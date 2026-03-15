@@ -8,6 +8,7 @@ import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
 import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle } from "lucide-react";
 import DepositModal from "./DepositModal";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -150,7 +151,7 @@ export default function Navbar() {
                         <div className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md bg-black text-white shrink-0">
                             <Command className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </div>
-                        <span className="text-xs sm:text-sm font-bold tracking-tight text-black">
+                        <span className="text-xs sm:text-sm font-bold tracking-tight text-foreground">
                             KASOKO
                         </span>
                     </Link>
@@ -163,8 +164,8 @@ export default function Navbar() {
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
                             <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-green flex-shrink-0" />
                             <div className="flex flex-col gap-0">
-                                <span className="text-[9px] sm:text-[10px] font-medium text-gray-600">Cash</span>
-                                <span className="text-[10px] sm:text-xs font-bold text-black">
+                                <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Cash</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-foreground">
                                     KSh <span className="text-apple-green font-black">{balance}</span>
                                 </span>
                             </div>
@@ -174,8 +175,8 @@ export default function Navbar() {
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-apple-blue/10 to-purple-400/10 border border-apple-blue/20">
                             <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-blue flex-shrink-0" />
                             <div className="flex flex-col gap-0">
-                                <span className="text-[9px] sm:text-[10px] font-medium text-gray-600">Portfolio</span>
-                                <span className="text-[10px] sm:text-xs font-bold text-black">
+                                <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Portfolio</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-foreground">
                                     KSh <span className="text-apple-blue font-black">{portfolioBalance}</span>
                                 </span>
                             </div>
@@ -205,6 +206,9 @@ export default function Navbar() {
                                 <span className="hidden md:inline">Deposit</span>
                             </button>
 
+                            {/* Theme Toggle */}
+                            <ThemeToggle />
+
                             {/* Notification Icon - Mobile & Desktop */}
                             <div className="relative notification-menu">
                                 <button
@@ -220,21 +224,21 @@ export default function Navbar() {
 
                                 {/* Notification Popup */}
                                 {isNotificationOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-300 rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute right-0 top-full mt-2 w-80 bg-background border border-border rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h3 className="font-bold text-sm text-black">
+                                            <h3 className="font-bold text-sm text-foreground">
                                                 Notifications {unreadCount > 0 && `(${unreadCount})`}
                                             </h3>
                                             <button
                                                 onClick={() => setIsNotificationOpen(false)}
-                                                className="text-gray-400 hover:text-black transition-colors"
+                                                className="text-muted-foreground hover:text-foreground transition-colors"
                                             >
                                                 ✕
                                             </button>
                                         </div>
                                         <div className="space-y-3 max-h-80 overflow-y-auto">
                                             {isLoadingNotifications ? (
-                                                <div className="p-3 text-center text-gray-500 text-xs">Loading notifications...</div>
+                                                <div className="p-3 text-center text-muted-foreground text-xs">Loading notifications...</div>
                                             ) : notifications.length > 0 ? (
                                                 notifications.map((notif) => {
                                                     const colors = getColorClasses(notif.color_class);
@@ -250,10 +254,10 @@ export default function Navbar() {
                                                     );
                                                 })
                                             ) : (
-                                                <div className="p-3 text-center text-gray-500 text-xs">No notifications yet</div>
+                                                <div className="p-3 text-center text-muted-foreground text-xs">No notifications yet</div>
                                             )}
                                         </div>
-                                        <button className="w-full mt-4 pt-3 border-t border-gray-200 text-xs font-semibold text-center text-black hover:text-gray-600 transition-colors">
+                                        <button className="w-full mt-4 pt-3 border-t border-border text-xs font-semibold text-center text-foreground hover:text-muted-foreground transition-colors">
                                             View all notifications
                                         </button>
                                     </div>
@@ -272,11 +276,11 @@ export default function Navbar() {
                                     </div>
                                 </button>
                                 {isMobileProfileOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-border rounded-lg shadow-lg z-50 p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-background border border-border rounded-lg shadow-lg z-50 p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-200">
                                         <Link
                                             href="/dashboard"
                                             onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <BarChart3 className="h-4 w-4" />
                                             Dashboard
@@ -284,7 +288,7 @@ export default function Navbar() {
                                         <Link
                                             href="/activity"
                                             onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <BarChart3 className="h-4 w-4" />
                                             Activity
@@ -292,7 +296,7 @@ export default function Navbar() {
                                         <Link
                                             href="/rewards"
                                             onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <Gift className="h-4 w-4" />
                                             Rewards
@@ -300,7 +304,7 @@ export default function Navbar() {
                                         <Link
                                             href="/profile"
                                             onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <User className="h-4 w-4" />
                                             Profile
@@ -308,7 +312,7 @@ export default function Navbar() {
                                         <Link
                                             href="/how-it-works"
                                             onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <HelpCircle className="h-4 w-4" />
                                             How it Works
@@ -316,7 +320,7 @@ export default function Navbar() {
                                         <Link
                                             href="/admin"
                                             onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <Settings className="h-4 w-4" />
                                             Admin Panel
@@ -340,23 +344,23 @@ export default function Navbar() {
                             <div className="relative profile-menu hidden sm:block">
                                 <button 
                                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                    className="flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-full bg-muted hover:bg-[#e8e8ed] transition-colors touch-target"
+                                    className="flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-full bg-muted hover:bg-[#e8e8ed] dark:hover:bg-[#3d3d3d] transition-colors touch-target"
                                     aria-label="User menu"
                                 >
                                     <div className="h-5 w-5 md:h-6 md:w-6 rounded-full bg-black flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
                                         {user.full_name.charAt(0)}
                                     </div>
-                                    <span className="hidden sm:block text-xs md:text-xs font-bold text-black truncate max-w-20">
+                                    <span className="hidden sm:block text-xs md:text-xs font-bold text-foreground truncate max-w-20">
                                         {user.full_name.split(' ')[0]}
                                     </span>
                                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                                 </button>
                                 {isProfileOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-border rounded-lg shadow-lg z-50 p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute right-0 top-full mt-2 w-44 bg-background border border-border rounded-lg shadow-lg z-50 p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-200">
                                         <Link
                                             href="/dashboard"
                                             onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <BarChart3 className="h-4 w-4" />
                                             Dashboard
@@ -364,7 +368,7 @@ export default function Navbar() {
                                         <Link
                                             href="/activity"
                                             onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <BarChart3 className="h-4 w-4" />
                                             Activity
@@ -372,7 +376,7 @@ export default function Navbar() {
                                         <Link
                                             href="/rewards"
                                             onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <Gift className="h-4 w-4" />
                                             Rewards
@@ -380,7 +384,7 @@ export default function Navbar() {
                                         <Link
                                             href="/profile"
                                             onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <User className="h-4 w-4" />
                                             Profile
@@ -388,7 +392,7 @@ export default function Navbar() {
                                         <Link
                                             href="/how-it-works"
                                             onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <HelpCircle className="h-4 w-4" />
                                             How it Works
@@ -396,7 +400,7 @@ export default function Navbar() {
                                         <Link
                                             href="/admin"
                                             onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-black font-bold text-sm hover:bg-muted transition-all"
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <Settings className="h-4 w-4" />
                                             Admin Panel
