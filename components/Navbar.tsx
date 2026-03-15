@@ -317,14 +317,6 @@ export default function Navbar() {
                                             <HelpCircle className="h-4 w-4" />
                                             How it Works
                                         </Link>
-                                        <Link
-                                            href="/admin"
-                                            onClick={() => setIsMobileProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
-                                        >
-                                            <Settings className="h-4 w-4" />
-                                            Admin Panel
-                                        </Link>
                                         <div className="border-t border-border my-1"></div>
                                         <button
                                             onClick={() => {
@@ -396,14 +388,6 @@ export default function Navbar() {
                                         >
                                             <HelpCircle className="h-4 w-4" />
                                             How it Works
-                                        </Link>
-                                        <Link
-                                            href="/admin"
-                                            onClick={() => setIsProfileOpen(false)}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
-                                        >
-                                            <Settings className="h-4 w-4" />
-                                            Admin Panel
                                         </Link>
                                         <div className="border-t border-border my-1"></div>
                                         <button

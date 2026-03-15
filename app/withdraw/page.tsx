@@ -83,7 +83,7 @@ export default function Withdraw() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fbfbfd] pb-12">
+        <div className="min-h-screen bg-background pb-12">
             <Navbar />
             <div className="pt-24 px-4">
                 <div className="max-w-[400px] mx-auto">
@@ -96,7 +96,7 @@ export default function Withdraw() {
                             <ArrowLeft className="h-6 w-6" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-black">Withdraw</h1>
+                            <h1 className="text-3xl font-bold text-foreground">Withdraw</h1>
                             <p className="text-muted-foreground">Cash out your balance</p>
                         </div>
                     </div>
@@ -104,12 +104,12 @@ export default function Withdraw() {
                     {/* Balance Display */}
                     <div className="apple-card p-6 mb-6">
                         <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider mb-2">Available Balance</p>
-                        <p className="text-4xl font-bold text-black">KSH {parseFloat(user.balance).toFixed(2)}</p>
+                        <p className="text-4xl font-bold text-foreground">KSH {parseFloat(user.balance).toFixed(2)}</p>
                     </div>
 
                     {/* Withdrawal Form */}
                     <div className="apple-card p-6">
-                        <h2 className="text-xl font-bold text-black mb-6">Withdrawal Details</h2>
+                        <h2 className="text-xl font-bold text-foreground mb-6">Withdrawal Details</h2>
 
                         {error && (
                             <div className="bg-apple-red/10 border border-apple-red/30 rounded-lg p-4 mb-4">
@@ -126,7 +126,7 @@ export default function Withdraw() {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-bold text-black mb-2">Withdrawal Amount</label>
+                                <label className="block text-sm font-bold text-foreground mb-2">Withdrawal Amount</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-3 text-muted-foreground font-bold">KSH</span>
                                     <input
@@ -135,7 +135,7 @@ export default function Withdraw() {
                                         value={amount}
                                         onChange={(e) => setAmount(e.target.value)}
                                         disabled={submitting}
-                                        className="w-full pl-14 pr-4 py-3 border border-border rounded-lg text-black font-bold focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
+                                        className="w-full pl-14 pr-4 py-3 border border-border rounded-lg text-foreground bg-background font-bold focus:outline-none focus:ring-2 focus:ring-foreground disabled:opacity-50"
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-2">Max: KSH {parseFloat(user.balance).toFixed(2)}</p>
@@ -170,7 +170,7 @@ export default function Withdraw() {
                             <button
                                 onClick={handleWithdraw}
                                 disabled={submitting || !amount}
-                                className="w-full h-12 bg-black text-white rounded-full font-bold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                className="w-full h-12 bg-foreground text-background rounded-full font-bold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                             >
                                 {submitting ? (
                                     <>
@@ -185,7 +185,7 @@ export default function Withdraw() {
                             <Link
                                 href="/dashboard"
                                 className="w-full h-12 bg-muted text-black rounded-full flex items-center justify-center font-bold transition-all hover:bg-[#e8e8ed]"
-                            >
+                            >foreground rounded-full flex items-center justify-center font-bold transition-all hover:bg-muted/80
                                 Back to Dashboard
                             </Link>
                         </div>

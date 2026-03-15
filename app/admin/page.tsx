@@ -4,9 +4,84 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { Plus, Edit2, CheckCircle, XCircle, Loader, TrendingUp, Users, DollarSign, BarChart3 } from "lucide-react";
+import { Plus, Edit2, CheckCircle, XCircle, Loader, TrendingUp, Users, DollarSign, BarChart3, Lock, ArrowLeft } from "lucide-react";
 
 export default function AdminPanel() {
+    // PIN Authentication State
+    const [pinAuthenticated, setPinAuthenticated] = useState(false);
+    const [pinInput, setPinInput] = useState("");
+    const [pinError, setPinError] = useState("");
+    const ADMIN_PIN = "2020";
+
+    const handlePinSubmit = () => {
+        if (pinInput === ADMIN_PIN) {
+            setPinAuthenticated(true);
+            setPinInput("");
+            setPinError("");
+        } else {
+            setPinError("Incorrect PIN");
+            setPinInput("");
+        }
+    };
+
+    if (!pinAuthenticated) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col">
+                <Navbar />
+                <div className="flex-1 flex items-center justify-center px-4">
+                    <div className="w-full max-w-sm">
+                        <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back
+                        </Link>
+                        
+                        <div className="apple-card p-8 text-center">
+                            <div className="flex justify-center mb-6">
+                                <div className="h-16 w-16 rounded-full bg-foreground/10 flex items-center justify-center">
+                                    <Lock className="h-8 w-8 text-foreground" />
+                                </div>
+                            </div>
+                            
+                            <h1 className="text-2xl font-bold text-foreground mb-2">Admin Access</h1>
+                            <p className="text-muted-foreground mb-8">Enter the admin PIN to continue</p>
+                            
+                            <div className="space-y-4">
+                                <input
+                                    type="password"
+                                    inputMode="numeric"
+                                    maxLength={4}
+                                    placeholder="••••"
+                                    value={pinInput}
+                                    onChange={(e) => {
+                                        setPinInput(e.target.value.replace(/\D/g, ""));
+                                        setPinError("");
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && pinInput.length === 4) {
+                                            handlePinSubmit();
+                                        }
+                                    }}
+                                    className="w-full px-4 py-3 border border-border rounded-lg text-center text-2xl tracking-widest font-bold text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-foreground transition-all"
+                                />
+                                
+                                {pinError && (
+                                    <p className="text-sm text-apple-red font-bold">{pinError}</p>
+                                )}
+                                
+                                <button
+                                    onClick={handlePinSubmit}
+                                    disabled={pinInput.length !== 4}
+                                    className="w-full py-3 bg-foreground text-background rounded-lg font-bold transition-all hover:opacity-90 disabled:opacity-50"
+                                >
+                                    Unlock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     const [markets, setMarkets] = useState<any[]>([]);
     const [selectedMarketDetails, setSelectedMarketDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);

@@ -68,11 +68,11 @@ export default function DepositPage() {
 
     if (step === "processing") {
         return (
-            <div className="min-h-screen bg-[#fbfbfd] flex flex-col">
+            <div className="min-h-screen bg-background flex flex-col">
                 <Navbar />
                 <div className="flex-1 flex flex-col items-center justify-center">
-                    <Wallet className="h-12 w-12 text-black animate-bounce mb-4" />
-                    <p className="font-bold text-black text-lg">Processing...</p>
+                    <Wallet className="h-12 w-12 text-foreground animate-bounce mb-4" />
+                    <p className="font-bold text-foreground text-lg">Processing...</p>
                     <p className="text-muted-foreground">Check your phone for M-Pesa prompt</p>
                 </div>
             </div>
@@ -81,13 +81,13 @@ export default function DepositPage() {
 
     if (step === "success") {
         return (
-            <div className="min-h-screen bg-[#fbfbfd] flex flex-col">
+            <div className="min-h-screen bg-background flex flex-col">
                 <Navbar />
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                     <CheckCircle2 className="h-20 w-20 text-green-600 mb-4" />
-                    <h1 className="text-3xl font-bold text-black mb-2">Deposit Successful!</h1>
+                    <h1 className="text-3xl font-bold text-foreground mb-2">Deposit Successful!</h1>
                     <p className="text-muted-foreground mb-6">KSh {parseFloat(amount).toLocaleString()} added</p>
-                    <Link href="/dashboard" className="bg-black text-white px-6 py-3 rounded-lg font-semibold">
+                    <Link href="/dashboard" className="bg-foreground text-background px-6 py-3 rounded-lg font-semibold">
                         Go to Dashboard →
                     </Link>
                 </div>
@@ -96,11 +96,11 @@ export default function DepositPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#fbfbfd] pb-12">
+        <div className="min-h-screen bg-background pb-12">
             <Navbar />
             <main className="mx-auto pt-24 max-w-[600px] px-4 md:px-6">
                 <div className="mb-8 flex items-center gap-4">
-                    <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg">
+                    <Link href="/" className="p-2 hover:bg-muted rounded-lg">
                         <ArrowLeft className="h-5 w-5" />
                     </Link>
                     <div>
@@ -110,7 +110,7 @@ export default function DepositPage() {
                 </div>
 
                 <form onSubmit={handleDeposit} className="space-y-6">
-                    <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                    <div className="bg-background rounded-2xl p-6 border border-border">
                         <p className="text-sm text-muted-foreground mb-2">Amount</p>
                         <input
                             type="number"
@@ -131,7 +131,7 @@ export default function DepositPage() {
                                     key={preset}
                                     type="button"
                                     onClick={() => setAmount(preset.toString())}
-                                    className="p-3 rounded-lg border border-gray-200 hover:border-black hover:bg-gray-50 font-semibold"
+                                    className="p-3 rounded-lg border border-border hover:border-foreground hover:bg-muted font-semibold"
                                 >
                                     KSh {preset.toLocaleString()}
                                 </button>
@@ -146,8 +146,8 @@ export default function DepositPage() {
                             onClick={() => setMethod("mpesa")}
                             className={`w-full p-4 rounded-lg border-2 text-left transition ${
                                 method === "mpesa"
-                                    ? "border-black bg-black/5"
-                                    : "border-gray-200 hover:border-gray-300"
+                                    ? "border-foreground bg-foreground/5"
+                                    : "border-border hover:border-muted-foreground"
                             }`}
                         >
                             <p className="font-semibold">M-Pesa</p>
@@ -160,7 +160,7 @@ export default function DepositPage() {
                     <button
                         type="submit"
                         disabled={!amount || parseFloat(amount) < 100}
-                        className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-foreground text-background py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Deposit KSh {amount || "0"}
                     </button>
