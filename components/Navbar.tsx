@@ -152,7 +152,7 @@ export default function Navbar() {
                             <Command className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </div>
                         <span className="text-xs sm:text-sm font-bold tracking-tight text-foreground">
-                            KASOKO
+                            CACHE
                         </span>
                     </Link>
                 </div>
