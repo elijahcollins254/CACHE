@@ -17,8 +17,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "CACHE | Kenyan Prediction Market",
-  description: "Predict the future & Earn. Politics, Sports, and Economy.",
+  title: "CACHE | Kwani Ni Kesho",
+  description: "Predict the future & Earn.",
 };
 
 export default function RootLayout({
