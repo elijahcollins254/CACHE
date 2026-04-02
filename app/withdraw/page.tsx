@@ -57,8 +57,7 @@ export default function Withdraw() {
         setSuccess("");
 
         try {
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/withdraw/`, {
-                method: "POST",
+                const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/withdraw/`, {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ amount: parseFloat(amount) }),
             });
@@ -185,7 +184,7 @@ export default function Withdraw() {
                             <Link
                                 href="/dashboard"
                                 className="w-full h-12 bg-muted text-black rounded-full flex items-center justify-center font-bold transition-all hover:bg-[#e8e8ed]"
-                            >foreground rounded-full flex items-center justify-center font-bold transition-all hover:bg-muted/80
+                            >
                                 Back to Dashboard
                             </Link>
                         </div>

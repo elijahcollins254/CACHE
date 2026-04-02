@@ -11,7 +11,7 @@ export default function AdminPanel() {
     const [passwordAuthenticated, setPasswordAuthenticated] = useState(false);
     const [passwordInput, setPasswordInput] = useState("");
     const [passwordError, setPasswordError] = useState("");
-    const ADMIN_PASSWORD = "admin123";
+    const ADMIN_PASSWORD = "#collins12K";
 
     const handlePasswordSubmit = () => {
         if (passwordInput === ADMIN_PASSWORD) {
@@ -23,6 +23,51 @@ export default function AdminPanel() {
             setPasswordInput("");
         }
     };
+
+    const [markets, setMarkets] = useState<any[]>([]);
+    const [selectedMarketDetails, setSelectedMarketDetails] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [activeTab, setActiveTab] = useState<"markets" | "create" | "settlements">("markets");
+    const [selectedMarket, setSelectedMarket] = useState<any>(null);
+    const [resolvingMarket, setResolvingMarket] = useState<string | null>(null);
+    const [outcome, setOutcome] = useState<"Yes" | "No" | "">();
+    const [settlements, setSettlements] = useState<any[]>([]);
+
+    // Create market form
+    const [createForm, setCreateForm] = useState({
+        question: "",
+        category: "Sports",
+        description: "",
+        endDate: "",
+    });
+
+    const loadMarkets = async () => {
+        try {
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/admin/markets/`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setMarkets(data.markets);
+            } else if (response.status === 401) {
+                window.location.href = "/login";
+            } else {
+                setError("Failed to load markets");
+            }
+        } catch (err) {
+            setError("Connection error");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadMarkets();
+    }, []);
 
     if (!passwordAuthenticated) {
         return (
@@ -80,23 +125,6 @@ export default function AdminPanel() {
             </div>
         );
     }
-    const [markets, setMarkets] = useState<any[]>([]);
-    const [selectedMarketDetails, setSelectedMarketDetails] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [activeTab, setActiveTab] = useState<"markets" | "create" | "settlements">("markets");
-    const [selectedMarket, setSelectedMarket] = useState<any>(null);
-    const [resolvingMarket, setResolvingMarket] = useState<string | null>(null);
-    const [outcome, setOutcome] = useState<"Yes" | "No" | "">();
-    const [settlements, setSettlements] = useState<any[]>([]);
-
-    // Create market form
-    const [createForm, setCreateForm] = useState({
-        question: "",
-        category: "Sports",
-        description: "",
-        endDate: "",
-    });
 
     const formatDate = (dateString: string) => {
         try {
@@ -110,33 +138,6 @@ export default function AdminPanel() {
             }).format(date);
         } catch {
             return dateString;
-        }
-    };
-
-    useEffect(() => {
-        loadMarkets();
-    }, []);
-
-    const loadMarkets = async () => {
-        try {
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/admin/markets/`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setMarkets(data.markets);
-            } else if (response.status === 401) {
-                window.location.href = "/login";
-            } else {
-                setError("Failed to load markets");
-            }
-        } catch (err) {
-            setError("Connection error");
-            console.error(err);
-        } finally {
-            setLoading(false);
         }
     };
 
