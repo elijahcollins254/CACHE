@@ -40,7 +40,7 @@ export default function TermsOfUsePage() {
                             You must be at least 18 years old to use CACHE. By using this Platform, you represent and warrant that you are at least 18 years of age and have the legal capacity to enter into these terms.
                         </p>
                         <p className="text-gray-700 leading-relaxed">
-                            CACHE does not allow users from jurisdictions where online betting or prediction markets are prohibited by law.
+                            CACHE does not allow users from jurisdictions where online trading or prediction markets are prohibited by law.
                         </p>
                     </section>
 
@@ -57,12 +57,12 @@ export default function TermsOfUsePage() {
 
                     {/* Section 4 */}
                     <section>
-                        <h2 className="text-2xl font-bold text-black mb-4">4. Prediction Markets and Betting</h2>
+                        <h2 className="text-2xl font-bold text-black mb-4">4. Prediction Markets and Market Positions</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            CACHE provides a platform for users to place bets on prediction markets. By placing a bet on any market:
+                            CACHE provides a platform for users to take positions in prediction markets. By taking a position on any market:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-                            <li>You acknowledge that you understand the risks involved in betting</li>
+                            <li>You acknowledge that you understand the risks involved in taking positions</li>
                             <li>You agree that your funds may be at risk and you could lose your entire investment</li>
                             <li>You accept that market outcomes are determined by the Platform's resolution process</li>
                             <li>You understand that no guarantee of profit or return on investment is provided</li>
@@ -98,13 +98,13 @@ export default function TermsOfUsePage() {
 
                     {/* Section 7 */}
                     <section>
-                        <h2 className="text-2xl font-bold text-black mb-4">7. Responsible Betting</h2>
+                        <h2 className="text-2xl font-bold text-black mb-4">7. Responsible Market Participation</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            CACHE promotes responsible betting. If you feel your betting is becoming problematic, we encourage you to:
+                            CACHE promotes responsible market participation. If you feel your market activity is becoming problematic, we encourage you to:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-                            <li>Set deposit and bet limits</li>
-                            <li>Take breaks from betting</li>
+                            <li>Set deposit and position limits</li>
+                            <li>Take breaks from market activity</li>
                             <li>Seek help from professional support organizations</li>
                         </ul>
                     </section>
@@ -173,7 +173,7 @@ export default function TermsOfUsePage() {
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-12">
                         <h3 className="text-lg font-bold text-yellow-800 mb-2">⚠️ Risk Warning</h3>
                         <p className="text-yellow-700">
-                            Betting on prediction markets carries substantial risk of loss. Past performance does not indicate future results. Never bet more than you can afford to lose. Gambling can be addictive. If you suspect you have a gambling problem, seek help immediately.
+                            Trading on prediction markets carries substantial risk of loss. Past performance does not indicate future results. Never take a position for more than you can afford to lose. Markets can be volatile. If you suspect your market activity is becoming problematic, seek help immediately.
                         </p>
                     </div>
                 </div>

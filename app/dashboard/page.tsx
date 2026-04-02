@@ -199,7 +199,7 @@ export default function Dashboard() {
                                                 : "border-transparent text-muted-foreground hover:text-black dark:hover:text-white"
                                         }`}
                                     >
-                                        {tab === "active" ? "Active Bets" : tab.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                                        {tab === "active" ? "Open Positions" : tab.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
                                     </button>
                                 ))}
                             </div>
@@ -239,7 +239,7 @@ export default function Dashboard() {
                                                         <div className="flex-1">
                                                             <h3 className="font-bold text-foreground text-lg">{bet.market_question}</h3>
                                                             <p className="text-sm text-muted-foreground mt-1">
-                                                                Bet on <span className={`font-semibold ${bet.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{bet.outcome}</span>
+                                                                Position on <span className={`font-semibold ${bet.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{bet.outcome}</span>
                                                             </p>
                                                         </div>
                                                         <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
@@ -249,7 +249,7 @@ export default function Dashboard() {
 
                                                     <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
                                                         <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Bet Amount</p>
+                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Stake Amount</p>
                                                             <p className="font-bold text-foreground">KSh {Number(bet.amount).toLocaleString()}</p>
                                                         </div>
                                                         <div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
                                                             <p className="font-bold text-foreground">{bet.entry_probability}%</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Potential Win</p>
+                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Potential Payout</p>
                                                             <p className="font-bold text-green-600">KSh {potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                                         </div>
                                                         <div>
@@ -278,9 +278,9 @@ export default function Dashboard() {
                                     </div>
                                 ) : (
                                     <div className="py-12 text-center">
-                                        <p className="text-muted-foreground mb-4">No active bets yet</p>
+                                        <p className="text-muted-foreground mb-4">No active positions yet</p>
                                         <Link href="/" className="text-apple-blue hover:underline font-bold">
-                                            Start betting on markets
+                                            Start trading markets
                                         </Link>
                                     </div>
                                 )}
@@ -295,8 +295,8 @@ export default function Dashboard() {
                                                 <tr className="border-b border-border">
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">MARKET</th>
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">AVG → NOW</th>
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">BET</th>
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">TO WIN</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">STAKE</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">PAYOUT</th>
                                                     <th className="text-right py-3 px-4 font-semibold text-muted-foreground">VALUE</th>
                                                 </tr>
                                             </thead>

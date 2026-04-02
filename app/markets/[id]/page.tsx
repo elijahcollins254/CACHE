@@ -54,7 +54,7 @@ export default function MarketDetail() {
         // Check if user is logged in first
         const user = localStorage.getItem("poly_user");
         if (!user) {
-            setMessage("Please log in to place a bet");
+            setMessage("Please log in to enter a position");
             return;
         }
 
@@ -97,7 +97,7 @@ export default function MarketDetail() {
                 dispatch(fetchMarkets());
                 window.dispatchEvent(new Event("poly_balance_updated"));
             } else {
-                setMessage(data.error || "Failed to place bet. Try logging in.");
+                setMessage(data.error || "Failed to submit position. Try logging in.");
             }
         } catch (err) {
             setMessage("Connection error.");
@@ -271,7 +271,7 @@ export default function MarketDetail() {
                         </div>
                     </div>
 
-                    {/* Right Column - Betting Interface */}
+                    {/* Right Column - Position Interface */}
                     <div className="bg-muted border border-border rounded-2xl p-6 h-fit sticky top-24">
                         {/* Outcome Selector */}
                         <div className="space-y-3 mb-6">
@@ -395,7 +395,7 @@ export default function MarketDetail() {
                 </div>
             </main>
 
-            {/* Bet Receipt Modal */}
+            {/* Position Receipt Modal */}
             {showReceipt && lastBet && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in">
                     <div className="bg-muted rounded-2xl p-8 max-w-md w-full shadow-xl">
@@ -406,8 +406,8 @@ export default function MarketDetail() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-2xl font-bold text-foreground">Bet Confirmed!</h2>
-                            <p className="text-sm text-muted-foreground mt-1">Your bet has been accepted</p>
+                            <h2 className="text-2xl font-bold text-foreground">Position Confirmed!</h2>
+                            <p className="text-sm text-muted-foreground mt-1">Your position has been accepted</p>
                         </div>
 
                         {/* Details */}
@@ -435,18 +435,18 @@ export default function MarketDetail() {
                         {/* Amount & Potential Win */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
-                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Bet Amount</p>
+                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Stake Amount</p>
                                 <p className="text-2xl font-bold text-foreground">KSh {Number(lastBet.amount).toLocaleString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">To Win</p>
+                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Potential Payout</p>
                                 <p className="text-2xl font-bold text-green-400">KSh {lastBet.potentialWinnings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                         </div>
 
-                        {/* Bet Reference */}
+                        {/* Contract Reference */}
                         <div className="bg-blue-950/40 border border-blue-900/40 rounded-lg p-3 text-center mb-6">
-                            <p className="text-xs text-blue-400 font-medium">BET ID</p>
+                            <p className="text-xs text-blue-400 font-medium">CONTRACT ID</p>
                             <p className="text-sm font-bold text-blue-300 font-mono">{lastBet.id}</p>
                         </div>
 
@@ -467,7 +467,7 @@ export default function MarketDetail() {
                                 href="/dashboard"
                                 className="w-full bg-muted hover:opacity-80 text-foreground font-bold py-3 rounded-lg transition-all text-center"
                             >
-                                View All Bets
+                                View All Positions
                             </Link>
                         </div>
                     </div>
