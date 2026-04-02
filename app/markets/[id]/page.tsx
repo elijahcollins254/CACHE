@@ -29,6 +29,10 @@ export default function MarketDetail() {
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastBet, setLastBet] = useState<any>(null);
     const [chatMessages, setChatMessages] = useState<any[]>([]);
+    const [marketPositions, setMarketPositions] = useState<any[]>([]);
+    const [topHolders, setTopHolders] = useState<{yes:any[]; no:any[]}>({yes: [], no: []});
+    const [marketActivity, setMarketActivity] = useState<any[]>([]);
+    const [marketTab, setMarketTab] = useState<"comments" | "topHolders" | "positions" | "activity">("comments");
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
     const [replyingToName, setReplyingToName] = useState("");
     const [newChatMessage, setNewChatMessage] = useState("");
@@ -43,6 +47,14 @@ export default function MarketDetail() {
         }
     }, [dispatch, allMarkets.length]);
 
+    // Auto-close receipt modal after 3 seconds
+    useEffect(() => {
+        if (showReceipt) {
+            const timer = setTimeout(() => setShowReceipt(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showReceipt]);
+
     // Set market from Redux data and update saved status
     useEffect(() => {
         if (allMarkets.length > 0) {
@@ -54,17 +66,17 @@ export default function MarketDetail() {
 
     useEffect(() => {
         if (market && market.id) {
-            fetchChatMessages();
+            fetchMarketDetails();
         }
     }, [market]);
 
-    const fetchChatMessages = async () => {
+    const fetchMarketDetails = async () => {
         setChatLoading(true);
         setChatError("");
 
         try {
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/chat/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/details/`,
                 {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
@@ -73,14 +85,17 @@ export default function MarketDetail() {
 
             if (response.ok) {
                 const data = await response.json();
-                setChatMessages(data.messages || []);
+                setChatMessages(data.comments || []);
+                setMarketPositions(data.positions || []);
+                setTopHolders(data.top_holders || { yes: [], no: [] });
+                setMarketActivity(data.activity || []);
             } else {
                 const data = await response.json();
-                setChatError(data.error || "Unable to load chat");
+                setChatError(data.error || "Unable to load market details");
             }
         } catch (err) {
             console.error(err);
-            setChatError("Connection error while loading chat");
+            setChatError("Connection error while loading market details");
         } finally {
             setChatLoading(false);
         }
@@ -175,6 +190,7 @@ export default function MarketDetail() {
                     market_id: id,
                     outcome,
                     amount: betAmount,
+                    action: activeTab,
                 }),
             });
 
@@ -202,9 +218,10 @@ export default function MarketDetail() {
                 setBetAmount("");
                 setMessage("");
                 
-                // Dispatch Redux events to refresh data
+                // Refresh market detail data and balance
                 dispatch(fetchMarkets());
                 window.dispatchEvent(new Event("poly_balance_updated"));
+                await fetchMarketDetails();
             } else {
                 setMessage(data.error || "Failed to submit position. Try logging in.");
             }
@@ -482,9 +499,6 @@ export default function MarketDetail() {
                             >
                                 {activeTab === "buy" ? "Buy " : "Sell "} {selectedOutcome}
                             </button>
-                            <button className="w-full bg-muted hover:opacity-80 text-foreground font-bold py-3 rounded-lg transition-all">
-                                Deposit
-                            </button>
                         </div>
 
                         {/* Message */}
@@ -503,6 +517,26 @@ export default function MarketDetail() {
                             By trading, you agree to the{" "}
                             <Link href="/terms-of-use" className="underline hover:text-foreground">Terms of Use</Link>.
                         </p>
+
+                        {/* Recommended Markets */}
+                        <div className="mt-8 pt-6 border-t border-border">
+                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Recommended Markets</h3>
+                            <div className="space-y-2">
+                                {allMarkets.slice(0, 3).map((rec_market: any) => (
+                                    <Link 
+                                        key={rec_market.id}
+                                        href={`/markets/${rec_market.id}`}
+                                        className="block p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
+                                    >
+                                        <p className="text-xs font-semibold text-foreground truncate">{rec_market.question}</p>
+                                        <div className="flex items-center justify-between mt-1">
+                                            <span className="text-xs text-muted-foreground">{rec_market.yes_probability}%</span>
+                                            <span className="text-xs font-semibold text-green-400">{rec_market.volume}</span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Market Chat */}
@@ -516,13 +550,149 @@ export default function MarketDetail() {
                                 {chatLoading && <span className="text-xs font-semibold text-foreground">Loading...</span>}
                             </div>
 
-                            {chatError ? (
-                                <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
-                                    {chatError}
+                                <div className="mb-6 border-b border-border pb-4">
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm font-semibold">
+                                    <button
+                                        onClick={() => setMarketTab("comments")}
+                                        className={`rounded-full px-4 py-2 transition ${marketTab === "comments" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
+                                    >
+                                        Comments ({chatMessages.length})
+                                    </button>
+                                    <button
+                                        onClick={() => setMarketTab("topHolders")}
+                                        className={`rounded-full px-4 py-2 transition ${marketTab === "topHolders" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
+                                    >
+                                        Top Holders
+                                    </button>
+                                    <button
+                                        onClick={() => setMarketTab("positions")}
+                                        className={`rounded-full px-4 py-2 transition ${marketTab === "positions" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
+                                    >
+                                        Positions
+                                    </button>
+                                    <button
+                                        onClick={() => setMarketTab("activity")}
+                                        className={`rounded-full px-4 py-2 transition ${marketTab === "activity" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
+                                    >
+                                        Activity
+                                    </button>
                                 </div>
-                            ) : null}
+                                <p className="mt-3 text-sm text-muted-foreground">
+                                    {marketTab === "comments" && "See the latest trader discussion and replies below."}
+                                    {marketTab === "topHolders" && "Top holders are displayed here once market holdings data is available."}
+                                    {marketTab === "positions" && "Your current and historical positions for this market will appear here."}
+                                    {marketTab === "activity" && "Recent market activity and trade history will show here."}
+                                </p>
+                            </div>
 
-                            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
+                            {marketTab !== "comments" ? (
+                                <div className="rounded-2xl border border-border bg-background/80 p-6 space-y-6">
+                                    {marketTab === "topHolders" && (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <div className="p-4 rounded-2xl bg-muted border border-border">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-foreground">Yes holders</h4>
+                                                        <p className="text-xs text-muted-foreground">Largest positions supporting Yes</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {topHolders.yes.length === 0 ? (
+                                                        <p className="text-sm text-muted-foreground">No Yes holders yet.</p>
+                                                    ) : (
+                                                        topHolders.yes.map((holder) => (
+                                                            <div key={`${holder.user_id}-yes`} className="flex items-center justify-between gap-3">
+                                                                <div>
+                                                                    <p className="font-semibold text-foreground">{holder.user_name}</p>
+                                                                    <p className="text-xs text-muted-foreground">Avg {holder.average_price}</p>
+                                                                </div>
+                                                                <span className="font-semibold text-green-400">{holder.shares.toLocaleString()}</span>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-muted border border-border">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-foreground">No holders</h4>
+                                                        <p className="text-xs text-muted-foreground">Largest positions supporting No</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {topHolders.no.length === 0 ? (
+                                                        <p className="text-sm text-muted-foreground">No No holders yet.</p>
+                                                    ) : (
+                                                        topHolders.no.map((holder) => (
+                                                            <div key={`${holder.user_id}-no`} className="flex items-center justify-between gap-3">
+                                                                <div>
+                                                                    <p className="font-semibold text-foreground">{holder.user_name}</p>
+                                                                    <p className="text-xs text-muted-foreground">Avg {holder.average_price}</p>
+                                                                </div>
+                                                                <span className="font-semibold text-red-400">{holder.shares.toLocaleString()}</span>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {marketTab === "positions" && (
+                                        <div className="space-y-4">
+                                            {marketPositions.length === 0 ? (
+                                                <div className="rounded-2xl border border-border p-6 bg-muted">
+                                                    <p className="text-sm text-muted-foreground">No public positions are available yet.</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {marketPositions.map((position) => (
+                                                        <div key={position.id} className="rounded-2xl border border-border bg-background p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div>
+                                                                <p className="font-semibold text-foreground">{position.user_name}</p>
+                                                                <p className="text-xs text-muted-foreground">{position.outcome} · {position.order_type} · {position.result}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="font-semibold text-foreground">{position.quantity} shares</p>
+                                                                <p className="text-xs text-muted-foreground">KSh {Number(position.amount).toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {marketTab === "activity" && (
+                                        <div className="space-y-3">
+                                            {marketActivity.length === 0 ? (
+                                                <div className="rounded-2xl border border-border p-6 bg-muted">
+                                                    <p className="text-sm text-muted-foreground">Activity will appear once positions are taken on this market.</p>
+                                                </div>
+                                            ) : (
+                                                marketActivity.map((item) => (
+                                                    <div key={item.id} className="rounded-2xl border border-border bg-background p-4 flex items-center justify-between gap-3">
+                                                        <div>
+                                                            <p className="font-semibold text-foreground">{item.user_name}</p>
+                                                            <p className="text-xs text-muted-foreground">{item.action}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-xs text-muted-foreground">{formatChatTimestamp(item.timestamp)}</p>
+                                                            <p className="text-sm font-semibold text-foreground">KSh {Number(item.amount).toLocaleString()}</p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    {chatError ? (
+                                        <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
+                                            {chatError}
+                                        </div>
+                                    ) : null}
+
+                                    <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
                                 {chatMessages.length === 0 ? (
                                     <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
                                         No messages yet. Start the conversation.
@@ -607,86 +777,55 @@ export default function MarketDetail() {
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </>
+                    )}
                     </div>
                 </div>
-            </main>
+            </div>
+        </main>
 
-            {/* Position Receipt Modal */}
+            {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in">
-                    <div className="bg-muted rounded-2xl p-8 max-w-md w-full shadow-xl">
-                        {/* Header */}
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-green-950/40 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+                    <div className="absolute inset-0 bg-black/30" onClick={() => setShowReceipt(false)}></div>
+                    <div className="relative bg-foreground text-background rounded-xl p-6 max-w-sm w-full shadow-xl animate-in zoom-in-95">
+                        <button
+                            onClick={() => setShowReceipt(false)}
+                            className="absolute top-4 right-4 text-background/60 hover:text-background transition"
+                        >
+                            ✕
+                        </button>
+                        
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-2xl font-bold text-foreground">Position Confirmed!</h2>
-                            <p className="text-sm text-muted-foreground mt-1">Your position has been accepted</p>
+                            <h2 className="text-lg font-bold">Position Confirmed</h2>
                         </div>
 
-                        {/* Details */}
-                        <div className="bg-muted/50 rounded-lg p-4 mb-6 space-y-3">
-                            <div className="flex justify-between items-start">
-                                <span className="text-sm text-muted-foreground font-medium">Market</span>
-                                <span className="text-sm font-bold text-foreground text-right max-w-[200px]">{lastBet.market}</span>
+                        <div className="space-y-3 mb-4">
+                            <div className="flex justify-between">
+                                <span className="text-background/75">Outcome</span>
+                                <span className={`font-bold ${lastBet.outcome === 'Yes' ? 'text-green-400' : 'text-red-400'}`}>{lastBet.outcome}</span>
                             </div>
-                            <div className="border-t border-border pt-3 flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground font-medium">Outcome</span>
-                                <span className={`text-sm font-bold px-3 py-1 rounded-full ${
-                                    lastBet.outcome === 'Yes' 
-                                        ? 'bg-green-950/40 text-green-400' 
-                                        : 'bg-red-950/40 text-red-400'
-                                }`}>
-                                    {lastBet.outcome}
-                                </span>
+                            <div className="flex justify-between">
+                                <span className="text-background/75">Amount</span>
+                                <span className="font-bold">KSh {Number(lastBet.amount).toLocaleString()}</span>
                             </div>
-                            <div className="border-t border-border pt-3 flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground font-medium">Probability</span>
-                                <span className="text-sm font-bold text-foreground">{lastBet.probability}%</span>
+                            <div className="flex justify-between">
+                                <span className="text-background/75">Probability</span>
+                                <span className="font-bold">{lastBet.probability}%</span>
                             </div>
                         </div>
 
-                        {/* Amount & Potential Win */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Stake Amount</p>
-                                <p className="text-2xl font-bold text-foreground">KSh {Number(lastBet.amount).toLocaleString()}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Total Return</p>
-                                <p className="text-2xl font-bold text-green-400">KSh {lastBet.potentialWinnings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                            </div>
-                        </div>
-
-                        {/* Contract Reference */}
-                        <div className="bg-blue-950/40 border border-blue-900/40 rounded-lg p-3 text-center mb-6">
-                            <p className="text-xs text-blue-400 font-medium">CONTRACT ID</p>
-                            <p className="text-sm font-bold text-blue-300 font-mono">{lastBet.id}</p>
-                        </div>
-
-                        {/* Time */}
-                        <p className="text-xs text-muted-foreground text-center mb-6">
-                            {lastBet.timestamp.toLocaleTimeString()} on {lastBet.timestamp.toLocaleDateString()}
-                        </p>
-
-                        {/* Buttons */}
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => setShowReceipt(false)}
-                                className="w-full bg-apple-blue hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all"
-                            >
-                                Continue Trading
-                            </button>
-                            <Link
-                                href="/dashboard"
-                                className="w-full bg-muted hover:opacity-80 text-foreground font-bold py-3 rounded-lg transition-all text-center"
-                            >
-                                View All Positions
-                            </Link>
-                        </div>
+                        <button
+                            onClick={() => setShowReceipt(false)}
+                            className="w-full bg-apple-blue hover:opacity-90 text-white font-bold py-2 rounded-lg transition-all text-sm"
+                        >
+                            Done
+                        </button>
                     </div>
                 </div>
             )}

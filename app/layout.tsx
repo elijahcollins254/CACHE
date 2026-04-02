@@ -18,7 +18,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "CACHE | Stake it, Cache it",
-  description: "Predict the future & Earn.",
+  description: "Stake it, Cache it.",
 };
 
 export default function RootLayout({
