@@ -246,7 +246,6 @@ export default function MarketDetail() {
     };
 
     const topLevelChatMessages = chatMessages.filter((msg) => !msg.parent_id);
-    const getRepliesForMessage = (messageId: number) => chatMessages.filter((msg) => msg.parent_id === messageId);
 
     const handleSaveToggle = () => {
         dispatch(toggleSaveMarket(Number(id)));
