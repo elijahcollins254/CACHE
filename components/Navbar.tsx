@@ -193,14 +193,14 @@ export default function Navbar() {
                             {/* Desktop Buttons */}
                             <Link
                                 href="/dashboard"
-                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-0.5 rounded-md bg-black text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
+                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1 rounded-md bg-black text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
                             >
                                 <BarChart3 className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">Dashboard</span>
                             </Link>
                             <button
                                 onClick={() => setIsDepositModalOpen(true)}
-                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-0.5 rounded-md bg-apple-green text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
+                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1 rounded-md bg-apple-green text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
                             >
                                 <Wallet className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">Deposit</span>
