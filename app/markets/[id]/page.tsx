@@ -381,113 +381,10 @@ export default function MarketDetail() {
                                 <div className="text-sm font-bold text-green-600 mt-1">Open</div>
                             </div>
                         </div>
-
-                        {/* Market Chat */}
-                        <div className="bg-muted rounded-2xl p-6 mt-6 border border-border">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Market Chat</h3>
-                                    <p className="text-sm text-muted-foreground">Talk about this market with others.</p>
-                                </div>
-                                {chatLoading && <span className="text-xs font-semibold text-foreground">Loading...</span>}
-                            </div>
-
-                            {chatError ? (
-                                <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
-                                    {chatError}
-                                </div>
-                            ) : null}
-
-                            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
-                                {chatMessages.length === 0 ? (
-                                    <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
-                                        No messages yet. Start the conversation.
-                                    </div>
-                                ) : (
-                                    topLevelChatMessages.map((msg) => (
-                                        <div key={msg.id} className="rounded-2xl border border-border bg-background/80 p-4 space-y-3">
-                                            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                                                <span className="font-semibold text-foreground">
-                                                    {msg.user_name || 'Trader'}
-                                                </span>
-                                                <span>{formatChatTimestamp(msg.created_at)}</span>
-                                            </div>
-                                            <p className="text-sm text-foreground">{msg.message}</p>
-                                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                                <button
-                                                    onClick={() => handleStartReply(msg.id, msg.user_name || 'Trader')}
-                                                    className="font-semibold text-foreground hover:text-apple-blue"
-                                                >
-                                                    Reply
-                                                </button>
-                                                {getRepliesForMessage(msg.id).length > 0 && (
-                                                    <span>{getRepliesForMessage(msg.id).length} repl{getRepliesForMessage(msg.id).length === 1 ? 'y' : 'ies'}</span>
-                                                )}
-                                            </div>
-
-                                            {getRepliesForMessage(msg.id).map((reply) => (
-                                                <div key={reply.id} className="ml-5 rounded-2xl border border-border bg-muted p-4">
-                                                    <div className="flex items-center justify-between gap-3 mb-2 text-xs text-muted-foreground">
-                                                        <span className="font-semibold text-foreground">
-                                                            {reply.user_name || 'Trader'}
-                                                        </span>
-                                                        <span>{formatChatTimestamp(reply.created_at)}</span>
-                                                    </div>
-                                                    <p className="text-sm text-foreground">
-                                                        <span className="font-semibold text-foreground">Reply to {reply.parent_user_name || 'them'}: </span>
-                                                        {reply.message}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <div className="space-y-3">
-                                {replyingToId && (
-                                    <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground">
-                                        <span>Replying to {replyingToName}</span>
-                                        <button
-                                            type="button"
-                                            onClick={cancelReply}
-                                            className="text-xs font-bold text-apple-blue hover:underline"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                )}
-                                <textarea
-                                    value={newChatMessage}
-                                    onChange={(e) => setNewChatMessage(e.target.value)}
-                                    placeholder="Write a message..."
-                                    className="w-full min-h-[100px] rounded-2xl border border-border bg-background/60 p-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
-                                />
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                    <button
-                                        onClick={handleSendChat}
-                                        disabled={sendingChat}
-                                        className="w-full sm:w-auto bg-apple-blue hover:opacity-90 text-white font-bold py-3 px-6 rounded-2xl transition disabled:opacity-50"
-                                    >
-                                        {sendingChat ? 'Sending...' : 'Send Message'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setNewChatMessage('');
-                                            setChatError('');
-                                        }}
-                                        className="w-full sm:w-auto border border-border text-sm text-foreground rounded-2xl py-3 px-6 hover:bg-muted/80"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Right Column - Position Interface */}
-                    <div className="bg-muted border border-border rounded-2xl p-6 h-fit sticky top-24">
+                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-6 h-fit md:sticky md:top-24 md:max-h-[calc(100vh-6rem)] md:overflow-y-auto">
                         {/* Outcome Selector */}
                         <div className="space-y-3 mb-6">
                             <button
@@ -606,6 +503,111 @@ export default function MarketDetail() {
                             By trading, you agree to the{" "}
                             <Link href="/terms-of-use" className="underline hover:text-foreground">Terms of Use</Link>.
                         </p>
+                    </div>
+
+                    {/* Market Chat */}
+                    <div className="md:col-span-2 space-y-6 order-3 md:order-none">
+                        <div className="bg-muted rounded-2xl p-6 mt-6 border border-border">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Market Chat</h3>
+                                    <p className="text-sm text-muted-foreground">Talk about this market with others.</p>
+                                </div>
+                                {chatLoading && <span className="text-xs font-semibold text-foreground">Loading...</span>}
+                            </div>
+
+                            {chatError ? (
+                                <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
+                                    {chatError}
+                                </div>
+                            ) : null}
+
+                            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
+                                {chatMessages.length === 0 ? (
+                                    <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
+                                        No messages yet. Start the conversation.
+                                    </div>
+                                ) : (
+                                    topLevelChatMessages.map((msg) => (
+                                        <div key={msg.id} className="rounded-2xl border border-border bg-background/80 p-4 space-y-3">
+                                            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                                                <span className="font-semibold text-foreground">
+                                                    {msg.user_name || 'Trader'}
+                                                </span>
+                                                <span>{formatChatTimestamp(msg.created_at)}</span>
+                                            </div>
+                                            <p className="text-sm text-foreground">{msg.message}</p>
+                                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                <button
+                                                    onClick={() => handleStartReply(msg.id, msg.user_name || 'Trader')}
+                                                    className="font-semibold text-foreground hover:text-apple-blue"
+                                                >
+                                                    Reply
+                                                </button>
+                                                {getRepliesForMessage(msg.id).length > 0 && (
+                                                    <span>{getRepliesForMessage(msg.id).length} repl{getRepliesForMessage(msg.id).length === 1 ? 'y' : 'ies'}</span>
+                                                )}
+                                            </div>
+
+                                            {getRepliesForMessage(msg.id).map((reply) => (
+                                                <div key={reply.id} className="ml-5 rounded-2xl border border-border bg-muted p-4">
+                                                    <div className="flex items-center justify-between gap-3 mb-2 text-xs text-muted-foreground">
+                                                        <span className="font-semibold text-foreground">
+                                                            {reply.user_name || 'Trader'}
+                                                        </span>
+                                                        <span>{formatChatTimestamp(reply.created_at)}</span>
+                                                    </div>
+                                                    <p className="text-sm text-foreground">
+                                                        <span className="font-semibold text-foreground">Reply to {reply.parent_user_name || 'them'}: </span>
+                                                        {reply.message}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="space-y-3">
+                                {replyingToId && (
+                                    <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground">
+                                        <span>Replying to {replyingToName}</span>
+                                        <button
+                                            type="button"
+                                            onClick={cancelReply}
+                                            className="text-xs font-bold text-apple-blue hover:underline"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
+                                <textarea
+                                    value={newChatMessage}
+                                    onChange={(e) => setNewChatMessage(e.target.value)}
+                                    placeholder="Write a message..."
+                                    className="w-full min-h-[100px] rounded-2xl border border-border bg-background/60 p-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                />
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                    <button
+                                        onClick={handleSendChat}
+                                        disabled={sendingChat}
+                                        className="w-full sm:w-auto bg-apple-blue hover:opacity-90 text-white font-bold py-3 px-6 rounded-2xl transition disabled:opacity-50"
+                                    >
+                                        {sendingChat ? 'Sending...' : 'Send Message'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setNewChatMessage('');
+                                            setChatError('');
+                                        }}
+                                        className="w-full sm:w-auto border border-border text-sm text-foreground rounded-2xl py-3 px-6 hover:bg-muted/80"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

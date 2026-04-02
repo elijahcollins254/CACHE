@@ -165,7 +165,14 @@ export default function AdminPanel() {
             });
 
             if (response.ok) {
-                setCreateForm({ question: "", category: "Sports", description: "", endDate: "" });
+                setCreateForm({
+                    question: "",
+                    category: "Sports",
+                    description: "",
+                    endDate: "",
+                    imageUrl: "",
+                    yesProbability: 50,
+                });
                 setActiveTab("markets");
                 await loadMarkets();
             } else {
