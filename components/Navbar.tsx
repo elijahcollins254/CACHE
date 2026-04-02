@@ -143,7 +143,7 @@ export default function Navbar() {
     return (
         <>
         <nav className="fixed top-0 left-0 right-0 z-50 apple-glass backdrop-blur-xl">
-            <div className="mx-auto flex h-16 sm:h-14 md:h-12 max-w-[1200px] items-center justify-between px-3 sm:px-4 md:px-6">
+            <div className="mx-auto flex h-18 sm:h-14 md:h-12 max-w-[1200px] items-center justify-between px-4 sm:px-4 md:px-6">
                 {/* Left Section: Logo */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                     {/* Logo */}
@@ -159,7 +159,7 @@ export default function Navbar() {
 
                 {/* Center Section: Balance */}
                 {user && (
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4">
                         {/* Cash Balance */}
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
                             <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-green flex-shrink-0" />
@@ -185,7 +185,7 @@ export default function Navbar() {
                 )}
 
                 {/* Right Section: Auth */}
-                <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
 
                     {/* Auth Section */}
                     {user ? (
@@ -213,7 +213,7 @@ export default function Navbar() {
                             <div className="relative notification-menu">
                                 <button
                                     onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                                    className="relative p-2 hover:bg-muted rounded-lg transition-colors"
+                                    className="relative p-2.5 hover:bg-muted rounded-lg transition-colors"
                                     aria-label="Notifications"
                                 >
                                     <Bell className="h-5 w-5" />
@@ -272,7 +272,7 @@ export default function Navbar() {
                             <div className="relative mobile-profile-menu sm:hidden">
                                 <button
                                     onClick={() => setIsMobileProfileOpen(!isMobileProfileOpen)}
-                                    className="p-2 hover:bg-muted rounded-lg transition-colors"
+                                    className="p-2.5 hover:bg-muted rounded-lg transition-colors"
                                     aria-label="User menu"
                                 >
                                     <div className="h-6 w-6 rounded-full bg-black flex items-center justify-center text-xs text-white font-bold">

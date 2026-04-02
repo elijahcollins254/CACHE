@@ -117,7 +117,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     {/* Cash Balance & Action Buttons */}
                     <div>
-                        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                        <div className="bg-background rounded-2xl p-6 border border-border">
                             <p className="text-muted-foreground text-sm font-medium mb-1">Cash Balance</p>
                             <h2 className="text-3xl font-bold mb-6">KSh {parseFloat(balance).toLocaleString()}</h2>
                             
@@ -132,7 +132,7 @@ export default function Dashboard() {
                                 </button>
                                 <button
                                     onClick={() => setIsWithdrawModalOpen(true)}
-                                    className="flex-1 px-4 py-3 border border-gray-300 text-black rounded-lg font-semibold hover:bg-gray-50 transition text-sm"
+                                    className="flex-1 px-4 py-3 border border-border text-foreground rounded-lg font-semibold hover:bg-muted transition text-sm"
                                 >
                                     Withdraw
                                 </button>
@@ -142,7 +142,7 @@ export default function Dashboard() {
 
                     {/* Portfolio Card */}
                     <div>
-                        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                        <div className="bg-background rounded-2xl p-6 border border-border">
                             <p className="text-muted-foreground text-sm font-medium mb-1">Portfolio Value</p>
                             <h2 className="text-3xl font-bold mb-1">KSh {parseFloat(portfolioValue).toLocaleString()}</h2>
                             <p className="text-xs text-muted-foreground mb-6">{statistics?.total_wagered && statistics.total_wagered > 0 ? `+${parseFloat(String(statistics.total_wagered)).toLocaleString()}` : '0.00'} (0%) past day</p>
@@ -150,7 +150,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Profit/Loss Card */}
-                    <div className="bg-white rounded-2xl p-6 border border-gray-200">
+<div className="bg-background rounded-2xl p-6 border border-border">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <p className="text-muted-foreground text-sm font-medium">Profit/Loss</p>
@@ -168,8 +168,8 @@ export default function Dashboard() {
                                     onClick={() => setProfitLossPeriod(period as any)}
                                     className={`px-3 py-1 rounded text-xs font-medium transition ${
                                         profitLossPeriod === period
-                                            ? "bg-blue-100 text-blue-600"
-                                            : "bg-gray-100 text-muted-foreground hover:bg-gray-200"
+                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/90"
                                     }`}
                                 >
                                     {period}
@@ -183,9 +183,9 @@ export default function Dashboard() {
                 </div>
 
                 {/* Positions Tabs & Table */}
-                <div className="bg-white rounded-2xl border border-gray-200">
+                    <div className="bg-background rounded-2xl border border-border">
                     {/* Tabs & Search */}
-                    <div className="border-b border-gray-200 p-6">
+                        <div className="border-b border-border p-6">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                             {/* Tabs */}
                             <div className="flex gap-6">
@@ -195,8 +195,8 @@ export default function Dashboard() {
                                         onClick={() => setActiveTab(tab as any)}
                                         className={`pb-2 font-semibold text-sm transition-colors border-b-2 ${
                                             activeTab === tab
-                                                ? "border-black text-black"
-                                                : "border-transparent text-muted-foreground hover:text-black"
+                                                ? "border-black text-black dark:border-white dark:text-white"
+                                                : "border-transparent text-muted-foreground hover:text-black dark:hover:text-white"
                                         }`}
                                     >
                                         {tab === "active" ? "Active Bets" : tab.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
@@ -205,7 +205,7 @@ export default function Dashboard() {
                             </div>
 
                             {/* Filter Button */}
-                            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+                            <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition text-sm font-medium">
                                 <Filter className="h-4 w-4" />
                                 Current value
                             </button>
@@ -219,7 +219,7 @@ export default function Dashboard() {
                                 placeholder="Search"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 text-sm"
+                                className="w-full md:w-64 pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:border-blue-400 text-sm"
                             />
                         </div>
                     </div>
@@ -234,27 +234,27 @@ export default function Dashboard() {
                                             // Calculate potential winnings
                                             const potentialWin = (Number(bet.amount) * bet.entry_probability) / 100;
                                             return (
-                                                <div key={bet.id} className="border border-gray-200 rounded-lg p-4 hover:border-black transition-all">
+                                                <div key={bet.id} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
                                                     <div className="flex items-start justify-between mb-4">
                                                         <div className="flex-1">
-                                                            <h3 className="font-bold text-black text-lg">{bet.market_question}</h3>
+                                                            <h3 className="font-bold text-foreground text-lg">{bet.market_question}</h3>
                                                             <p className="text-sm text-muted-foreground mt-1">
                                                                 Bet on <span className={`font-semibold ${bet.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{bet.outcome}</span>
                                                             </p>
                                                         </div>
-                                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700">
+                                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
                                                             PENDING
                                                         </span>
                                                     </div>
 
-                                                    <div className="grid grid-cols-4 gap-3 bg-gray-50 p-3 rounded-lg">
+                                                    <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Bet Amount</p>
-                                                            <p className="font-bold text-black">KSh {Number(bet.amount).toLocaleString()}</p>
+                                                            <p className="font-bold text-foreground">KSh {Number(bet.amount).toLocaleString()}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Probability</p>
-                                                            <p className="font-bold text-black">{bet.entry_probability}%</p>
+                                                            <p className="font-bold text-foreground">{bet.entry_probability}%</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Potential Win</p>
@@ -262,13 +262,13 @@ export default function Dashboard() {
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Placed</p>
-                                                            <p className="font-bold text-black">{new Date(bet.timestamp).toLocaleDateString()}</p>
+                                                            <p className="font-bold text-foreground">{new Date(bet.timestamp).toLocaleDateString()}</p>
                                                         </div>
                                                     </div>
 
                                                     <Link
                                                         href={`/markets/${bet.market_id}`}
-                                                        className="mt-3 w-full inline-block text-center py-2 border border-gray-300 rounded-lg text-sm font-bold hover:bg-gray-50 transition-all"
+                                                        className="mt-3 w-full inline-block text-center py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
                                                     >
                                                         View Market
                                                     </Link>
@@ -292,7 +292,7 @@ export default function Dashboard() {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead>
-                                                <tr className="border-b border-gray-200">
+                                                <tr className="border-b border-border">
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">MARKET</th>
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">AVG → NOW</th>
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">BET</th>
@@ -302,7 +302,7 @@ export default function Dashboard() {
                                             </thead>
                                             <tbody>
                                                 {bets.filter(b => !searchQuery || b.market_question?.toLowerCase().includes(searchQuery.toLowerCase())).map((bet) => (
-                                                    <tr key={bet.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                                                    <tr key={bet.id} className="border-b border-border hover:bg-muted transition">
                                                         <td className="py-4 px-4">
                                                             <div>
                                                                 <p className="font-medium text-sm truncate max-w-xs">{bet.market_question}</p>
@@ -361,7 +361,7 @@ export default function Dashboard() {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead>
-                                                <tr className="border-b border-gray-200">
+                                            <tr className="border-b border-border">
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">TYPE</th>
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">DESCRIPTION</th>
                                                     <th className="text-left py-3 px-4 font-semibold text-muted-foreground">AMOUNT</th>
@@ -371,7 +371,7 @@ export default function Dashboard() {
                                             </thead>
                                             <tbody>
                                                 {transactions.map((txn) => (
-                                                    <tr key={txn.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                                                    <tr key={txn.id} className="border-b border-border hover:bg-muted transition">
                                                         <td className="py-4 px-4">
                                                             <span className={`text-xs font-semibold px-2 py-1 rounded ${
                                                                 txn.type === 'DEPOSIT'

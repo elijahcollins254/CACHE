@@ -165,7 +165,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border bg-white">
+                    <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border bg-background">
                         <div>
                             <h2 className="text-base font-bold text-foreground">Withdraw</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -213,8 +213,8 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                                             disabled={!isAvailable}
                                             className={`py-2 px-2 rounded-lg border font-semibold text-xs transition-all ${
                                                 isAvailable
-                                                    ? 'border-border hover:border-black hover:bg-muted cursor-pointer'
-                                                    : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                                                    ? 'border-border hover:border-white hover:bg-muted cursor-pointer dark:hover:border-white'
+                                                    : 'border-border text-muted-foreground cursor-not-allowed opacity-50'
                                             }`}
                                         >
                                             +KSh {preset}
@@ -225,8 +225,8 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                         </div>
 
                         {/* Balance Limit */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <p className="text-xs text-blue-700">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 dark:bg-blue-950/40 dark:border-blue-900/40 dark:text-blue-200">
+                            <p className="text-xs text-blue-700 dark:text-blue-200">
                                 <span className="font-semibold">Maximum Withdrawal:</span> KSh {parseFloat(balance).toLocaleString()}
                             </p>
                         </div>
@@ -234,7 +234,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                         {/* M-Pesa Method */}
                         <div>
                             <label className="block text-xs font-semibold mb-2">Method</label>
-                            <div className="p-3 rounded-lg border-2 border-black bg-black/5">
+                            <div className="p-3 rounded-lg border-2 border-black bg-black/5 dark:border-white/10 dark:bg-white/5">
                                 <p className="font-semibold text-sm">M-Pesa</p>
                                 <p className="text-xs text-muted-foreground">{phoneNumber}</p>
                             </div>

@@ -49,7 +49,7 @@ export default function Profile() {
 
             const { phone_number } = JSON.parse(storedUser);
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/transactions/?phone_number=${phone_number}`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/transactions/?phone_number=${phone_number}`,
                 {
                     headers: {
                         'X-User-Phone-Number': phone_number,
@@ -81,7 +81,7 @@ export default function Profile() {
 
             const { phone_number } = JSON.parse(storedUser);
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/update-profile/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/update-profile/`,
                 {
                     method: 'POST',
                     headers: {
@@ -183,7 +183,7 @@ export default function Profile() {
                         {!isEditing && (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm"
+                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition font-medium text-sm dark:hover:bg-muted"
                             >
                                 <Edit2 className="h-4 w-4" />
                                 Edit Profile
@@ -197,28 +197,28 @@ export default function Profile() {
                                 <Phone className="h-5 w-5 text-muted-foreground" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Phone Number</p>
-                                    <p className="font-semibold text-black">{user.phone_number}</p>
+                                    <p className="font-semibold text-foreground">{user.phone_number}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Mail className="h-5 w-5 text-muted-foreground" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Full Name</p>
-                                    <p className="font-semibold text-black">{user.full_name || 'Not set'}</p>
+                                    <p className="font-semibold text-foreground">{user.full_name || 'Not set'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <DollarSign className="h-5 w-5 text-muted-foreground" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Current Balance</p>
-                                    <p className="font-bold text-black text-lg">KSh {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                                    <p className="font-bold text-foreground text-lg">KSh {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Calendar className="h-5 w-5 text-muted-foreground" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Member Since</p>
-                                    <p className="font-semibold text-black">{user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'N/A'}</p>
+                                    <p className="font-semibold text-foreground">{user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
@@ -230,7 +230,7 @@ export default function Profile() {
                                     type="text"
                                     value={editData.full_name}
                                     onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-blue-400"
                                 />
                             </div>
                             <div className="flex gap-3">
@@ -247,7 +247,7 @@ export default function Profile() {
                                         setIsEditing(false);
                                         setEditData({ full_name: user.full_name || '' });
                                     }}
-                                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+                                    className="px-6 py-2 border border-border rounded-lg hover:bg-muted transition font-medium dark:hover:bg-muted"
                                 >
                                     <X className="h-4 w-4 inline mr-2" />
                                     Cancel
@@ -259,28 +259,28 @@ export default function Profile() {
 
                 {/* Balance Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="border border-gray-200 rounded-xl p-6">
+                    <div className="bg-background border border-border rounded-xl p-6">
                         <p className="text-sm text-muted-foreground mb-2">Total Deposited</p>
                         <p className="text-2xl font-bold text-green-600">KSh {totalDeposited.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <p className="text-xs text-muted-foreground mt-2">{depositTransactions} transactions</p>
                     </div>
-                    <div className="border border-gray-200 rounded-xl p-6">
+                    <div className="bg-background border border-border rounded-xl p-6">
                         <p className="text-sm text-muted-foreground mb-2">Total Withdrawn</p>
                         <p className="text-2xl font-bold text-red-600">KSh {totalWithdrawn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <p className="text-xs text-muted-foreground mt-2">{withdrawalTransactions} transactions</p>
                     </div>
-                    <div className="border border-gray-200 rounded-xl p-6">
+                    <div className="bg-background border border-border rounded-xl p-6">
                         <p className="text-sm text-muted-foreground mb-2">Current Balance</p>
-                        <p className="text-2xl font-bold text-black">KSh {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="text-2xl font-bold text-foreground">KSh {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <p className="text-xs text-muted-foreground mt-2">Available</p>
                     </div>
                 </div>
 
                 {/* Transaction History */}
-                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                <div className="bg-background border border-border rounded-2xl overflow-hidden">
                     {/* Tabs & Header */}
-                    <div className="border-b border-gray-200 p-6">
-                        <h2 className="text-2xl font-bold mb-4">Transaction History</h2>
+                    <div className="border-b border-border p-6">
+                        <h2 className="text-2xl font-bold mb-4 text-foreground">Transaction History</h2>
                         <div className="flex gap-4">
                             {(['all', 'deposits', 'withdrawals'] as const).map((tab) => (
                                 <button
@@ -288,8 +288,8 @@ export default function Profile() {
                                     onClick={() => setActiveHistoryTab(tab)}
                                     className={`pb-2 font-semibold text-sm transition-colors border-b-2 ${
                                         activeHistoryTab === tab
-                                            ? 'border-black text-black'
-                                            : 'border-transparent text-muted-foreground hover:text-black'
+                                                ? 'border-black text-black dark:border-white dark:text-white'
+                                                : 'border-transparent text-muted-foreground hover:text-black dark:hover:text-white'
                                     }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -308,7 +308,7 @@ export default function Profile() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b border-gray-200">
+                                        <tr className="border-b border-border">
                                             <th className="text-left py-3 px-4 font-semibold text-muted-foreground">TYPE</th>
                                             <th className="text-left py-3 px-4 font-semibold text-muted-foreground">DESCRIPTION</th>
                                             <th className="text-left py-3 px-4 font-semibold text-muted-foreground">AMOUNT</th>
@@ -318,11 +318,11 @@ export default function Profile() {
                                     </thead>
                                     <tbody>
                                         {filteredTransactions.map((txn) => (
-                                            <tr key={txn.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                                            <tr key={txn.id} className="border-b border-border hover:bg-muted transition">
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center gap-2">
                                                         {getTransactionIcon(txn.type)}
-                                                        <span className="text-xs font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700">
+                                                        <span className="text-xs font-semibold px-2 py-1 rounded bg-muted text-muted-foreground">
                                                             {txn.type}
                                                         </span>
                                                     </div>
@@ -336,10 +336,10 @@ export default function Profile() {
                                                 <td className="py-4 px-4">
                                                     <span className={`text-xs font-medium px-2 py-1 rounded ${
                                                         txn.status === 'COMPLETED'
-                                                            ? 'bg-green-50 text-green-700'
+                                                            ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
                                                             : txn.status === 'PENDING'
-                                                            ? 'bg-yellow-50 text-yellow-700'
-                                                            : 'bg-red-50 text-red-700'
+                                                            ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300'
+                                                            : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'
                                                     }`}>
                                                         {txn.status}
                                                     </span>

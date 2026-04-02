@@ -224,7 +224,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                                         key={preset}
                                         type="button"
                                         onClick={() => setAmount(((parseFloat(amount) || 0) + preset).toString())}
-                                        className="py-2 px-2 rounded-lg border border-border hover:border-black hover:bg-muted font-semibold text-xs transition-all"
+                                        className="py-2 px-2 rounded-lg border border-border hover:border-white hover:bg-muted font-semibold text-xs transition-all dark:hover:border-white"
                                     >
                                         +KSh {preset}
                                     </button>
@@ -235,7 +235,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                         {/* M-Pesa Method */}
                         <div>
                             <label className="block text-xs font-semibold mb-2">Method</label>
-                            <div className="p-3 rounded-lg border-2 border-black bg-black/5">
+                            <div className="p-3 rounded-lg border-2 border-black bg-black/5 dark:border-white/10 dark:bg-white/5">
                                 <p className="font-semibold text-sm">M-Pesa</p>
                                 <p className="text-xs text-muted-foreground">Instant STK Push</p>
                             </div>
