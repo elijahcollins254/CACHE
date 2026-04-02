@@ -107,7 +107,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                 // Don't set step to success here - let polling handle it
             } else {
                 setStep("input");
-                setError(data.error || "Failed to initiate STK Push");
+                setError(data.customer_message || data.error || "Failed to initiate STK Push");
                 setTransactionId(null);
             }
         } catch (err) {
@@ -210,7 +210,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0"
                                 className="text-2xl font-bold w-full border-none focus:outline-none bg-transparent"
-                                min="100"
+                                min="1"
                                 required
                             />
                         </div>
@@ -247,7 +247,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={!amount || parseFloat(amount) < 100}
+                            disabled={!amount || parseFloat(amount) < 1}
                             className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             Deposit KSh {amount || "0"}
@@ -255,7 +255,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
 
                         {/* Info Text */}
                         <p className="text-[11px] text-center text-muted-foreground">
-                            Minimum: KSh 100
+                            Minimum: KSh 1
                         </p>
                     </form>
                 </div>

@@ -58,7 +58,7 @@ export default function DepositPage() {
                 setTimeout(() => setStep("success"), 3000);
             } else {
                 setStep("input");
-                setError(data.error || "Failed to initiate STK Push");
+                setError(data.customer_message || data.error || "Failed to initiate STK Push");
             }
         } catch (err) {
             setStep("input");
@@ -118,7 +118,7 @@ export default function DepositPage() {
                             onChange={(e) => setAmount(e.target.value)}
                             placeholder="0"
                             className="text-4xl font-bold w-full border-none focus:outline-none bg-transparent"
-                            min="100"
+                            min="1"
                             required
                         />
                     </div>
@@ -159,7 +159,7 @@ export default function DepositPage() {
 
                     <button
                         type="submit"
-                        disabled={!amount || parseFloat(amount) < 100}
+                        disabled={!amount || parseFloat(amount) < 1}
                         className="w-full bg-foreground text-background py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Deposit KSh {amount || "0"}
