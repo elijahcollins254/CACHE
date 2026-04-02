@@ -159,14 +159,14 @@ export default function Navbar() {
 
                 {/* Center Section: Balance */}
                 {user && (
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 ml-3 sm:ml-0">
                         {/* Cash Balance */}
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
                             <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-green flex-shrink-0" />
                             <div className="flex flex-col gap-0">
                                 <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Cash</span>
                                 <span className="text-[10px] sm:text-xs font-bold text-foreground">
-                                    KSh <span className="text-apple-green font-black">{balance}</span>
+                                    <span className="text-apple-green font-black">{balance}</span>
                                 </span>
                             </div>
                         </div>
@@ -177,7 +177,7 @@ export default function Navbar() {
                             <div className="flex flex-col gap-0">
                                 <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Portfolio</span>
                                 <span className="text-[10px] sm:text-xs font-bold text-foreground">
-                                    KSh <span className="text-apple-blue font-black">{portfolioBalance}</span>
+                                    <span className="text-apple-blue font-black">{portfolioBalance}</span>
                                 </span>
                             </div>
                         </div>

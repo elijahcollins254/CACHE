@@ -358,21 +358,21 @@ export default function Dashboard() {
                         {activeTab === "history" && (
                             <div>
                                 {transactions.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
+                                    <div className="overflow-x-auto rounded-lg border border-border bg-background">
+                                        <table className="w-full min-w-[700px] table-auto text-sm">
                                             <thead>
                                             <tr className="border-b border-border">
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">TYPE</th>
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">DESCRIPTION</th>
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">AMOUNT</th>
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">STATUS</th>
-                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground">DATE</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">TYPE</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">DESCRIPTION</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">AMOUNT</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">STATUS</th>
+                                                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground whitespace-nowrap">DATE</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {transactions.map((txn) => (
                                                     <tr key={txn.id} className="border-b border-border hover:bg-muted transition">
-                                                        <td className="py-4 px-4">
+                                                        <td className="py-4 px-4 whitespace-nowrap">
                                                             <span className={`text-xs font-semibold px-2 py-1 rounded ${
                                                                 txn.type === 'DEPOSIT'
                                                                     ? 'bg-green-50 text-green-700'
@@ -381,13 +381,13 @@ export default function Dashboard() {
                                                                 {txn.type}
                                                             </span>
                                                         </td>
-                                                        <td className="py-4 px-4 text-sm">{txn.description}</td>
-                                                        <td className="py-4 px-4 text-sm font-medium">
+                                                        <td className="py-4 px-4 text-sm max-w-[220px] truncate">{txn.description}</td>
+                                                        <td className="py-4 px-4 text-sm font-medium whitespace-nowrap">
                                                             <span className={txn.type === 'DEPOSIT' ? 'text-green-600' : 'text-red-600'}>
                                                                 {txn.type === 'DEPOSIT' ? '+' : '-'} KSh {parseFloat(txn.amount).toLocaleString()}
                                                             </span>
                                                         </td>
-                                                        <td className="py-4 px-4">
+                                                        <td className="py-4 px-4 whitespace-nowrap">
                                                             <span className={`text-xs font-medium px-2 py-1 rounded ${
                                                                 txn.status === 'COMPLETED'
                                                                     ? 'bg-green-50 text-green-700'
@@ -398,7 +398,7 @@ export default function Dashboard() {
                                                                 {txn.status}
                                                             </span>
                                                         </td>
-                                                        <td className="py-4 px-4 text-sm text-muted-foreground">
+                                                        <td className="py-4 px-4 text-sm text-muted-foreground whitespace-nowrap">
                                                             {new Date(txn.created_at).toLocaleDateString()}
                                                         </td>
                                                     </tr>

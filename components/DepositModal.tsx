@@ -130,7 +130,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                 />
                 {/* Modal */}
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
-                    <div className="bg-muted rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto flex flex-col items-center justify-center py-8 px-4">
+                    <div className="bg-background dark:bg-slate-950 border border-border rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto flex flex-col items-center justify-center py-8 px-4">
                         <Wallet className="h-10 w-10 text-foreground animate-bounce mb-3" />
                         <p className="font-bold text-foreground text-base">Processing...</p>
                         <p className="text-muted-foreground text-xs mt-1">Check your phone for M-Pesa prompt</p>
@@ -151,7 +151,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                 />
                 {/* Modal */}
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
-                    <div className="bg-muted rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-4 text-center">
+                    <div className="bg-background dark:bg-slate-950 border border-border rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-4 text-center">
                         <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
                         <h2 className="text-lg font-bold text-foreground mb-1">Deposit Successful!</h2>
                         <p className="text-muted-foreground text-xs mb-4">KSh {parseFloat(amount).toLocaleString()} added</p>
@@ -179,11 +179,11 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
                 <div
-                    className="bg-muted rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-300"
+                    className="bg-background dark:bg-slate-950 border border-border rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-300"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border bg-white">
+                    <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border bg-background dark:bg-slate-950">
                         <div>
                             <h2 className="text-base font-bold text-foreground">Deposit</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -224,7 +224,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                                         key={preset}
                                         type="button"
                                         onClick={() => setAmount(((parseFloat(amount) || 0) + preset).toString())}
-                                        className="py-2 px-2 rounded-lg border border-border hover:border-white hover:bg-muted font-semibold text-xs transition-all dark:hover:border-white"
+                                        className="py-2 px-2 rounded-lg border border-border bg-background text-foreground hover:border-black hover:bg-muted font-semibold text-xs transition-all dark:bg-muted dark:hover:border-white"
                                     >
                                         +KSh {preset}
                                     </button>

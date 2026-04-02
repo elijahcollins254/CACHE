@@ -68,7 +68,7 @@ export default function Login() {
                     <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-black text-white">
                         <Command className="h-6 w-6" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-black">KASOKO</span>
+                    <span className="text-xl font-bold tracking-tight text-black">CACHE</span>
                 </Link>
 
                 <div className="apple-card w-full max-w-[400px] p-10">
@@ -122,7 +122,7 @@ export default function Login() {
                 </form>
 
                 <p className="mt-8 text-center text-sm text-muted-foreground font-medium">
-                    New to KASOKO?{" "}
+                    New to CACHE?{" "}
                     <Link href="/signup" className="text-apple-blue font-bold hover:underline">Create an account</Link>
                 </p>
             </div>

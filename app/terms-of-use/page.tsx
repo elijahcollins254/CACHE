@@ -29,7 +29,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">1. Agreement to Terms</h2>
                         <p className="text-gray-700 leading-relaxed">
-                            By accessing and using KASOKO ("the Platform"), you agree to be bound by these Terms of Use and all applicable laws and regulations. If you do not agree with any part of these terms, you may not use this service.
+                            By accessing and using CACHE ("the Platform"), you agree to be bound by these Terms of Use and all applicable laws and regulations. If you do not agree with any part of these terms, you may not use this service.
                         </p>
                     </section>
 
@@ -37,10 +37,10 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">2. Eligibility</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            You must be at least 18 years old to use KASOKO. By using this Platform, you represent and warrant that you are at least 18 years of age and have the legal capacity to enter into these terms.
+                            You must be at least 18 years old to use CACHE. By using this Platform, you represent and warrant that you are at least 18 years of age and have the legal capacity to enter into these terms.
                         </p>
                         <p className="text-gray-700 leading-relaxed">
-                            KASOKO does not allow users from jurisdictions where online betting or prediction markets are prohibited by law.
+                            CACHE does not allow users from jurisdictions where online betting or prediction markets are prohibited by law.
                         </p>
                     </section>
 
@@ -48,10 +48,10 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">3. User Accounts</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify KASOKO immediately of any unauthorized use of your account.
+                            You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify CACHE immediately of any unauthorized use of your account.
                         </p>
                         <p className="text-gray-700 leading-relaxed">
-                            You must provide accurate, current, and complete information during registration. KASOKO reserves the right to suspend or terminate accounts that contain false or incomplete information.
+                            You must provide accurate, current, and complete information during registration. CACHE reserves the right to suspend or terminate accounts that contain false or incomplete information.
                         </p>
                     </section>
 
@@ -59,7 +59,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">4. Prediction Markets and Betting</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            KASOKO provides a platform for users to place bets on prediction markets. By placing a bet on any market:
+                            CACHE provides a platform for users to place bets on prediction markets. By placing a bet on any market:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
                             <li>You acknowledge that you understand the risks involved in betting</li>
@@ -73,7 +73,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">5. Payments and Deposits</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            All deposits are final and non-refundable except where required by law. KASOKO is not responsible for:
+                            All deposits are final and non-refundable except where required by law. CACHE is not responsible for:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
                             <li>Fees charged by payment providers or your bank</li>
@@ -81,7 +81,7 @@ export default function TermsOfUsePage() {
                             <li>Currency conversion rates or foreign transaction fees</li>
                         </ul>
                         <p className="text-gray-700 leading-relaxed mt-4">
-                            Minimum and maximum deposit amounts may apply. KASOKO reserves the right to suspend accounts for suspected fraudulent transactions.
+                            Minimum and maximum deposit amounts may apply. CACHE reserves the right to suspend accounts for suspected fraudulent transactions.
                         </p>
                     </section>
 
@@ -89,10 +89,10 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">6. Withdrawals</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            Withdrawal requests must be made through your KASOKO account. Withdrawals are processed to the payment method used for your original deposit. KASOKO may require additional verification before processing withdrawals.
+                            Withdrawal requests must be made through your CACHE account. Withdrawals are processed to the payment method used for your original deposit. CACHE may require additional verification before processing withdrawals.
                         </p>
                         <p className="text-gray-700 leading-relaxed">
-                            Withdrawal limits and processing times may apply and will be clearly displayed on the Platform. KASOKO is not liable for delays caused by payment providers or your financial institution.
+                            Withdrawal limits and processing times may apply and will be clearly displayed on the Platform. CACHE is not liable for delays caused by payment providers or your financial institution.
                         </p>
                     </section>
 
@@ -100,7 +100,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">7. Responsible Betting</h2>
                         <p className="text-gray-700 leading-relaxed mb-3">
-                            KASOKO promotes responsible betting. If you feel your betting is becoming problematic, we encourage you to:
+                            CACHE promotes responsible betting. If you feel your betting is becoming problematic, we encourage you to:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
                             <li>Set deposit and bet limits</li>
@@ -129,7 +129,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">9. Market Resolution</h2>
                         <p className="text-gray-700 leading-relaxed">
-                            Market outcomes are resolved by KASOKO's Admin team based on publicly available information and predetermined resolution criteria. KASOKO's resolution decision is final and binding. If you dispute a market resolution, you may contact support within 7 days of resolution with supporting evidence.
+                            Market outcomes are resolved by CACHE's Admin team based on publicly available information and predetermined resolution criteria. CACHE's resolution decision is final and binding. If you dispute a market resolution, you may contact support within 7 days of resolution with supporting evidence.
                         </p>
                     </section>
 
@@ -137,7 +137,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">10. Limitation of Liability</h2>
                         <p className="text-gray-700 leading-relaxed">
-                            KASOKO is provided "as is" without warranties. To the maximum extent permitted by law, KASOKO is not liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform, including loss of profits or funds.
+                            CACHE is provided "as is" without warranties. To the maximum extent permitted by law, CACHE is not liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform, including loss of profits or funds.
                         </p>
                     </section>
 
@@ -145,7 +145,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">11. Termination</h2>
                         <p className="text-gray-700 leading-relaxed">
-                            KASOKO reserves the right to terminate or suspend your account at any time, with or without cause. Upon termination, any remaining balance will be refunded to your registered payment method within 30 days.
+                            CACHE reserves the right to terminate or suspend your account at any time, with or without cause. Upon termination, any remaining balance will be refunded to your registered payment method within 30 days.
                         </p>
                     </section>
 
@@ -153,7 +153,7 @@ export default function TermsOfUsePage() {
                     <section>
                         <h2 className="text-2xl font-bold text-black mb-4">12. Changes to Terms</h2>
                         <p className="text-gray-700 leading-relaxed">
-                            KASOKO may modify these Terms of Use at any time. Continued use of the Platform after changes constitutes acceptance of the new terms. We will notify users of significant changes via email.
+                            CACHE may modify these Terms of Use at any time. Continued use of the Platform after changes constitutes acceptance of the new terms. We will notify users of significant changes via email.
                         </p>
                     </section>
 
@@ -164,7 +164,7 @@ export default function TermsOfUsePage() {
                             If you have questions about these Terms of Use, please contact us at:
                         </p>
                         <p className="text-gray-700 leading-relaxed mt-3">
-                            Email: support@kasoko.com <br />
+                            Email: support@CACHE.com <br />
                             Address: Nairobi, Kenya
                         </p>
                     </section>

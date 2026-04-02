@@ -5,7 +5,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">KASOKO</h3>
+            <h3 className="text-white font-bold text-lg mb-4">CACHE</h3>
             <p className="text-sm text-gray-400">
               Predict the future of Kenya. Join the prediction market revolution.
             </p>
@@ -96,7 +96,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>&copy; 2026 KASOKO. All rights reserved.</p>
+            <p>&copy; 2026 CACHE. All rights reserved.</p>
           </div>
         </div>
       </div>
