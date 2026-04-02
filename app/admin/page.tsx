@@ -33,6 +33,7 @@ export default function AdminPanel() {
     const [resolvingMarket, setResolvingMarket] = useState<string | null>(null);
     const [outcome, setOutcome] = useState<"Yes" | "No" | "">();
     const [settlements, setSettlements] = useState<any[]>([]);
+    const [deletingMarketId, setDeletingMarketId] = useState<string | null>(null);
 
     // Create market form
     const [createForm, setCreateForm] = useState({
@@ -40,6 +41,8 @@ export default function AdminPanel() {
         category: "Sports",
         description: "",
         endDate: "",
+        imageUrl: "",
+        yesProbability: 50,
     });
 
     const loadMarkets = async () => {
@@ -156,6 +159,8 @@ export default function AdminPanel() {
                     category: createForm.category,
                     description: createForm.description,
                     end_date: createForm.endDate,
+                    image_url: createForm.imageUrl,
+                    yes_probability: createForm.yesProbability,
                 }),
             });
 
@@ -221,6 +226,33 @@ export default function AdminPanel() {
             console.error(err);
         } finally {
             setResolvingMarket(null);
+        }
+    };
+
+    const handleDeleteMarket = async (marketId: string) => {
+        const confirmed = window.confirm("Delete this market permanently? This cannot be undone.");
+        if (!confirmed) return;
+
+        setDeletingMarketId(marketId);
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/admin/markets/${marketId}/`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (response.ok) {
+                setMarkets(markets.filter((market) => market.id !== marketId));
+            } else {
+                const data = await response.json();
+                setError(data.error || "Failed to delete market");
+            }
+        } catch (err) {
+            setError("Connection error");
+            console.error(err);
+        } finally {
+            setDeletingMarketId(null);
         }
     };
 
@@ -368,14 +400,23 @@ export default function AdminPanel() {
                                                     </div>
                                                 )}
 
-                                                {market.status === "OPEN" && market.total_bets > 0 && (
+                                                <div className="space-y-3">
+                                                    {market.status === "OPEN" && market.total_bets > 0 && (
+                                                        <button
+                                                            onClick={() => setSelectedMarket(market)}
+                                                            className="w-full px-4 py-2 bg-black text-white rounded-lg font-bold transition-all hover:opacity-90"
+                                                        >
+                                                            Resolve Market
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        onClick={() => setSelectedMarket(market)}
-                                                        className="w-full px-4 py-2 bg-black text-white rounded-lg font-bold transition-all hover:opacity-90"
+                                                        onClick={() => handleDeleteMarket(market.id)}
+                                                        disabled={deletingMarketId === market.id}
+                                                        className="w-full px-4 py-2 bg-apple-red text-white rounded-lg font-bold transition-all hover:opacity-90 disabled:opacity-50"
                                                     >
-                                                        Resolve Market
+                                                        {deletingMarketId === market.id ? "Deleting..." : "Delete Market"}
                                                     </button>
-                                                )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -461,11 +502,14 @@ export default function AdminPanel() {
                                             }
                                             className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black bg-white"
                                         >
-                                            <option value="Sports">Sports</option>
                                             <option value="Politics">Politics</option>
-                                            <option value="Economy">Economy</option>
-                                            <option value="Crypto">Crypto</option>
-                                            <option value="Environment">Environment</option>
+                                            <option value="Sports">Sports</option>
+                                            <option value="Technology">Technology</option>
+                                            <option value="Entertainment">Entertainment</option>
+                                            <option value="Business">Business</option>
+                                            <option value="Science">Science</option>
+                                            <option value="Health">Health</option>
+                                            <option value="Other">Other</option>
                                         </select>
                                     </div>
 
@@ -479,6 +523,33 @@ export default function AdminPanel() {
                                             }
                                             className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black resize-none"
                                             rows={4}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-black mb-2">Image URL (Optional)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://example.com/image.jpg"
+                                            value={createForm.imageUrl}
+                                            onChange={(e) =>
+                                                setCreateForm({ ...createForm, imageUrl: e.target.value })
+                                            }
+                                            className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-black mb-2">Starting Yes Probability</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={99}
+                                            value={createForm.yesProbability}
+                                            onChange={(e) =>
+                                                setCreateForm({ ...createForm, yesProbability: Number(e.target.value) })
+                                            }
+                                            className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black"
                                         />
                                     </div>
 

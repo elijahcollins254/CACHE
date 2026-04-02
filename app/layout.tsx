@@ -17,7 +17,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "CACHE | Kwani Ni Kesho",
+  title: "CACHE | Stake it, Cache it",
   description: "Predict the future & Earn.",
 };
 

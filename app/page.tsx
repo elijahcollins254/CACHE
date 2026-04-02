@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import MarketCard from "@/components/MarketCard";
 import { Search, Sliders, Bookmark } from "lucide-react";
 
-const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved"];
+const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved"];
 
 const browseCategories = ["New", "Trending", "Popular", "Liquid", "Ending Soon"];
 const topics = ["Live Crypto", "Middle East", "Sports", "Tech", "Politics", "Crypto", "Pop Culture", "AI"];
@@ -75,11 +75,13 @@ export default function Home() {
     
     // Filter by saved if "Saved" category is selected
     if (activeCategory === "Saved") {
-      marketsToFilter = allMarkets.filter(m => m.saved);
+      marketsToFilter = allMarkets.filter(m => m.saved && m.status !== "RESOLVED");
+    } else if (activeCategory === "Resolved") {
+      marketsToFilter = allMarkets.filter(m => m.status === "RESOLVED");
     } else {
       marketsToFilter = allMarkets.filter(m => {
         const matchCategory = activeCategory === "Trending" || m.category === activeCategory;
-        return matchCategory;
+        return matchCategory && m.status !== "RESOLVED";
       });
     }
     

@@ -28,6 +28,13 @@ export default function MarketDetail() {
     const [shareMessage, setShareMessage] = useState("");
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastBet, setLastBet] = useState<any>(null);
+    const [chatMessages, setChatMessages] = useState<any[]>([]);
+    const [replyingToId, setReplyingToId] = useState<number | null>(null);
+    const [replyingToName, setReplyingToName] = useState("");
+    const [newChatMessage, setNewChatMessage] = useState("");
+    const [chatLoading, setChatLoading] = useState(false);
+    const [sendingChat, setSendingChat] = useState(false);
+    const [chatError, setChatError] = useState("");
 
     // Fetch markets if not already loaded
     useEffect(() => {
@@ -44,6 +51,105 @@ export default function MarketDetail() {
             setIsSaved(savedMarketIds.includes(Number(id)));
         }
     }, [allMarkets, id, savedMarketIds]);
+
+    useEffect(() => {
+        if (market && market.id) {
+            fetchChatMessages();
+        }
+    }, [market]);
+
+    const fetchChatMessages = async () => {
+        setChatLoading(true);
+        setChatError("");
+
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/chat/`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                setChatMessages(data.messages || []);
+            } else {
+                const data = await response.json();
+                setChatError(data.error || "Unable to load chat");
+            }
+        } catch (err) {
+            console.error(err);
+            setChatError("Connection error while loading chat");
+        } finally {
+            setChatLoading(false);
+        }
+    };
+
+    const handleSendChat = async () => {
+        if (!newChatMessage.trim()) {
+            setChatError("Please type a message before sending.");
+            return;
+        }
+
+        setSendingChat(true);
+        setChatError("");
+
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/chat/`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: newChatMessage.trim(),
+                        reply_to: replyingToId,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+            if (response.ok) {
+                setChatMessages((prev) => [...prev, data.message]);
+                setNewChatMessage("");
+            } else {
+                setChatError(data.error || "Failed to send message");
+            }
+        } catch (err) {
+            console.error(err);
+            setChatError("Connection error while sending message");
+        } finally {
+            setSendingChat(false);
+        }
+    };
+
+    const getRepliesForMessage = (messageId: number) => {
+        return chatMessages.filter((msg) => msg.parent_id === messageId);
+    };
+
+    const handleStartReply = (messageId: number, userName: string) => {
+        setReplyingToId(messageId);
+        setReplyingToName(userName);
+        setChatError("");
+    };
+
+    const cancelReply = () => {
+        setReplyingToId(null);
+        setReplyingToName("");
+    };
+
+    const formatChatTimestamp = (timestamp: string) => {
+        try {
+            return new Intl.DateTimeFormat('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                day: 'numeric',
+                month: 'short'
+            }).format(new Date(timestamp));
+        } catch {
+            return timestamp;
+        }
+    };
 
     const handleBet = async (outcome: "Yes" | "No") => {
         if (!betAmount || isNaN(Number(betAmount))) {
@@ -78,13 +184,16 @@ export default function MarketDetail() {
                 const userStr = localStorage.getItem("poly_user");
                 const userData = userStr ? JSON.parse(userStr) : {};
                 
+                const amountValue = Number(betAmount);
+                const probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
+                const winningsValue = (amountValue * probabilityValue) / 100;
                 setLastBet({
                     id: Math.random().toString(36).substr(2, 9),
                     market: market.question,
                     outcome,
                     amount: betAmount,
-                    probability: selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability,
-                    potentialWinnings: (Number(betAmount) * (selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability)) / 100,
+                    probability: probabilityValue,
+                    potentialWinnings: amountValue + winningsValue,
                     phoneNumber: userData.phone_number,
                     timestamp: new Date(),
                 });
@@ -111,17 +220,17 @@ export default function MarketDetail() {
 
     const noProbability = 100 - market.yes_probability;
 
-    // Calculate estimated winnings
-    const calculateEstimatedWinnings = () => {
+    // Calculate estimated payout return
+    const calculateEstimatedReturn = () => {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
         const probability = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-        // Estimated winnings = amount * (probability/100)
-        // This represents the payout if they win
-        return (amount * probability) / 100;
+        const winnings = (amount * probability) / 100;
+        // Total return = stake + winnings
+        return amount + winnings;
     };
 
-    const estimatedWinnings = calculateEstimatedWinnings();
+    const estimatedReturn = calculateEstimatedReturn();
 
     const formatDate = (dateString: string) => {
         try {
@@ -136,8 +245,12 @@ export default function MarketDetail() {
         }
     };
 
+    const topLevelChatMessages = chatMessages.filter((msg) => !msg.parent_id);
+    const getRepliesForMessage = (messageId: number) => chatMessages.filter((msg) => msg.parent_id === messageId);
+
     const handleSaveToggle = () => {
         dispatch(toggleSaveMarket(Number(id)));
+        setIsSaved(!isSaved);
         
         // Update localStorage
         const savedIds = [...savedMarketIds];
@@ -258,7 +371,7 @@ export default function MarketDetail() {
                         <div className="grid grid-cols-3 gap-4">
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Volume</span>
-                                <div className="text-xl font-bold text-foreground mt-1">{market.volume}</div>
+                                <div className="text-xl font-bold text-foreground mt-1">{market.volume || 'KSh 0'}</div>
                             </div>
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Closes</span>
@@ -267,6 +380,109 @@ export default function MarketDetail() {
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Status</span>
                                 <div className="text-sm font-bold text-green-600 mt-1">Open</div>
+                            </div>
+                        </div>
+
+                        {/* Market Chat */}
+                        <div className="bg-muted rounded-2xl p-6 mt-6 border border-border">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Market Chat</h3>
+                                    <p className="text-sm text-muted-foreground">Talk about this market with others.</p>
+                                </div>
+                                {chatLoading && <span className="text-xs font-semibold text-foreground">Loading...</span>}
+                            </div>
+
+                            {chatError ? (
+                                <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
+                                    {chatError}
+                                </div>
+                            ) : null}
+
+                            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
+                                {chatMessages.length === 0 ? (
+                                    <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
+                                        No messages yet. Start the conversation.
+                                    </div>
+                                ) : (
+                                    topLevelChatMessages.map((msg) => (
+                                        <div key={msg.id} className="rounded-2xl border border-border bg-background/80 p-4 space-y-3">
+                                            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                                                <span className="font-semibold text-foreground">
+                                                    {msg.user_name || 'Trader'}
+                                                </span>
+                                                <span>{formatChatTimestamp(msg.created_at)}</span>
+                                            </div>
+                                            <p className="text-sm text-foreground">{msg.message}</p>
+                                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                <button
+                                                    onClick={() => handleStartReply(msg.id, msg.user_name || 'Trader')}
+                                                    className="font-semibold text-foreground hover:text-apple-blue"
+                                                >
+                                                    Reply
+                                                </button>
+                                                {getRepliesForMessage(msg.id).length > 0 && (
+                                                    <span>{getRepliesForMessage(msg.id).length} repl{getRepliesForMessage(msg.id).length === 1 ? 'y' : 'ies'}</span>
+                                                )}
+                                            </div>
+
+                                            {getRepliesForMessage(msg.id).map((reply) => (
+                                                <div key={reply.id} className="ml-5 rounded-2xl border border-border bg-muted p-4">
+                                                    <div className="flex items-center justify-between gap-3 mb-2 text-xs text-muted-foreground">
+                                                        <span className="font-semibold text-foreground">
+                                                            {reply.user_name || 'Trader'}
+                                                        </span>
+                                                        <span>{formatChatTimestamp(reply.created_at)}</span>
+                                                    </div>
+                                                    <p className="text-sm text-foreground">
+                                                        <span className="font-semibold text-foreground">Reply to {reply.parent_user_name || 'them'}: </span>
+                                                        {reply.message}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="space-y-3">
+                                {replyingToId && (
+                                    <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground">
+                                        <span>Replying to {replyingToName}</span>
+                                        <button
+                                            type="button"
+                                            onClick={cancelReply}
+                                            className="text-xs font-bold text-apple-blue hover:underline"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
+                                <textarea
+                                    value={newChatMessage}
+                                    onChange={(e) => setNewChatMessage(e.target.value)}
+                                    placeholder="Write a message..."
+                                    className="w-full min-h-[100px] rounded-2xl border border-border bg-background/60 p-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                />
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                    <button
+                                        onClick={handleSendChat}
+                                        disabled={sendingChat}
+                                        className="w-full sm:w-auto bg-apple-blue hover:opacity-90 text-white font-bold py-3 px-6 rounded-2xl transition disabled:opacity-50"
+                                    >
+                                        {sendingChat ? 'Sending...' : 'Send Message'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setNewChatMessage('');
+                                            setChatError('');
+                                        }}
+                                        className="w-full sm:w-auto border border-border text-sm text-foreground rounded-2xl py-3 px-6 hover:bg-muted/80"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -351,9 +567,9 @@ export default function MarketDetail() {
                         {/* Estimated Winnings */}
                         {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
                             <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-6 border border-green-900/40">
-                                <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">To Win</span>
+                                <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">Total Return</span>
                                 <div className="text-3xl font-bold text-green-400">
-                                    KSh {estimatedWinnings.toFixed(2)}
+                                    KSh {estimatedReturn.toFixed(2)}
                                 </div>
                                 <span className="text-xs text-muted-foreground mt-1 block">
                                     Probability {selectedOutcome === "Yes" ? market.yes_probability : noProbability}%
@@ -439,7 +655,7 @@ export default function MarketDetail() {
                                 <p className="text-2xl font-bold text-foreground">KSh {Number(lastBet.amount).toLocaleString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Potential Payout</p>
+                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Total Return</p>
                                 <p className="text-2xl font-bold text-green-400">KSh {lastBet.potentialWinnings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                         </div>

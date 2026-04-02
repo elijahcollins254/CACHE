@@ -103,7 +103,7 @@ export default function MarketCard({ market }: MarketCardProps) {
                     <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                             <TrendingUp className="h-3.5 w-3.5" />
-                            <span>{market.volume}</span>
+                            <span>{market.volume || 'KSh 0'}</span>
                         </div>
                         <span>Monthly</span>
                     </div>
@@ -163,7 +163,7 @@ export default function MarketCard({ market }: MarketCardProps) {
                     <div className="flex items-center gap-4 md:gap-5">
                         <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
                             <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-                            <span>{market.volume}</span>
+                            <span>{market.volume || 'KSh 0'}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
                             <span>{market.end_date}</span>

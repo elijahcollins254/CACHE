@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
-import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle } from "lucide-react";
+import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy } from "lucide-react";
 import DepositModal from "./DepositModal";
 import ThemeToggle from "./ThemeToggle";
 
@@ -306,6 +306,14 @@ export default function Navbar() {
                                             Rewards
                                         </Link>
                                         <Link
+                                            href="/leaderboard"
+                                            onClick={() => setIsMobileProfileOpen(false)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
+                                        >
+                                            <Trophy className="h-4 w-4" />
+                                            Leaderboard
+                                        </Link>
+                                        <Link
                                             href="/profile"
                                             onClick={() => setIsMobileProfileOpen(false)}
                                             className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
@@ -376,6 +384,14 @@ export default function Navbar() {
                                         >
                                             <Gift className="h-4 w-4" />
                                             Rewards
+                                        </Link>
+                                        <Link
+                                            href="/leaderboard"
+                                            onClick={() => setIsProfileOpen(false)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
+                                        >
+                                            <Trophy className="h-4 w-4" />
+                                            Leaderboard
                                         </Link>
                                         <Link
                                             href="/profile"
