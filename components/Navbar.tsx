@@ -161,7 +161,7 @@ export default function Navbar() {
                 {user && (
                     <div className="flex items-center gap-3 sm:gap-4 ml-3 sm:ml-0">
                         {/* Cash Balance */}
-                        <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
+                        <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
                             <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-green flex-shrink-0" />
                             <div className="flex flex-col gap-0">
                                 <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Cash</span>
@@ -172,7 +172,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Portfolio Balance */}
-                        <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-apple-blue/10 to-purple-400/10 border border-apple-blue/20">
+                        <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg bg-gradient-to-r from-apple-blue/10 to-purple-400/10 border border-apple-blue/20">
                             <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-blue flex-shrink-0" />
                             <div className="flex flex-col gap-0">
                                 <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Portfolio</span>
@@ -193,14 +193,14 @@ export default function Navbar() {
                             {/* Desktop Buttons */}
                             <Link
                                 href="/dashboard"
-                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1 rounded-md bg-black text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
+                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1.5 rounded-md bg-black text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
                             >
                                 <BarChart3 className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">Dashboard</span>
                             </Link>
                             <button
                                 onClick={() => setIsDepositModalOpen(true)}
-                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1 rounded-md bg-apple-green text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
+                                className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1.5 rounded-md bg-apple-green text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
                             >
                                 <Wallet className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">Deposit</span>
