@@ -321,7 +321,7 @@ export default function AdminPanel() {
                                                             </span>
                                                             <span className="text-muted-foreground">•</span>
                                                             <span className="flex items-center gap-1">
-                                                                <span className="text-muted-foreground">End:</span> {market.end_date || "Not set"}}
+                                                                <span className="text-muted-foreground">End:</span> {market.end_date || "Not set"}
                                                             </span>
                                                         </div>
                                                     </div>
