@@ -17,7 +17,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "CACHE | Stake it, Cache it",
+  title: "CACHE.CO.KE",
   description: "Stake it, Cache it.",
 };
 
