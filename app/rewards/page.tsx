@@ -5,7 +5,7 @@ import { Award, Zap, Star, Trophy, ArrowRight } from "lucide-react";
 
 export default function Rewards() {
     return (
-        <div className="min-h-screen bg-[#fbfbfd]">
+        <div className="min-h-screen bg-background">
             <Navbar />
 
             <main className="mx-auto max-w-[1000px] px-6 pt-32 pb-20">

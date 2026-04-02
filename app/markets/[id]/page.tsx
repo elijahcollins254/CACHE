@@ -178,12 +178,12 @@ export default function MarketDetail() {
     };
 
     return (
-        <div className="min-h-screen bg-white pb-20 md:pb-8 font-sans">
+        <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
             <Navbar />
 
             <main className="mx-auto pt-20 md:pt-24 max-w-7xl px-4 md:px-6">
                 {/* Back Button */}
-                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-black mb-8 transition-colors">
+                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors">
                     <ArrowLeft className="h-4 w-4" />
                     Back
                 </Link>
@@ -195,18 +195,18 @@ export default function MarketDetail() {
                         {/* Market Header */}
                         <div>
                             <div className="flex items-start gap-4 mb-4">
-                                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-200">
-                                    <img src={market.image_url} alt="" className="h-full w-full object-cover" />
+                                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
+                                    {market.image_url && <img src={market.image_url} alt="" className="h-full w-full object-cover" />}
                                 </div>
                                 <div className="flex-1">
-                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{market.category}</span>
-                                    <h1 className="text-2xl md:text-3xl font-bold text-black mt-1">{market.question}</h1>
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{market.category}</span>
+                                    <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">{market.question}</h1>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <button 
                                     onClick={handleShare}
-                                    className="flex items-center gap-2 hover:text-black transition"
+                                    className="flex items-center gap-2 hover:text-foreground transition"
                                 >
                                     <Share2 className="h-4 w-4" />
                                     {shareMessage || "Share"}
@@ -214,7 +214,7 @@ export default function MarketDetail() {
                                 <button
                                     onClick={handleSaveToggle}
                                     className={`flex items-center gap-2 transition ${
-                                        isSaved ? 'text-yellow-600' : 'text-gray-600 hover:text-black'
+                                        isSaved ? 'text-yellow-400' : 'text-muted-foreground hover:text-foreground'
                                     }`}
                                 >
                                     <Bookmark className="h-4 w-4" fill={isSaved ? "currentColor" : "none"} />
@@ -224,31 +224,31 @@ export default function MarketDetail() {
                         </div>
 
                         {/* Probability Display */}
-                        <div className="bg-gray-50 rounded-2xl p-6">
-                            <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-4">Options</h3>
+                        <div className="bg-muted rounded-2xl p-6">
+                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Options</h3>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                <div className="flex items-center justify-between p-3 bg-muted border border-border rounded-lg">
                                     <div className="flex items-center gap-3 flex-1">
                                         <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                                        <span className="font-semibold text-black">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
+                                        <span className="font-semibold text-foreground">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                                             <div className="h-full bg-green-400" style={{width: `${market.yes_probability}%`}}></div>
                                         </div>
-                                        <span className="font-bold text-lg text-black">{market.yes_probability}%</span>
+                                        <span className="font-bold text-lg text-foreground">{market.yes_probability}%</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border">
                                     <div className="flex items-center gap-3 flex-1">
                                         <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                                        <span className="font-semibold text-black">No</span>
+                                        <span className="font-semibold text-foreground">No</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                                             <div className="h-full bg-red-400" style={{width: `${noProbability}%`}}></div>
                                         </div>
-                                        <span className="font-bold text-lg text-black">{noProbability}%</span>
+                                        <span className="font-bold text-lg text-foreground">{noProbability}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -256,23 +256,23 @@ export default function MarketDetail() {
 
                         {/* Info Grid */}
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-gray-50 rounded-lg p-4">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Volume</span>
-                                <div className="text-xl font-bold text-black mt-1">{market.volume}</div>
+                            <div className="bg-muted rounded-lg p-4">
+                                <span className="text-xs font-bold text-muted-foreground uppercase">Volume</span>
+                                <div className="text-xl font-bold text-foreground mt-1">{market.volume}</div>
                             </div>
-                            <div className="bg-gray-50 rounded-lg p-4">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Closes</span>
-                                <div className="text-sm font-bold text-black mt-1">{formatDate(market.end_date)}</div>
+                            <div className="bg-muted rounded-lg p-4">
+                                <span className="text-xs font-bold text-muted-foreground uppercase">Closes</span>
+                                <div className="text-sm font-bold text-foreground mt-1">{formatDate(market.end_date)}</div>
                             </div>
-                            <div className="bg-gray-50 rounded-lg p-4">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Status</span>
+                            <div className="bg-muted rounded-lg p-4">
+                                <span className="text-xs font-bold text-muted-foreground uppercase">Status</span>
                                 <div className="text-sm font-bold text-green-600 mt-1">Open</div>
                             </div>
                         </div>
                     </div>
 
                     {/* Right Column - Betting Interface */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-6 h-fit sticky top-24">
+                    <div className="bg-muted border border-border rounded-2xl p-6 h-fit sticky top-24">
                         {/* Outcome Selector */}
                         <div className="space-y-3 mb-6">
                             <button
@@ -280,7 +280,7 @@ export default function MarketDetail() {
                                 className={`w-full p-4 rounded-xl font-bold transition-all ${
                                     selectedOutcome === "Yes"
                                         ? "bg-green-500 text-white"
-                                        : "bg-gray-100 text-black hover:bg-gray-200"
+                                        : "bg-muted/50 text-foreground hover:bg-muted/80"
                                 }`}
                             >
                                 Yes {market.yes_probability}%
@@ -290,7 +290,7 @@ export default function MarketDetail() {
                                 className={`w-full p-4 rounded-xl font-bold transition-all ${
                                     selectedOutcome === "No"
                                         ? "bg-red-500 text-white"
-                                        : "bg-gray-100 text-black hover:bg-gray-200"
+                                        : "bg-muted/50 text-foreground hover:bg-muted/80"
                                 }`}
                             >
                                 No {noProbability}%
@@ -298,13 +298,13 @@ export default function MarketDetail() {
                         </div>
 
                         {/* Buy/Sell Tabs */}
-                        <div className="flex gap-2 mb-6 border-b border-gray-200">
+                        <div className="flex gap-2 mb-6 border-b border-border">
                             <button
                                 onClick={() => setActiveTab("buy")}
                                 className={`flex-1 py-3 font-bold text-sm transition-colors ${
                                     activeTab === "buy"
-                                        ? "text-black border-b-2 border-black -mb-[2px]"
-                                        : "text-gray-600"
+                                        ? "text-foreground border-b-2 border-foreground -mb-[2px]"
+                                        : "text-muted-foreground"
                                 }`}
                             >
                                 Buy
@@ -313,8 +313,8 @@ export default function MarketDetail() {
                                 onClick={() => setActiveTab("sell")}
                                 className={`flex-1 py-3 font-bold text-sm transition-colors ${
                                     activeTab === "sell"
-                                        ? "text-black border-b-2 border-black -mb-[2px]"
-                                        : "text-gray-600"
+                                        ? "text-foreground border-b-2 border-foreground -mb-[2px]"
+                                        : "text-muted-foreground"
                                 }`}
                             >
                                 Sell
@@ -323,39 +323,39 @@ export default function MarketDetail() {
 
                         {/* Amount Input */}
                         <div className="mb-4">
-                            <label className="text-xs font-bold text-gray-600 uppercase block mb-2">Amount</label>
+                            <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Amount</label>
                             <div className="relative mb-3">
                                 <input
                                     type="number"
                                     placeholder="0"
                                     value={betAmount}
                                     onChange={(e) => setBetAmount(e.target.value)}
-                                    className="w-full text-3xl font-bold text-right p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                    className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
                                 />
                             </div>
-                            <span className="text-xs text-gray-600">KSh. {betAmount ? parseFloat(betAmount).toFixed(2) : '0.00'}</span>
+                            <span className="text-xs text-muted-foreground">KSh. {betAmount ? parseFloat(betAmount).toFixed(2) : '0.00'}</span>
                         </div>
 
                         {/* Quick Select Buttons */}
                         <div className="mb-6">
-                            <div className="text-xs font-bold text-gray-600 uppercase mb-2">Quick Add</div>
+                            <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Quick Add</div>
                             <div className="grid grid-cols-5 gap-2">
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold bg-gray-100 hover:bg-gray-200 p-2 rounded">+100</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold bg-gray-100 hover:bg-gray-200 p-2 rounded">+500</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold bg-gray-100 hover:bg-gray-200 p-2 rounded">+1K</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold bg-gray-100 hover:bg-gray-200 p-2 rounded">+5K</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold bg-gray-100 hover:bg-gray-200 p-2 rounded">+10K</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+100</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+500</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+1K</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+5K</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+10K</button>
                             </div>
                         </div>
 
                         {/* Estimated Winnings */}
                         {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 mb-6 border border-green-200">
-                                <span className="text-xs font-bold text-gray-600 uppercase block mb-2">To Win</span>
-                                <div className="text-3xl font-bold text-green-600">
+                            <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-6 border border-green-900/40">
+                                <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">To Win</span>
+                                <div className="text-3xl font-bold text-green-400">
                                     KSh {estimatedWinnings.toFixed(2)}
                                 </div>
-                                <span className="text-xs text-gray-600 mt-1 block">
+                                <span className="text-xs text-muted-foreground mt-1 block">
                                     Probability {selectedOutcome === "Yes" ? market.yes_probability : noProbability}%
                                 </span>
                             </div>
@@ -366,11 +366,11 @@ export default function MarketDetail() {
                             <button
                                 onClick={() => handleBet(selectedOutcome)}
                                 disabled={placingBet}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
+                                className="w-full bg-apple-blue hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
                             >
                                 {activeTab === "buy" ? "Buy " : "Sell "} {selectedOutcome}
                             </button>
-                            <button className="w-full bg-gray-200 hover:bg-gray-300 text-black font-bold py-3 rounded-lg transition-all">
+                            <button className="w-full bg-muted hover:opacity-80 text-foreground font-bold py-3 rounded-lg transition-all">
                                 Deposit
                             </button>
                         </div>
@@ -379,17 +379,17 @@ export default function MarketDetail() {
                         {message && (
                             <div className={`mt-4 p-3 rounded-lg text-sm font-bold text-center ${
                                 message.includes('Success')
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-950/40 text-green-400'
+                                    : 'bg-red-950/40 text-red-400'
                             }`}>
                                 {message}
                             </div>
                         )}
 
                         {/* Terms */}
-                        <p className="text-xs text-gray-600 text-center mt-4">
+                        <p className="text-xs text-muted-foreground text-center mt-4">
                             By trading, you agree to the{" "}
-                            <Link href="/terms-of-use" className="underline hover:text-black">Terms of Use</Link>.
+                            <Link href="/terms-of-use" className="underline hover:text-foreground">Terms of Use</Link>.
                         </p>
                     </div>
                 </div>
@@ -398,60 +398,60 @@ export default function MarketDetail() {
             {/* Bet Receipt Modal */}
             {showReceipt && lastBet && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in">
-                    <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl">
+                    <div className="bg-muted rounded-2xl p-8 max-w-md w-full shadow-xl">
                         {/* Header */}
                         <div className="text-center mb-6">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-green-950/40 rounded-full flex items-center justify-center">
+                                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-2xl font-bold text-black">Bet Confirmed!</h2>
-                            <p className="text-sm text-gray-600 mt-1">Your bet has been accepted</p>
+                            <h2 className="text-2xl font-bold text-foreground">Bet Confirmed!</h2>
+                            <p className="text-sm text-muted-foreground mt-1">Your bet has been accepted</p>
                         </div>
 
                         {/* Details */}
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
+                        <div className="bg-muted/50 rounded-lg p-4 mb-6 space-y-3">
                             <div className="flex justify-between items-start">
-                                <span className="text-sm text-gray-600 font-medium">Market</span>
-                                <span className="text-sm font-bold text-black text-right max-w-[200px]">{lastBet.market}</span>
+                                <span className="text-sm text-muted-foreground font-medium">Market</span>
+                                <span className="text-sm font-bold text-foreground text-right max-w-[200px]">{lastBet.market}</span>
                             </div>
-                            <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                                <span className="text-sm text-gray-600 font-medium">Outcome</span>
+                            <div className="border-t border-border pt-3 flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground font-medium">Outcome</span>
                                 <span className={`text-sm font-bold px-3 py-1 rounded-full ${
                                     lastBet.outcome === 'Yes' 
-                                        ? 'bg-green-100 text-green-700' 
-                                        : 'bg-red-100 text-red-700'
+                                        ? 'bg-green-950/40 text-green-400' 
+                                        : 'bg-red-950/40 text-red-400'
                                 }`}>
                                     {lastBet.outcome}
                                 </span>
                             </div>
-                            <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                                <span className="text-sm text-gray-600 font-medium">Probability</span>
-                                <span className="text-sm font-bold text-black">{lastBet.probability}%</span>
+                            <div className="border-t border-border pt-3 flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground font-medium">Probability</span>
+                                <span className="text-sm font-bold text-foreground">{lastBet.probability}%</span>
                             </div>
                         </div>
 
                         {/* Amount & Potential Win */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
-                                <p className="text-xs text-gray-600 font-medium mb-1 uppercase">Bet Amount</p>
-                                <p className="text-2xl font-bold text-black">KSh {Number(lastBet.amount).toLocaleString()}</p>
+                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">Bet Amount</p>
+                                <p className="text-2xl font-bold text-foreground">KSh {Number(lastBet.amount).toLocaleString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-gray-600 font-medium mb-1 uppercase">To Win</p>
-                                <p className="text-2xl font-bold text-green-600">KSh {lastBet.potentialWinnings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                <p className="text-xs text-muted-foreground font-medium mb-1 uppercase">To Win</p>
+                                <p className="text-2xl font-bold text-green-400">KSh {lastBet.potentialWinnings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             </div>
                         </div>
 
                         {/* Bet Reference */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center mb-6">
-                            <p className="text-xs text-blue-600 font-medium">BET ID</p>
-                            <p className="text-sm font-bold text-blue-900 font-mono">{lastBet.id}</p>
+                        <div className="bg-blue-950/40 border border-blue-900/40 rounded-lg p-3 text-center mb-6">
+                            <p className="text-xs text-blue-400 font-medium">BET ID</p>
+                            <p className="text-sm font-bold text-blue-300 font-mono">{lastBet.id}</p>
                         </div>
 
                         {/* Time */}
-                        <p className="text-xs text-gray-500 text-center mb-6">
+                        <p className="text-xs text-muted-foreground text-center mb-6">
                             {lastBet.timestamp.toLocaleTimeString()} on {lastBet.timestamp.toLocaleDateString()}
                         </p>
 
@@ -459,13 +459,13 @@ export default function MarketDetail() {
                         <div className="space-y-3">
                             <button
                                 onClick={() => setShowReceipt(false)}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all"
+                                className="w-full bg-apple-blue hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all"
                             >
                                 Continue Trading
                             </button>
                             <Link
                                 href="/dashboard"
-                                className="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-lg transition-all text-center"
+                                className="w-full bg-muted hover:opacity-80 text-foreground font-bold py-3 rounded-lg transition-all text-center"
                             >
                                 View All Bets
                             </Link>

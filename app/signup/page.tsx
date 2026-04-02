@@ -8,7 +8,7 @@ import { Command, Wallet, User, Phone, Lock } from "lucide-react";
 export default function Signup() {
     const [fullName, setFullName] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
-    const [pin, setPin] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -17,8 +17,8 @@ export default function Signup() {
         setLoading(true);
         setError("");
 
-        if (pin.length !== 4) {
-            setError("PIN must be exactly 4 digits");
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
             setLoading(false);
             return;
         }
@@ -30,7 +30,7 @@ export default function Signup() {
                 body: JSON.stringify({
                     full_name: fullName,
                     phone_number: phoneNumber,
-                    pin
+                    password
                 }),
             });
 
@@ -48,7 +48,7 @@ export default function Signup() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fbfbfd]">
+        <div className="min-h-screen bg-background">
             <Navbar />
             <div className="flex flex-col items-center justify-center pt-24 pb-12 px-6">
                 <Link href="/" className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-80">
@@ -86,7 +86,7 @@ export default function Signup() {
                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="tel"
-                                placeholder="0718693484"
+                                placeholder="0712345678"
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all"
@@ -96,16 +96,15 @@ export default function Signup() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Create 4-Digit PIN</label>
+                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Create Password</label>
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="password"
-                                maxLength={4}
-                                placeholder="••••"
-                                value={pin}
-                                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                                className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all tracking-[0.5em]"
+                                placeholder="At least 6 characters"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all"
                                 required
                             />
                         </div>

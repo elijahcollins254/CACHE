@@ -75,44 +75,44 @@ export default function Navbar() {
     const getColorClasses = (colorClass: string) => {
         const colorMap: { [key: string]: { bg: string; border: string; textBg: string; textTitle: string; textMsg: string; textTime: string } } = {
             blue: {
-                bg: 'bg-blue-50',
-                border: 'border-blue-200',
-                textBg: 'hover:bg-blue-100',
-                textTitle: 'text-blue-900',
-                textMsg: 'text-blue-700',
-                textTime: 'text-blue-500'
+                bg: 'bg-blue-50 dark:bg-blue-950/40',
+                border: 'border-blue-200 dark:border-blue-900/40',
+                textBg: 'hover:bg-blue-100 dark:hover:bg-blue-950/60',
+                textTitle: 'text-blue-800 dark:text-blue-300',
+                textMsg: 'text-blue-700 dark:text-blue-300',
+                textTime: 'text-blue-700 dark:text-blue-400'
             },
             green: {
-                bg: 'bg-green-50',
-                border: 'border-green-200',
-                textBg: 'hover:bg-green-100',
-                textTitle: 'text-green-900',
-                textMsg: 'text-green-700',
-                textTime: 'text-green-500'
+                bg: 'bg-green-50 dark:bg-green-950/40',
+                border: 'border-green-200 dark:border-green-900/40',
+                textBg: 'hover:bg-green-100 dark:hover:bg-green-950/60',
+                textTitle: 'text-green-800 dark:text-green-300',
+                textMsg: 'text-green-700 dark:text-green-300',
+                textTime: 'text-green-700 dark:text-green-400'
             },
             purple: {
-                bg: 'bg-purple-50',
-                border: 'border-purple-200',
-                textBg: 'hover:bg-purple-100',
-                textTitle: 'text-purple-900',
-                textMsg: 'text-purple-700',
-                textTime: 'text-purple-500'
+                bg: 'bg-purple-50 dark:bg-purple-950/40',
+                border: 'border-purple-200 dark:border-purple-900/40',
+                textBg: 'hover:bg-purple-100 dark:hover:bg-purple-950/60',
+                textTitle: 'text-purple-950 dark:text-purple-200',
+                textMsg: 'text-purple-900 dark:text-purple-200',
+                textTime: 'text-purple-900 dark:text-purple-300'
             },
             orange: {
-                bg: 'bg-orange-50',
-                border: 'border-orange-200',
-                textBg: 'hover:bg-orange-100',
-                textTitle: 'text-orange-900',
-                textMsg: 'text-orange-700',
-                textTime: 'text-orange-500'
+                bg: 'bg-orange-50 dark:bg-orange-950/40',
+                border: 'border-orange-200 dark:border-orange-900/40',
+                textBg: 'hover:bg-orange-100 dark:hover:bg-orange-950/60',
+                textTitle: 'text-orange-800 dark:text-orange-300',
+                textMsg: 'text-orange-700 dark:text-orange-300',
+                textTime: 'text-orange-700 dark:text-orange-400'
             },
             red: {
-                bg: 'bg-red-50',
-                border: 'border-red-200',
-                textBg: 'hover:bg-red-100',
-                textTitle: 'text-red-900',
-                textMsg: 'text-red-700',
-                textTime: 'text-red-500'
+                bg: 'bg-red-50 dark:bg-red-950/40',
+                border: 'border-red-200 dark:border-red-900/40',
+                textBg: 'hover:bg-red-100 dark:hover:bg-red-950/60',
+                textTitle: 'text-red-800 dark:text-red-300',
+                textMsg: 'text-red-700 dark:text-red-300',
+                textTime: 'text-red-700 dark:text-red-400'
             },
         };
         
@@ -257,9 +257,13 @@ export default function Navbar() {
                                                 <div className="p-3 text-center text-muted-foreground text-xs">No notifications yet</div>
                                             )}
                                         </div>
-                                        <button className="w-full mt-4 pt-3 border-t border-border text-xs font-semibold text-center text-foreground hover:text-muted-foreground transition-colors">
+                                        <Link 
+                                            href="/notifications"
+                                            onClick={() => setIsNotificationOpen(false)}
+                                            className="w-full mt-4 pt-3 border-t border-border text-xs font-semibold text-center text-foreground hover:text-muted-foreground transition-colors block"
+                                        >
                                             View all notifications
-                                        </button>
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -408,7 +412,7 @@ export default function Navbar() {
                         <div className="flex items-center gap-1.5 sm:gap-2">
                             <Link
                                 href="/login"
-                                className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-black bg-muted rounded-lg transition-all hover:bg-[#e8e8ed] active:scale-95"
+                                className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-foreground bg-muted rounded-lg transition-all hover:opacity-80 active:scale-95"
                             >
                                 Log In
                             </Link>
@@ -431,7 +435,7 @@ export default function Navbar() {
                     {/* Home */}
                     <Link
                         href="/"
-                        className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/" ? "text-black" : "text-muted-foreground"}`}
+                        className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/" ? "text-foreground" : "text-muted-foreground"}`}
                     >
                         <Home className={`h-6 w-6 ${pathname === "/" ? "font-bold" : ""}`} />
                         <span className="text-[10px] font-semibold">Home</span>
@@ -440,7 +444,7 @@ export default function Navbar() {
                     {/* Trending */}
                     <Link
                         href="/"
-                        className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-black transition-colors"
+                        className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <TrendingUp className="h-6 w-6" />
                         <span className="text-[10px] font-semibold">Trending</span>
@@ -458,7 +462,7 @@ export default function Navbar() {
                     {/* Portfolio */}
                     <Link
                         href="/dashboard"
-                        className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/dashboard" ? "text-black" : "text-muted-foreground"}`}
+                        className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
                     >
                         <BarChart3 className={`h-6 w-6 ${pathname === "/dashboard" ? "font-bold" : ""}`} />
                         <span className="text-[10px] font-semibold">Portfolio</span>

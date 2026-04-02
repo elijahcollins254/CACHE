@@ -7,24 +7,24 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Plus, Edit2, CheckCircle, XCircle, Loader, TrendingUp, Users, DollarSign, BarChart3, Lock, ArrowLeft } from "lucide-react";
 
 export default function AdminPanel() {
-    // PIN Authentication State
-    const [pinAuthenticated, setPinAuthenticated] = useState(false);
-    const [pinInput, setPinInput] = useState("");
-    const [pinError, setPinError] = useState("");
-    const ADMIN_PIN = "2020";
+    // Password Authentication State
+    const [passwordAuthenticated, setPasswordAuthenticated] = useState(false);
+    const [passwordInput, setPasswordInput] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const ADMIN_PASSWORD = "admin123";
 
-    const handlePinSubmit = () => {
-        if (pinInput === ADMIN_PIN) {
-            setPinAuthenticated(true);
-            setPinInput("");
-            setPinError("");
+    const handlePasswordSubmit = () => {
+        if (passwordInput === ADMIN_PASSWORD) {
+            setPasswordAuthenticated(true);
+            setPasswordInput("");
+            setPasswordError("");
         } else {
-            setPinError("Incorrect PIN");
-            setPinInput("");
+            setPasswordError("Incorrect password");
+            setPasswordInput("");
         }
     };
 
-    if (!pinAuthenticated) {
+    if (!passwordAuthenticated) {
         return (
             <div className="min-h-screen bg-background flex flex-col">
                 <Navbar />
@@ -43,34 +43,32 @@ export default function AdminPanel() {
                             </div>
                             
                             <h1 className="text-2xl font-bold text-foreground mb-2">Admin Access</h1>
-                            <p className="text-muted-foreground mb-8">Enter the admin PIN to continue</p>
+                            <p className="text-muted-foreground mb-8">Enter the admin password to continue</p>
                             
                             <div className="space-y-4">
                                 <input
                                     type="password"
-                                    inputMode="numeric"
-                                    maxLength={4}
-                                    placeholder="••••"
-                                    value={pinInput}
+                                    placeholder="Enter admin password"
+                                    value={passwordInput}
                                     onChange={(e) => {
-                                        setPinInput(e.target.value.replace(/\D/g, ""));
-                                        setPinError("");
+                                        setPasswordInput(e.target.value);
+                                        setPasswordError("");
                                     }}
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter" && pinInput.length === 4) {
-                                            handlePinSubmit();
+                                        if (e.key === "Enter" && passwordInput.length > 0) {
+                                            handlePasswordSubmit();
                                         }
                                     }}
-                                    className="w-full px-4 py-3 border border-border rounded-lg text-center text-2xl tracking-widest font-bold text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-foreground transition-all"
+                                    className="w-full px-4 py-3 border border-border rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-foreground transition-all"
                                 />
                                 
-                                {pinError && (
-                                    <p className="text-sm text-apple-red font-bold">{pinError}</p>
+                                {passwordError && (
+                                    <p className="text-sm text-apple-red font-bold">{passwordError}</p>
                                 )}
                                 
                                 <button
-                                    onClick={handlePinSubmit}
-                                    disabled={pinInput.length !== 4}
+                                    onClick={handlePasswordSubmit}
+                                    disabled={passwordInput.length === 0}
                                     className="w-full py-3 bg-foreground text-background rounded-lg font-bold transition-all hover:opacity-90 disabled:opacity-50"
                                 >
                                     Unlock
@@ -227,7 +225,7 @@ export default function AdminPanel() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#fbfbfd]">
+            <div className="min-h-screen bg-background">
                 <Navbar />
                 <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] p-6">
                     <div className="h-12 w-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
@@ -237,7 +235,7 @@ export default function AdminPanel() {
     }
 
     return (
-        <div className="min-h-screen bg-[#fbfbfd] pb-12">
+        <div className="min-h-screen bg-background pb-12">
             <Navbar />
             <div className="pt-24 px-4">
                 <div className="max-w-[1200px] mx-auto">
@@ -319,11 +317,11 @@ export default function AdminPanel() {
                                                         <h3 className="text-lg font-bold text-black">{market.question}</h3>
                                                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                                                             <span className="flex items-center gap-1">
-                                                                <span className="text-gray-400">Category:</span> {market.category}
+                                                                <span className="text-muted-foreground">Category:</span> {market.category}
                                                             </span>
-                                                            <span className="text-gray-300">•</span>
+                                                            <span className="text-muted-foreground">•</span>
                                                             <span className="flex items-center gap-1">
-                                                                <span className="text-gray-400">End:</span> {market.end_date || "Not set"}
+                                                                <span className="text-muted-foreground">End:</span> {market.end_date || "Not set"}}
                                                             </span>
                                                         </div>
                                                     </div>

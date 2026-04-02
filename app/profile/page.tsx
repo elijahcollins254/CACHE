@@ -133,7 +133,7 @@ export default function Profile() {
             case 'BET':
                 return 'text-red-600';
             default:
-                return 'text-gray-600';
+                return 'text-muted-foreground';
         }
     };
 
@@ -154,7 +154,7 @@ export default function Profile() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-white">
+            <div className="min-h-screen bg-background">
                 <Navbar />
                 <main className="mx-auto max-w-[900px] px-6 pt-32 pb-20">
                     <p className="text-muted-foreground">Loading...</p>
@@ -164,20 +164,20 @@ export default function Profile() {
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-background">
             <Navbar />
 
             <main className="mx-auto max-w-[900px] px-6 pt-32 pb-20">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">
-                    <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <Link href="/dashboard" className="p-2 hover:bg-muted rounded-lg transition">
                         <ArrowLeft className="h-5 w-5" />
                     </Link>
                     <h1 className="text-4xl font-extrabold tracking-tight">Profile & Settings</h1>
                 </div>
 
                 {/* Profile Card */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-8 mb-8">
+                <div className="bg-muted border border-border rounded-2xl p-8 mb-8">
                     <div className="flex items-start justify-between mb-6">
                         <h2 className="text-2xl font-bold">Account Information</h2>
                         {!isEditing && (

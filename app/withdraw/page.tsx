@@ -16,7 +16,7 @@ export default function Withdraw() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-[#fbfbfd]">
+            <div className="min-h-screen bg-background">
                 <Navbar />
                 <main className="mx-auto pt-24 max-w-[600px] px-4">
                     <div className="h-96 bg-muted rounded-lg animate-pulse" />
@@ -27,7 +27,7 @@ export default function Withdraw() {
 
     if (!authUser) {
         return (
-            <div className="min-h-screen bg-[#fbfbfd]">
+            <div className="min-h-screen bg-background">
                 <Navbar />
                 <main className="mx-auto pt-24 max-w-[600px] px-4 text-center">
                     <p className="text-red-500 mb-4">Authentication required</p>

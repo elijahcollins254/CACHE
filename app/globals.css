@@ -6,7 +6,7 @@
   --muted: #f5f5f7;
   --muted-foreground: #86868b;
 
-  --apple-blue: #0071e3;
+  --apple-blue: #ff3b30;
   --apple-green: #2dbd4a;
   --apple-red: #ff3b30;
 
@@ -45,7 +45,7 @@
 }
 
 body {
-  background-color: #ffffff;
+  background-color: #1a1a1a;
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -58,7 +58,7 @@ body {
   }
 
   .apple-card {
-    @apply bg-white border border-border rounded-[var(--radius-apple)] shadow-[var(--shadow-apple)] transition-all duration-500 ease-apple hover:shadow-[var(--shadow-apple-hover)] hover:-translate-y-0.5;
+    @apply bg-muted border border-border rounded-[var(--radius-apple)] shadow-[var(--shadow-apple)] transition-all duration-500 ease-apple hover:shadow-[var(--shadow-apple-hover)] hover:-translate-y-0.5;
   }
 
   .apple-btn-primary {

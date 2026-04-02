@@ -103,27 +103,27 @@ export default function Home() {
   }, [allMarkets, activeCategory, searchQuery, minProbability, maxProbability, sortBy, dispatch]);
 
   return (
-    <div className="min-h-screen bg-white font-sans antialiased text-gray-900">
+    <div className="min-h-screen bg-background font-sans antialiased text-foreground">
       <Navbar />
 
       {/* Sticky Search & Category Section */}
-      <div className="sticky top-16 sm:top-14 md:top-12 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm">
+      <div className="sticky top-16 sm:top-14 md:top-12 z-30 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
         {/* Search Bar */}
-        <div className="px-4 sm:px-6 py-3 border-b border-gray-100">
+        <div className="px-4 sm:px-6 py-3 border-b border-border">
           <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto" ref={searchBoxRef}>
-            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search markets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchOpen(true)}
-              className="flex-1 h-9 rounded-lg bg-gray-100 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all"
+              className="flex-1 h-9 rounded-lg bg-muted pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground focus:bg-muted/80 transition-all"
             />
             <div className="relative" ref={filterBoxRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-gray-500 hover:text-gray-900"
+                className="p-2 rounded-lg bg-muted hover:opacity-80 transition-colors text-muted-foreground hover:text-foreground"
                 aria-label="Filters"
               >
                 <Sliders className="h-4 w-4" />
@@ -131,12 +131,12 @@ export default function Home() {
 
               {/* Filter Dropdown */}
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-300 rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="absolute right-0 top-full mt-2 w-80 bg-muted border border-border rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-sm text-black">Filters</h3>
+                    <h3 className="font-bold text-sm text-foreground">Filters</h3>
                     <button
                       onClick={() => setIsFilterOpen(false)}
-                      className="text-gray-400 hover:text-black transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       ✕
                     </button>
@@ -145,7 +145,7 @@ export default function Home() {
                   <div className="space-y-4">
                     {/* Sort By */}
                     <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                      <label className="block text-xs font-bold text-gray-700 mb-2">Sort By</label>
+                      <label className="block text-xs font-bold text-muted-foreground mb-2">Sort By</label>
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
@@ -158,13 +158,13 @@ export default function Home() {
 
                     {/* Probability Range */}
                     <div className="animate-in fade-in slide-in-from-left-2 duration-300 delay-100">
-                      <label className="block text-xs font-bold text-gray-700 mb-2 transition-colors duration-300">
+                      <label className="block text-xs font-bold text-muted-foreground mb-2 transition-colors duration-300">
                         <span className="inline-block">Yes Probability:</span>
                         <span className="text-apple-green font-black ml-1 animate-pulse">{minProbability}% - {maxProbability}%</span>
                       </label>
                       <div className="space-y-3">
                         <div className="space-y-1">
-                          <label className="text-[10px] text-gray-600">Min: {minProbability}%</label>
+                          <label className="text-[10px] text-muted-foreground">Min: {minProbability}%</label>
                           <input
                             type="range"
                             min="0"
@@ -178,7 +178,7 @@ export default function Home() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] text-gray-600">Max: {maxProbability}%</label>
+                          <label className="text-[10px] text-muted-foreground">Max: {maxProbability}%</label>
                           <input
                             type="range"
                             min="0"
@@ -202,7 +202,7 @@ export default function Home() {
                         setSortBy("volume");
                         setIsFilterOpen(false);
                       }}
-                      className="w-full px-3 py-2 text-xs font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="w-full px-3 py-2 text-xs font-semibold text-foreground border border-border rounded-lg hover:bg-muted/80 transition-colors"
                     >
                       Reset Filters
                     </button>
@@ -213,10 +213,10 @@ export default function Home() {
 
             {/* Search Dropdown */}
             {isSearchOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-muted border border-border rounded-lg shadow-lg z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                 {/* Browse Section */}
                 <div className="mb-6">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">Browse</h3>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">Browse</h3>
                   <div className="flex flex-wrap gap-2">
                     {browseCategories.map((cat) => (
                       <button
@@ -225,7 +225,7 @@ export default function Home() {
                           setActiveCategory(cat);
                           setIsSearchOpen(false);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:opacity-80 rounded-lg transition-colors"
                       >
                         {cat}
                       </button>
@@ -235,7 +235,7 @@ export default function Home() {
 
                 {/* Topics Section */}
                 <div>
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">Topics</h3>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">Topics</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {topics.map((topic) => (
                       <button
@@ -244,7 +244,7 @@ export default function Home() {
                           setSearchQuery(topic);
                           setIsSearchOpen(false);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-left"
+                        className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:opacity-80 rounded-lg transition-colors text-left"
                       >
                         {topic}
                       </button>
@@ -265,7 +265,7 @@ export default function Home() {
               className={`px-3.5 py-1.5 text-xs md:text-sm font-medium whitespace-nowrap rounded-lg transition-all ${
                 activeCategory === cat
                   ? "bg-gray-900 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               {cat}
@@ -292,7 +292,7 @@ export default function Home() {
               ))
             ) : (
               <div className="col-span-full py-20 text-center animate-in fade-in duration-300">
-                <p className="text-gray-400 text-lg">No markets found in this category.</p>
+                <p className="text-muted-foreground text-lg">No markets found in this category.</p>
               </div>
             )}
           </div>

@@ -7,7 +7,7 @@ import { Command, Wallet, Phone, Lock } from "lucide-react";
 
 export default function Login() {
     const [phoneNumber, setPhoneNumber] = useState("");
-    const [pin, setPin] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -21,7 +21,7 @@ export default function Login() {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone_number: phoneNumber, pin }),
+                body: JSON.stringify({ phone_number: phoneNumber, password }),
                 credentials: "include",
             });
 
@@ -61,7 +61,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fbfbfd]">
+        <div className="min-h-screen bg-background">
             <Navbar />
             <div className="flex flex-col items-center justify-center pt-24 pb-12 px-6">
                 <Link href="/" className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-80">
@@ -74,7 +74,7 @@ export default function Login() {
                 <div className="apple-card w-full max-w-[400px] p-10">
                 <h1 className="text-3xl font-bold tracking-tight text-black mb-2 text-center">Welcome back</h1>
                 <p className="text-sm text-muted-foreground text-center mb-10 font-medium">
-                    Enter your phone and PIN to sign in.
+                    Enter your phone and password to sign in.
                 </p>
 
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -84,7 +84,7 @@ export default function Login() {
                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="tel"
-                                placeholder="0718693484"
+                                placeholder="0712345678"
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all"
@@ -95,17 +95,16 @@ export default function Login() {
 
                     <div className="space-y-2">
                         <div className="flex items-center justify-between ml-1">
-                            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">4-Digit PIN</label>
+                            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Password</label>
                         </div>
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="password"
-                                maxLength={4}
-                                placeholder="••••"
-                                value={pin}
-                                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                                className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all tracking-[0.5em]"
+                                placeholder="Enter your password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all"
                                 required
                             />
                         </div>
@@ -130,7 +129,7 @@ export default function Login() {
 
                 <p className="mt-8 text-[11px] text-muted-foreground font-medium text-center max-w-[300px] leading-relaxed">
                     Your security is our priority.
-                    PIN-protected decentralized access.
+                    Password-protected decentralized access.
                 </p>
             </div>
         </div>

@@ -58,7 +58,7 @@ export default function Dashboard() {
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-[#fbfbfd]">
+            <div className="min-h-screen bg-background">
                 <Navbar />
                 <main className="mx-auto pt-24 max-w-[1200px] px-4">
                     <div className="space-y-4">
@@ -76,7 +76,7 @@ export default function Dashboard() {
 
     if (error || !authUser) {
         return (
-            <div className="min-h-screen bg-[#fbfbfd]">
+            <div className="min-h-screen bg-background">
                 <Navbar />
                 <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
                     <p className="text-red-500 mb-4">{error || "Failed to load dashboard"}</p>
@@ -89,7 +89,7 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-[#fbfbfd] pb-20">
+        <div className="min-h-screen bg-background pb-20">
             <Navbar />
 
             <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
@@ -154,7 +154,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <p className="text-muted-foreground text-sm font-medium">Profit/Loss</p>
-                                <h2 className="text-3xl font-bold text-gray-900">KSh 0.00</h2>
+                                <h2 className="text-3xl font-bold text-foreground">KSh 0.00</h2>
                             </div>
                         </div>
                         

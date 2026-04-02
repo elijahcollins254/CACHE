@@ -130,9 +130,9 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                 />
                 {/* Modal */}
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto flex flex-col items-center justify-center py-8 px-4">
-                        <Wallet className="h-10 w-10 text-black animate-bounce mb-3" />
-                        <p className="font-bold text-black text-base">Processing...</p>
+                    <div className="bg-muted rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto flex flex-col items-center justify-center py-8 px-4">
+                        <Wallet className="h-10 w-10 text-foreground animate-bounce mb-3" />
+                        <p className="font-bold text-foreground text-base">Processing...</p>
                         <p className="text-muted-foreground text-xs mt-1">Check your phone for M-Pesa prompt</p>
                     </div>
                 </div>
@@ -151,9 +151,9 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                 />
                 {/* Modal */}
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-4 text-center">
+                    <div className="bg-muted rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-4 text-center">
                         <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                        <h2 className="text-lg font-bold text-black mb-1">Deposit Successful!</h2>
+                        <h2 className="text-lg font-bold text-foreground mb-1">Deposit Successful!</h2>
                         <p className="text-muted-foreground text-xs mb-4">KSh {parseFloat(amount).toLocaleString()} added</p>
                         <button
                             onClick={onClose}
@@ -179,13 +179,13 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
                 <div
-                    className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-300"
+                    className="bg-muted rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-300"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
                     <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border bg-white">
                         <div>
-                            <h2 className="text-base font-bold text-black">Deposit</h2>
+                            <h2 className="text-base font-bold text-foreground">Deposit</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 Balance: KSh {balance}
                             </p>
