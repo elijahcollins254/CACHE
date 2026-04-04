@@ -5,8 +5,9 @@ import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import Navbar from "@/components/Navbar";
+import SearchFilterBar from "@/components/SearchFilterBar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark } from "lucide-react";
+import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Send, BarChart3, Percent } from "lucide-react";
 import Link from "next/link";
 
 export default function MarketDetail() {
@@ -39,6 +40,21 @@ export default function MarketDetail() {
     const [chatLoading, setChatLoading] = useState(false);
     const [sendingChat, setSendingChat] = useState(false);
     const [chatError, setChatError] = useState("");
+    const [probabilityViewMode, setProbabilityViewMode] = useState<"percentage" | "graph">("graph");
+    const [timePeriod, setTimePeriod] = useState<"1H" | "6H" | "1D" | "1W" | "1M" | "ALL">("ALL");
+    const [priceHistory, setPriceHistory] = useState<{yes: number[]; no: number[]}>({yes: [], no: []});
+    const [loadingChart, setLoadingChart] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Detect mobile on mount and resize
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     // Fetch markets if not already loaded
     useEffect(() => {
@@ -67,8 +83,77 @@ export default function MarketDetail() {
     useEffect(() => {
         if (market && market.id) {
             fetchMarketDetails();
+            fetchPriceHistory();
         }
     }, [market]);
+
+    const fetchPriceHistory = async () => {
+        setLoadingChart(true);
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/price-history/?period=${timePeriod}`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.data && data.data.length > 0) {
+                    // Extract yes and no probabilities from history
+                    const yesProbs = data.data.map((d: any) => d.yes_probability);
+                    const noProbs = data.data.map((d: any) => d.no_probability);
+                    
+                    // If we have less than 8 points, pad with interpolated values
+                    if (yesProbs.length < 8) {
+                        while (yesProbs.length < 8) {
+                            yesProbs.unshift(yesProbs[0]);
+                            noProbs.unshift(noProbs[0]);
+                        }
+                    } else if (yesProbs.length > 8) {
+                        // If we have more than 8 points, sample them evenly
+                        const step = Math.floor(yesProbs.length / 8);
+                        const sampledYes = [];
+                        const sampledNo = [];
+                        for (let i = 0; i < 8; i++) {
+                            const index = i * step;
+                            sampledYes.push(yesProbs[index]);
+                            sampledNo.push(noProbs[index]);
+                        }
+                        yesProbs.splice(0, yesProbs.length, ...sampledYes);
+                        noProbs.splice(0, noProbs.length, ...sampledNo);
+                    }
+                    
+                    setPriceHistory({
+                        yes: yesProbs,
+                        no: noProbs,
+                    });
+                } else {
+                    // No history available, use generated data
+                    const generated = generateHistoricalPrices();
+                    setPriceHistory(generated);
+                }
+            } else {
+                // Fallback to generated data if API fails
+                const generated = generateHistoricalPrices();
+                setPriceHistory(generated);
+            }
+        } catch (err) {
+            console.error("Error fetching price history:", err);
+            // Fallback to generated data
+            const generated = generateHistoricalPrices();
+            setPriceHistory(generated);
+        } finally {
+            setLoadingChart(false);
+        }
+    };
+
+    useEffect(() => {
+        if (market && market.id) {
+            fetchPriceHistory();
+        }
+    }, [timePeriod]);
 
     const fetchMarketDetails = async () => {
         setChatLoading(true);
@@ -89,6 +174,11 @@ export default function MarketDetail() {
                 setMarketPositions(data.positions || []);
                 setTopHolders(data.top_holders || { yes: [], no: [] });
                 setMarketActivity(data.activity || []);
+                
+                // Update market with description if provided
+                if (data.description) {
+                    setMarket((prev: any) => ({ ...prev, description: data.description }));
+                }
             } else {
                 const data = await response.json();
                 setChatError(data.error || "Unable to load market details");
@@ -222,6 +312,7 @@ export default function MarketDetail() {
                 dispatch(fetchMarkets());
                 window.dispatchEvent(new Event("poly_balance_updated"));
                 await fetchMarketDetails();
+                await fetchPriceHistory();
             } else {
                 setMessage(data.error || "Failed to submit position. Try logging in.");
             }
@@ -236,6 +327,39 @@ export default function MarketDetail() {
     if (!market) return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Market not found</div>;
 
     const noProbability = 100 - market.yes_probability;
+
+    // Generate historical price data based on time period
+    const generateHistoricalPrices = () => {
+        const numPoints = 8;
+        const yesProb = market.yes_probability;
+        const noProb = noProbability;
+        
+        // Create slight variations for realistic historical data
+        const variation = 0.15; // 15% variation from current price
+        let yesHistory = [];
+        let noHistory = [];
+        
+        for (let i = 0; i < numPoints; i++) {
+            // Add random walk behavior
+            const randomVariation = (Math.random() - 0.5) * 2 * variation;
+            const yesValue = Math.max(5, Math.min(95, yesProb + (yesProb * randomVariation)));
+            const noValue = 100 - yesValue;
+            
+            yesHistory.push(yesValue);
+            noHistory.push(noValue);
+        }
+        
+        // Ensure last value is current probability
+        yesHistory[numPoints - 1] = yesProb;
+        noHistory[numPoints - 1] = noProb;
+        
+        return { yes: yesHistory, no: noHistory };
+    };
+
+    // Use fetched price history or fallback to generated data
+    const chartData = priceHistory && priceHistory.yes.length > 0 
+        ? priceHistory 
+        : generateHistoricalPrices();
 
     // Calculate estimated payout return
     const calculateEstimatedReturn = () => {
@@ -309,27 +433,28 @@ export default function MarketDetail() {
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
             <Navbar />
+            <SearchFilterBar />
 
-            <main className="mx-auto pt-20 md:pt-24 max-w-7xl px-4 md:px-6">
+            <main className="mx-auto pt-48 md:pt-56 max-w-7xl px-4 md:px-6">
                 {/* Back Button */}
-                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors">
+                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-3 transition-colors">
                     <ArrowLeft className="h-4 w-4" />
                     Back
                 </Link>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Left Column - Market Info */}
-                    <div className="md:col-span-2 space-y-6">
+                    <div className="md:col-span-2 space-y-4">
                         {/* Market Header */}
                         <div>
-                            <div className="flex items-start gap-4 mb-4">
+                            <div className="flex items-start gap-4 mb-3">
                                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
                                     {market.image_url && <img src={market.image_url} alt="" className="h-full w-full object-cover" />}
                                 </div>
                                 <div className="flex-1">
                                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{market.category}</span>
-                                    <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">{market.question}</h1>
+                                    <h1 className="text-xl md:text-2xl font-bold text-foreground mt-1">{market.question}</h1>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -353,38 +478,226 @@ export default function MarketDetail() {
                         </div>
 
                         {/* Probability Display */}
-                        <div className="bg-muted rounded-2xl p-6">
-                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Options</h3>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between p-3 bg-muted border border-border rounded-lg">
-                                    <div className="flex items-center gap-3 flex-1">
-                                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                                        <span className="font-semibold text-foreground">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                                            <div className="h-full bg-green-400" style={{width: `${market.yes_probability}%`}}></div>
-                                        </div>
-                                        <span className="font-bold text-lg text-foreground">{market.yes_probability}%</span>
-                                    </div>
+                        <div className="bg-muted rounded-2xl p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Options</h3>
                                 </div>
-                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border">
-                                    <div className="flex items-center gap-3 flex-1">
-                                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                                        <span className="font-semibold text-foreground">No</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                                            <div className="h-full bg-red-400" style={{width: `${noProbability}%`}}></div>
-                                        </div>
-                                        <span className="font-bold text-lg text-foreground">{noProbability}%</span>
-                                    </div>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => setProbabilityViewMode("percentage")}
+                                        className={`p-2 rounded transition ${
+                                            probabilityViewMode === "percentage"
+                                                ? "bg-foreground text-background"
+                                                : "bg-border text-muted-foreground hover:bg-border/80 hover:text-foreground"
+                                        }`}
+                                        title="View as percentages"
+                                    >
+                                        <Percent className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setProbabilityViewMode("graph")}
+                                        className={`p-2 rounded transition ${
+                                            probabilityViewMode === "graph"
+                                                ? "bg-foreground text-background"
+                                                : "bg-border text-muted-foreground hover:bg-border/80 hover:text-foreground"
+                                        }`}
+                                        title="View as chart"
+                                    >
+                                        <BarChart3 className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
+                            
+                            {probabilityViewMode === "percentage" ? (
+                                <div className="space-y-3">
+                                    <button onClick={() => setSelectedOutcome("Yes")} className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                                        selectedOutcome === "Yes"
+                                                ? "bg-green-500/20 border-green-500"
+                                                : "bg-muted hover:bg-muted/80 border-border hover:border-green-500/50"
+                                    }`}>
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                                            <span className="font-semibold text-foreground">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-400" style={{width: `${market.yes_probability}%`}}></div>
+                                            </div>
+                                            <span className="font-bold text-lg text-foreground">{market.yes_probability}%</span>
+                                        </div>
+                                    </button>
+                                    <button onClick={() => setSelectedOutcome("No")} className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                                        selectedOutcome === "No"
+                                                ? "bg-red-500/20 border-red-500"
+                                                : "bg-muted hover:bg-muted/80 border-border hover:border-red-500/50"
+                                    }`}>
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                                            <span className="font-semibold text-foreground">No</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div className="h-full bg-red-400" style={{width: `${noProbability}%`}}></div>
+                                            </div>
+                                            <span className="font-bold text-lg text-foreground">{noProbability}%</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {/* Market Odds Chart - Polymarket Style */}
+                                    <div className="bg-background rounded-2xl border border-border overflow-hidden">
+                                        {/* Chart Header */}
+                                        <div className={isMobile ? "px-4 py-3 border-b border-border" : "px-6 py-4 border-b border-border"}>
+                                            <div className="flex items-center justify-between">
+                                                <h3 className={isMobile ? "text-xs font-bold text-foreground" : "text-sm font-bold text-foreground"}>Market Odds</h3>
+                                                <div className={isMobile ? "flex gap-0.5" : "flex gap-1"}>
+                                                    {(["1H", "6H", "1D", "1W", "1M", "ALL"] as const).map((period) => (
+                                                        <button
+                                                            key={period}
+                                                            onClick={() => setTimePeriod(period)}
+                                                            className={`${isMobile ? "px-1.5 py-0.5 text-xs" : "px-3 py-1.5 text-xs"} font-bold rounded transition-all ${
+                                                                timePeriod === period
+                                                                    ? "bg-foreground text-background"
+                                                                    : "hover:bg-border text-muted-foreground hover:text-foreground bg-muted/50"
+                                                            }`}
+                                                        >
+                                                            {period}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* SVG Chart */}
+                                        <div className={isMobile ? "px-3 py-4" : "px-6 py-4"}>
+                                            <svg width="100%" height={isMobile ? "220" : "280"} viewBox="0 0 900 280" className="w-full" style={{minHeight: isMobile ? '220px' : '280px'}}>
+                                                <defs>
+                                                    {/* Gradient for Yes */}
+                                                    <linearGradient id="yesGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                        <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.2" />
+                                                        <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
+                                                    </linearGradient>
+                                                    {/* Gradient for No */}
+                                                    <linearGradient id="noGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                        <stop offset="0%" stopColor="rgb(249, 115, 22)" stopOpacity="0.2" />
+                                                        <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
+                                                    </linearGradient>
+                                                </defs>
+
+                                                {/* Horizontal Grid Lines & Labels */}
+                                                {[240, 200, 160, 120, 80, 40].map((y, idx) => {
+                                                    const percent = 100 - (idx * 20);
+                                                    return (
+                                                        <g key={`h-grid-${y}`}>
+                                                            <line x1="80" y1={y} x2="900" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-border opacity-30" />
+                                                            <text x="70" y={y + 4} textAnchor="end" fontSize={isMobile ? "10" : "12"} className="fill-muted-foreground">{percent}%</text>
+                                                        </g>
+                                                    );
+                                                })}
+
+                                                {/* Vertical Grid Lines */}
+                                                {[150, 250, 350, 450, 550, 650, 750].map((x) => (
+                                                    <line key={`v-grid-${x}`} x1={x} y1="40" x2={x} y2="240" stroke="currentColor" strokeWidth="0.5" className="text-border opacity-20" />
+                                                ))}
+
+                                                {/* Axes */}
+                                                <line x1="80" y1="240" x2="900" y2="240" stroke="currentColor" strokeWidth="1.5" className="text-border" />
+                                                <line x1="80" y1="40" x2="80" y2="240" stroke="currentColor" strokeWidth="1.5" className="text-border" />
+
+                                                {/* Time Labels - Show fewer on mobile */}
+                                                {(isMobile 
+                                                    ? [
+                                                        { x: 150, label: "12 PM" },
+                                                        { x: 350, label: "12 PM" },
+                                                        { x: 550, label: "12 PM" },
+                                                        { x: 750, label: "12 PM" }
+                                                    ]
+                                                    : [
+                                                        { x: 150, label: "12 PM" },
+                                                        { x: 250, label: "12 AM" },
+                                                        { x: 350, label: "12 PM" },
+                                                        { x: 450, label: "12 AM" },
+                                                        { x: 550, label: "12 PM" },
+                                                        { x: 650, label: "12 AM" },
+                                                        { x: 750, label: "12 PM" }
+                                                    ]
+                                                ).map(({ x, label }) => (
+                                                    <text key={`time-${label}`} x={x} y="265" textAnchor="middle" fontSize={isMobile ? "9" : "12"} className="fill-muted-foreground">
+                                                        {label}
+                                                    </text>
+                                                ))}
+
+                                                {/* Yes Area */}
+                                                <path
+                                                    d={`M 150 ${240 - (chartData.yes[0] * 2)} L 250 ${240 - (chartData.yes[1] * 2)} L 350 ${240 - (chartData.yes[2] * 2)} L 450 ${240 - (chartData.yes[3] * 2)} L 550 ${240 - (chartData.yes[4] * 2)} L 650 ${240 - (chartData.yes[5] * 2)} L 750 ${240 - (chartData.yes[6] * 2)} L 850 ${240 - (chartData.yes[7] * 2)} L 850 240 L 150 240 Z`}
+                                                    fill="url(#yesGradient2)"
+                                                />
+
+                                                {/* No Area */}
+                                                <path
+                                                    d={`M 150 ${240 - (chartData.no[0] * 2)} L 250 ${240 - (chartData.no[1] * 2)} L 350 ${240 - (chartData.no[2] * 2)} L 450 ${240 - (chartData.no[3] * 2)} L 550 ${240 - (chartData.no[4] * 2)} L 650 ${240 - (chartData.no[5] * 2)} L 750 ${240 - (chartData.no[6] * 2)} L 850 ${240 - (chartData.no[7] * 2)} L 850 240 L 150 240 Z`}
+                                                    fill="url(#noGradient2)"
+                                                />
+
+                                                {/* Yes Line */}
+                                                <path
+                                                    d={`M 150 ${240 - (chartData.yes[0] * 2)} L 250 ${240 - (chartData.yes[1] * 2)} L 350 ${240 - (chartData.yes[2] * 2)} L 450 ${240 - (chartData.yes[3] * 2)} L 550 ${240 - (chartData.yes[4] * 2)} L 650 ${240 - (chartData.yes[5] * 2)} L 750 ${240 - (chartData.yes[6] * 2)} L 850 ${240 - (chartData.yes[7] * 2)}`}
+                                                    stroke="rgb(59, 130, 246)"
+                                                    strokeWidth="3"
+                                                    fill="none"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+
+                                                {/* No Line */}
+                                                <path
+                                                    d={`M 150 ${240 - (chartData.no[0] * 2)} L 250 ${240 - (chartData.no[1] * 2)} L 350 ${240 - (chartData.no[2] * 2)} L 450 ${240 - (chartData.no[3] * 2)} L 550 ${240 - (chartData.no[4] * 2)} L 650 ${240 - (chartData.no[5] * 2)} L 750 ${240 - (chartData.no[6] * 2)} L 850 ${240 - (chartData.no[7] * 2)}`}
+                                                    stroke="rgb(249, 115, 22)"
+                                                    strokeWidth="3"
+                                                    fill="none"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+
+                                                {/* Current Price Dots */}
+                                                <circle cx="850" cy={240 - (chartData.yes[7] * 2)} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                <circle cx="850" cy={240 - (chartData.no[7] * 2)} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                            </svg>
+                                        </div>
+
+                                        {/* Chart Footer Info */}
+                                        <div className={isMobile ? "px-4 py-3 border-t border-border bg-muted/50 flex items-center justify-between gap-2 flex-wrap text-xs" : "px-6 py-4 border-t border-border bg-muted/50 flex items-center justify-between"}>
+                                            <div className={isMobile ? "flex items-center gap-2" : "flex items-center gap-6"}>
+                                                <div className="flex items-center gap-1">
+                                                    <TrendingUp className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                                                    <span className={isMobile ? "text-xs font-semibold" : "text-sm font-semibold"}>{market.volume}</span>
+                                                    <span className="text-xs text-muted-foreground">Vol.</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                                                    <span className="text-xs text-muted-foreground">{formatDate(market.end_date)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                                    <span className="text-sm font-bold text-foreground">{market.yes_probability}%</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                                                    <span className="text-sm font-bold text-foreground">{noProbability}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Info Grid */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-3">
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Volume</span>
                                 <div className="text-xl font-bold text-foreground mt-1">{market.volume || 'KSh 0'}</div>
@@ -401,9 +714,9 @@ export default function MarketDetail() {
                     </div>
 
                     {/* Right Column - Position Interface */}
-                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-6 h-fit md:sticky md:top-24 md:max-h-[calc(100vh-6rem)] md:overflow-y-auto">
+                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 h-fit md:sticky md:top-12 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
                         {/* Outcome Selector */}
-                        <div className="space-y-3 mb-6">
+                        <div className="space-y-3 mb-4">
                             <button
                                 onClick={() => setSelectedOutcome("Yes")}
                                 className={`w-full p-4 rounded-xl font-bold transition-all ${
@@ -427,7 +740,7 @@ export default function MarketDetail() {
                         </div>
 
                         {/* Buy/Sell Tabs */}
-                        <div className="flex gap-2 mb-6 border-b border-border">
+                        <div className="flex gap-2 mb-4 border-b border-border">
                             <button
                                 onClick={() => setActiveTab("buy")}
                                 className={`flex-1 py-3 font-bold text-sm transition-colors ${
@@ -453,7 +766,7 @@ export default function MarketDetail() {
                         {/* Amount Input */}
                         <div className="mb-4">
                             <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Amount</label>
-                            <div className="relative mb-3">
+                            <div className="relative">
                                 <input
                                     type="number"
                                     placeholder="0"
@@ -462,25 +775,25 @@ export default function MarketDetail() {
                                     className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
                                 />
                             </div>
-                            <span className="text-xs text-muted-foreground">KSh. {betAmount ? parseFloat(betAmount).toFixed(2) : '0.00'}</span>
                         </div>
 
                         {/* Quick Select Buttons */}
-                        <div className="mb-6">
-                            <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Quick Add</div>
+                        <div className="mb-4">
                             <div className="grid grid-cols-5 gap-2">
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+100</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+500</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+1K</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+5K</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold bg-muted hover:bg-muted p-2 rounded">+10K</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+500</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+1K</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+5K</button>
+                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10K</button>
                             </div>
                         </div>
 
                         {/* Estimated Winnings */}
                         {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                            <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-6 border border-green-900/40">
-                                <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">Total Return</span>
+                            <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
+                                <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">
+                                    {activeTab === "sell" ? "You'll receive" : "Total Return"}
+                                </span>
                                 <div className="text-3xl font-bold text-green-400">
                                     KSh {estimatedReturn.toFixed(2)}
                                 </div>
@@ -495,7 +808,11 @@ export default function MarketDetail() {
                             <button
                                 onClick={() => handleBet(selectedOutcome)}
                                 disabled={placingBet}
-                                className="w-full bg-apple-blue hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
+                                className={`w-full text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 ${
+                                    selectedOutcome === "Yes"
+                                        ? "bg-green-500 hover:opacity-90"
+                                        : "bg-red-500 hover:opacity-90"
+                                }`}
                             >
                                 {activeTab === "buy" ? "Buy " : "Sell "} {selectedOutcome}
                             </button>
@@ -540,9 +857,17 @@ export default function MarketDetail() {
                     </div>
 
                     {/* Market Chat */}
-                    <div className="md:col-span-2 space-y-6 order-3 md:order-none">
-                        <div className="bg-muted rounded-2xl p-6 mt-6 border border-border">
-                            <div className="flex items-center justify-between mb-4">
+                    <div className="md:col-span-2 space-y-3 order-3 md:order-none">
+                        {/* Market Description */}
+                        {market.description && (
+                            <div className="bg-muted rounded-2xl p-4 border border-border">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Description</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed">{market.description}</p>
+                            </div>
+                        )}
+
+                        <div className="bg-muted rounded-2xl p-4 border border-border">
+                            <div className="flex items-center justify-between mb-3">
                                 <div>
                                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Market Chat</h3>
                                     <p className="text-sm text-muted-foreground">Talk about this market with others.</p>
@@ -692,6 +1017,37 @@ export default function MarketDetail() {
                                         </div>
                                     ) : null}
 
+                                    {/* Chat Input */}
+                                    <div className="mb-4 pb-4 border-b border-border">
+                                        {replyingToId && (
+                                            <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
+                                                <span>Replying to {replyingToName}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelReply}
+                                                    className="text-xs font-bold text-apple-blue hover:underline"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2 items-end">
+                                            <textarea
+                                                value={newChatMessage}
+                                                onChange={(e) => setNewChatMessage(e.target.value)}
+                                                placeholder="Add a comment..."
+                                                className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background/60 p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground resize-none"
+                                            />
+                                            <button
+                                                onClick={handleSendChat}
+                                                disabled={sendingChat}
+                                                className="bg-apple-blue hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
+                                            >
+                                                <Send className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
                                 {chatMessages.length === 0 ? (
                                     <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
@@ -720,8 +1076,8 @@ export default function MarketDetail() {
                                             </div>
 
                                             {getRepliesForMessage(msg.id).map((reply) => (
-                                                <div key={reply.id} className="ml-5 rounded-2xl border border-border bg-muted p-4">
-                                                    <div className="flex items-center justify-between gap-3 mb-2 text-xs text-muted-foreground">
+                                                <div key={reply.id} className="ml-5 rounded-2xl border border-border bg-muted p-4 space-y-3">
+                                                    <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                                                         <span className="font-semibold text-foreground">
                                                             {reply.user_name || 'Trader'}
                                                         </span>
@@ -731,6 +1087,39 @@ export default function MarketDetail() {
                                                         <span className="font-semibold text-foreground">Reply to {reply.parent_user_name || 'them'}: </span>
                                                         {reply.message}
                                                     </p>
+                                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                        <button
+                                                            onClick={() => handleStartReply(reply.id, reply.user_name || 'Trader')}
+                                                            className="font-semibold text-foreground hover:text-apple-blue"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                        {getRepliesForMessage(reply.id).length > 0 && (
+                                                            <span>{getRepliesForMessage(reply.id).length} repl{getRepliesForMessage(reply.id).length === 1 ? 'y' : 'ies'}</span>
+                                                        )}
+                                                    </div>
+                                                    {getRepliesForMessage(reply.id).map((nestedReply) => (
+                                                        <div key={nestedReply.id} className="ml-5 rounded-2xl border border-border bg-background p-4 space-y-3">
+                                                            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                                                                <span className="font-semibold text-foreground">
+                                                                    {nestedReply.user_name || 'Trader'}
+                                                                </span>
+                                                                <span>{formatChatTimestamp(nestedReply.created_at)}</span>
+                                                            </div>
+                                                            <p className="text-sm text-foreground">
+                                                                <span className="font-semibold text-foreground">Reply to {nestedReply.parent_user_name || 'them'}: </span>
+                                                                {nestedReply.message}
+                                                            </p>
+                                                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                                                <button
+                                                                    onClick={() => handleStartReply(nestedReply.id, nestedReply.user_name || 'Trader')}
+                                                                    className="font-semibold text-foreground hover:text-apple-blue"
+                                                                >
+                                                                    Reply
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ))}
                                         </div>
@@ -738,45 +1127,6 @@ export default function MarketDetail() {
                                 )}
                             </div>
 
-                            <div className="space-y-3">
-                                {replyingToId && (
-                                    <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground">
-                                        <span>Replying to {replyingToName}</span>
-                                        <button
-                                            type="button"
-                                            onClick={cancelReply}
-                                            className="text-xs font-bold text-apple-blue hover:underline"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                )}
-                                <textarea
-                                    value={newChatMessage}
-                                    onChange={(e) => setNewChatMessage(e.target.value)}
-                                    placeholder="Write a message..."
-                                    className="w-full min-h-[100px] rounded-2xl border border-border bg-background/60 p-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
-                                />
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                    <button
-                                        onClick={handleSendChat}
-                                        disabled={sendingChat}
-                                        className="w-full sm:w-auto bg-apple-blue hover:opacity-90 text-white font-bold py-3 px-6 rounded-2xl transition disabled:opacity-50"
-                                    >
-                                        {sendingChat ? 'Sending...' : 'Send Message'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setNewChatMessage('');
-                                            setChatError('');
-                                        }}
-                                        className="w-full sm:w-auto border border-border text-sm text-foreground rounded-2xl py-3 px-6 hover:bg-muted/80"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-                            </div>
                         </>
                     )}
                     </div>

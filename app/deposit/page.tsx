@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/useAuth";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { ArrowLeft, Wallet, Smartphone, CreditCard, ChevronRight, CheckCircle2 } from "lucide-react";
 
-const PRESET_AMOUNTS = [500, 1000, 2000, 5000];
+const PRESET_AMOUNTS = [50, 100, 200, 500];
 
 export default function DepositPage() {
     const { user: authUser, loading: authLoading } = useAuth("/deposit");

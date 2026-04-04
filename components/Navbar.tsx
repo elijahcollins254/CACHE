@@ -6,9 +6,10 @@ import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
-import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy } from "lucide-react";
+import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle } from "lucide-react";
 import DepositModal from "./DepositModal";
 import ThemeToggle from "./ThemeToggle";
+import SupportModal from "./SupportModal";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -26,6 +27,7 @@ export default function Navbar() {
     const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
     useEffect(() => {
         const checkUser = () => {
@@ -142,6 +144,7 @@ export default function Navbar() {
 
     return (
         <>
+        <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
         <nav className="fixed top-0 left-0 right-0 z-50 apple-glass backdrop-blur-xl">
             <div className="mx-auto flex h-18 sm:h-14 md:h-12 max-w-[1200px] items-center justify-between px-4 sm:px-4 md:px-6">
                 {/* Left Section: Logo */}
@@ -186,6 +189,8 @@ export default function Navbar() {
 
                 {/* Right Section: Auth */}
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                    {/* Theme Toggle - Always Visible */}
+                    <ThemeToggle />
 
                     {/* Auth Section */}
                     {user ? (
@@ -205,9 +210,6 @@ export default function Navbar() {
                                 <Wallet className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">Deposit</span>
                             </button>
-
-                            {/* Theme Toggle */}
-                            <ThemeToggle />
 
                             {/* Notification Icon - Mobile & Desktop */}
                             <div className="relative notification-menu">
@@ -329,6 +331,16 @@ export default function Navbar() {
                                             <HelpCircle className="h-4 w-4" />
                                             How it Works
                                         </Link>
+                                        <button
+                                            onClick={() => {
+                                                setIsSupportModalOpen(true);
+                                                setIsMobileProfileOpen(false);
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all w-full"
+                                        >
+                                            <MessageCircle className="h-4 w-4" />
+                                            Support
+                                        </button>
                                         <div className="border-t border-border my-1"></div>
                                         <button
                                             onClick={() => {
@@ -409,6 +421,16 @@ export default function Navbar() {
                                             <HelpCircle className="h-4 w-4" />
                                             How it Works
                                         </Link>
+                                        <button
+                                            onClick={() => {
+                                                setIsSupportModalOpen(true);
+                                                setIsProfileOpen(false);
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all w-full"
+                                        >
+                                            <MessageCircle className="h-4 w-4" />
+                                            Support
+                                        </button>
                                         <div className="border-t border-border my-1"></div>
                                         <button
                                             onClick={() => {

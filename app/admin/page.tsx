@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { Plus, Edit2, CheckCircle, XCircle, Loader, TrendingUp, Users, DollarSign, BarChart3, Lock, ArrowLeft } from "lucide-react";
+import { Plus, CheckCircle, XCircle, Loader, Users, Lock, ArrowLeft } from "lucide-react";
 
 export default function AdminPanel() {
     // Password Authentication State
@@ -28,12 +28,18 @@ export default function AdminPanel() {
     const [selectedMarketDetails, setSelectedMarketDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [activeTab, setActiveTab] = useState<"markets" | "create" | "settlements">("markets");
+    const [activeTab, setActiveTab] = useState<"markets" | "users" | "transactions">("markets");
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedMarket, setSelectedMarket] = useState<any>(null);
     const [resolvingMarket, setResolvingMarket] = useState<string | null>(null);
     const [outcome, setOutcome] = useState<"Yes" | "No" | "">();
     const [settlements, setSettlements] = useState<any[]>([]);
     const [deletingMarketId, setDeletingMarketId] = useState<string | null>(null);
+    
+    // Users management
+    const [users, setUsers] = useState<any[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
 
     // Create market form
     const [createForm, setCreateForm] = useState({
@@ -68,9 +74,65 @@ export default function AdminPanel() {
         }
     };
 
+    const loadUsers = async () => {
+        setLoadingUsers(true);
+        try {
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/admin/users/`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUsers(data.users);
+            } else {
+                setError("Failed to load users");
+            }
+        } catch (err) {
+            setError("Connection error");
+            console.error(err);
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
+
+    const toggleSupportStaff = async (userId: number, currentStatus: boolean) => {
+        setTogglingUserId(userId);
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/admin/users/${userId}/toggle-support-staff/`,
+                {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ is_support_staff: !currentStatus }),
+                }
+            );
+
+            if (response.ok) {
+                const updated = await response.json();
+                setUsers(users.map(u => 
+                    u.id === userId ? { ...u, is_support_staff: updated.is_support_staff } : u
+                ));
+            } else {
+                setError("Failed to update user");
+            }
+        } catch (err) {
+            setError("Connection error");
+            console.error(err);
+        } finally {
+            setTogglingUserId(null);
+        }
+    };
+
     useEffect(() => {
         loadMarkets();
     }, []);
+
+    useEffect(() => {
+        if (activeTab === "users" && users.length === 0) {
+            loadUsers();
+        }
+    }, [activeTab]);
 
     if (!passwordAuthenticated) {
         return (
@@ -313,36 +375,49 @@ export default function AdminPanel() {
                                 Markets ({markets.length})
                             </button>
                             <button
-                                onClick={() => setActiveTab("settlements")}
+                                onClick={() => setActiveTab("transactions")}
                                 className={`flex-1 px-6 py-4 font-bold transition-all ${
-                                    activeTab === "settlements"
+                                    activeTab === "transactions"
                                         ? "text-black border-b-2 border-black"
                                         : "text-muted-foreground hover:text-black"
                                 }`}
                             >
-                                Settlements ({markets.filter(m => m.status === 'RESOLVED').length})
+                                Transactions ({markets.filter(m => m.status === 'RESOLVED').length})
                             </button>
                             <button
-                                onClick={() => setActiveTab("create")}
-                                className={`flex-1 px-6 py-4 font-bold transition-all flex items-center justify-center gap-2 ${
-                                    activeTab === "create"
+                                onClick={() => setActiveTab("users")}
+                                className={`flex-1 px-6 py-4 font-bold transition-all ${
+                                    activeTab === "users"
                                         ? "text-black border-b-2 border-black"
                                         : "text-muted-foreground hover:text-black"
                                 }`}
                             >
-                                <Plus className="h-4 w-4" />
-                                Create
+                                <span className="flex items-center justify-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    Users ({users.length})
+                                </span>
                             </button>
                         </div>
 
                         {/* Markets Tab */}
                         {activeTab === "markets" && (
                             <div className="p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-lg font-bold text-black">Market Management</h2>
+                                    <button
+                                        onClick={() => setShowCreateModal(true)}
+                                        className="px-4 py-2 bg-black text-white rounded-full font-bold transition-all hover:opacity-90 flex items-center gap-2"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        Create Market
+                                    </button>
+                                </div>
+
                                 {markets.length === 0 ? (
                                     <div className="text-center py-12">
                                         <p className="text-muted-foreground mb-4">No markets yet</p>
                                         <button
-                                            onClick={() => setActiveTab("create")}
+                                            onClick={() => setShowCreateModal(true)}
                                             className="px-4 py-2 bg-black text-white rounded-full font-bold transition-all hover:opacity-90"
                                         >
                                             Create First Market
@@ -354,74 +429,73 @@ export default function AdminPanel() {
                                             <div key={market.id} className="border border-border rounded-lg p-4 hover:border-black transition-all">
                                                 <div className="flex items-start justify-between mb-4">
                                                     <div className="flex-1">
-                                                        <h3 className="text-lg font-bold text-black">{market.question}</h3>
-                                                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                                                            <span className="flex items-center gap-1">
-                                                                <span className="text-muted-foreground">Category:</span> {market.category}
+                                                        <h3 className="text-lg font-bold text-black mb-2">{market.question}</h3>
+                                                        <div className="flex gap-2 flex-wrap">
+                                                            <span className="px-3 py-1 bg-muted rounded-full text-sm font-semibold text-muted-foreground">
+                                                                {market.category}
                                                             </span>
-                                                            <span className="text-muted-foreground">•</span>
-                                                            <span className="flex items-center gap-1">
-                                                                <span className="text-muted-foreground">End:</span> {market.end_date || "Not set"}
+                                                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                                market.status === 'OPEN' ? 'bg-apple-green/10 text-apple-green' :
+                                                                market.status === 'RESOLVED' ? 'bg-blue/10 text-blue' :
+                                                                'bg-muted text-muted-foreground'
+                                                            }`}>
+                                                                {market.status}
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <span
-                                                        className={`text-xs font-bold px-3 py-1 rounded-full ml-4 white-space-nowrap ${
-                                                            market.status === "OPEN"
-                                                                ? "bg-apple-blue/10 text-apple-blue"
-                                                                : market.status === "CLOSED"
-                                                                ? "bg-amber-500/10 text-amber-500"
-                                                                : "bg-apple-green/10 text-apple-green"
-                                                        }`}
-                                                    >
-                                                        {market.status}
-                                                    </span>
+                                                    {market.status === "OPEN" && (
+                                                        <button
+                                                            onClick={() => setSelectedMarket(market)}
+                                                            className="px-4 py-2 bg-black text-white rounded-lg font-bold transition-all hover:opacity-90 ml-4"
+                                                        >
+                                                            Resolve
+                                                        </button>
+                                                    )}
+                                                    {market.status === "RESOLVED" && (
+                                                        <span className="text-sm font-semibold text-apple-green ml-4">
+                                                            ✓ {market.resolved_outcome}
+                                                        </span>
+                                                    )}
                                                 </div>
 
                                                 <div className="grid grid-cols-4 gap-3 mb-4 py-3 border-y border-border">
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-muted-foreground mb-1">Total Bets</p>
-                                                        <p className="text-xl font-bold text-black">{market.total_bets}</p>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase">Yes Bets</p>
+                                                        <p className="text-lg font-bold text-black">{market.yes_bets}</p>
                                                     </div>
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-muted-foreground mb-1">Yes Bets</p>
-                                                        <p className="text-xl font-bold text-apple-blue">{market.yes_bets}</p>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase">No Bets</p>
+                                                        <p className="text-lg font-bold text-black">{market.no_bets}</p>
                                                     </div>
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-muted-foreground mb-1">No Bets</p>
-                                                        <p className="text-xl font-bold text-apple-red">{market.no_bets}</p>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase">Yes Prob</p>
+                                                        <p className="text-lg font-bold text-black">{market.yes_probability}%</p>
                                                     </div>
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-muted-foreground mb-1">Wagered</p>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase">Wagered</p>
                                                         <p className="text-lg font-bold text-black">KSh {parseFloat(market.total_wagered).toLocaleString()}</p>
                                                     </div>
                                                 </div>
 
                                                 {market.status === "RESOLVED" && market.resolved_outcome && (
                                                     <div className="mb-4 p-3 bg-apple-green/5 border border-apple-green/20 rounded">
-                                                        <p className="text-xs text-muted-foreground mb-1">Resolved Outcome</p>
-                                                        <div className="flex items-center justify-between">
-                                                            <p className="font-bold text-black">{market.resolved_outcome}</p>
-                                                            <p className="text-xs text-muted-foreground">{market.resolved_at && new Date(market.resolved_at).toLocaleDateString()}</p>
-                                                        </div>
+                                                        <p className="text-sm font-bold text-apple-green">
+                                                            ✓ Resolved as: <span className="font-bold">{market.resolved_outcome}</span>
+                                                        </p>
                                                     </div>
                                                 )}
 
                                                 <div className="space-y-3">
-                                                    {market.status === "OPEN" && market.total_bets > 0 && (
-                                                        <button
-                                                            onClick={() => setSelectedMarket(market)}
-                                                            className="w-full px-4 py-2 bg-black text-white rounded-lg font-bold transition-all hover:opacity-90"
-                                                        >
-                                                            Resolve Market
-                                                        </button>
-                                                    )}
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-muted-foreground">Created: {formatDate(market.created_at)}</span>
+                                                        <span className="text-muted-foreground">Ends: {formatDate(market.end_date)}</span>
+                                                    </div>
                                                     <button
                                                         onClick={() => handleDeleteMarket(market.id)}
                                                         disabled={deletingMarketId === market.id}
-                                                        className="w-full px-4 py-2 bg-apple-red text-white rounded-lg font-bold transition-all hover:opacity-90 disabled:opacity-50"
+                                                        className="w-full px-3 py-2 text-sm border border-apple-red/30 text-apple-red rounded-lg font-semibold hover:bg-apple-red/5 transition-all disabled:opacity-50"
                                                     >
-                                                        {deletingMarketId === market.id ? "Deleting..." : "Delete Market"}
+                                                        {deletingMarketId === market.id ? 'Deleting...' : 'Delete Market'}
                                                     </button>
                                                 </div>
                                             </div>
@@ -431,9 +505,10 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* Settlements Tab */}
-                        {activeTab === "settlements" && (
+                        {/* Transactions Tab */}
+                        {activeTab === "transactions" && (
                             <div className="p-6">
+                                <h2 className="text-lg font-bold text-black mb-6">Resolved Markets & Payouts</h2>
                                 {markets.filter(m => m.status === 'RESOLVED').length === 0 ? (
                                     <div className="text-center py-12">
                                         <p className="text-muted-foreground">No settled markets yet</p>
@@ -443,37 +518,38 @@ export default function AdminPanel() {
                                         {markets.filter(m => m.status === 'RESOLVED').map((market) => (
                                             <div key={market.id} className="border border-border rounded-lg p-4">
                                                 <div className="flex items-start justify-between mb-4">
-                                                    <div>
-                                                        <h3 className="text-lg font-bold text-black">{market.question}</h3>
-                                                        <p className="text-sm text-muted-foreground mt-1">Resolved on {market.resolved_at ? formatDate(market.resolved_at) : 'Unknown'}</p>
+                                                    <div className="flex-1">
+                                                        <h3 className="text-lg font-bold text-black mb-2">{market.question}</h3>
+                                                        <p className="text-sm text-muted-foreground">{market.category}</p>
                                                     </div>
-                                                    <span className={`text-sm font-bold px-3 py-1 rounded-full ${
-                                                        market.resolved_outcome === 'Yes' ? 'bg-apple-blue/10 text-apple-blue' : 'bg-apple-red/10 text-apple-red'
-                                                    }`}>
-                                                        Outcome: {market.resolved_outcome}
-                                                    </span>
+                                                    <div className="text-right">
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase">Outcome</p>
+                                                        <p className={`text-lg font-bold ${market.resolved_outcome === 'Yes' ? 'text-apple-green' : 'text-apple-red'}`}>
+                                                            {market.resolved_outcome}
+                                                        </p>
+                                                    </div>
                                                 </div>
 
                                                 <div className="grid grid-cols-5 gap-3 bg-muted/50 p-3 rounded-lg mb-4">
                                                     <div>
-                                                        <p className="text-xs text-muted-foreground mb-1">Total Wagered</p>
+                                                        <p className="text-xs text-muted-foreground font-bold">Total Bets</p>
+                                                        <p className="font-bold text-black">{market.total_bets}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-bold">Total Wagered</p>
                                                         <p className="font-bold text-black">KSh {parseFloat(market.total_wagered).toLocaleString()}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-muted-foreground mb-1">Winners</p>
-                                                        <p className="font-bold text-apple-green">{market.yes_bets + market.no_bets - market.no_bets}</p>
+                                                        <p className="text-xs text-muted-foreground font-bold">Yes Bets</p>
+                                                        <p className="font-bold text-black">{market.yes_bets}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-muted-foreground mb-1">Platform Fee</p>
-                                                        <p className="font-bold text-black">10%</p>
+                                                        <p className="text-xs text-muted-foreground font-bold">No Bets</p>
+                                                        <p className="font-bold text-black">{market.no_bets}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-muted-foreground mb-1">Paid Out</p>
-                                                        <p className="font-bold text-apple-green">90%</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-muted-foreground mb-1">Status</p>
-                                                        <p className="font-bold text-apple-green flex items-center gap-1"><CheckCircle className="h-4 w-4" /> Complete</p>
+                                                        <p className="text-xs text-muted-foreground font-bold">Resolved</p>
+                                                        <p className="font-bold text-black">{formatDate(market.resolved_at)}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -483,9 +559,74 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* Create Market Tab */}
-                        {activeTab === "create" && (
-                            <div className="p-6 max-w-[500px]">
+                        {/* Users Tab */}
+                        {activeTab === "users" && (
+                            <div className="p-6">
+                                <h2 className="text-lg font-bold text-black mb-6">User Management</h2>
+                                {loadingUsers ? (
+                                    <div className="text-center py-12">
+                                        <div className="h-8 w-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                        <p className="text-muted-foreground">Loading users...</p>
+                                    </div>
+                                ) : users.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-muted-foreground">No users found</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <div className="text-sm text-muted-foreground mb-4">
+                                            {users.length} total users • {users.filter(u => u.is_support_staff).length} support staff
+                                        </div>
+                                        {users.map((user) => (
+                                            <div key={user.id} className="border border-border rounded-lg p-4 hover:border-black transition-all flex items-center justify-between">
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-black">{user.full_name}</p>
+                                                    <p className="text-sm text-muted-foreground">{user.phone_number}</p>
+                                                    <div className="flex gap-2 mt-2 text-xs">
+                                                        <span className="px-2 py-1 bg-muted rounded">
+                                                            {user.kyc_verified ? '✓ KYC Verified' : 'KYC Pending'}
+                                                        </span>
+                                                        <span className="px-2 py-1 bg-muted rounded">
+                                                            Balance: KSh {parseFloat(user.balance).toLocaleString()}
+                                                        </span>
+                                                        {!user.is_active && (
+                                                            <span className="px-2 py-1 bg-apple-red/10 text-apple-red rounded">Inactive</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => toggleSupportStaff(user.id, user.is_support_staff)}
+                                                    disabled={togglingUserId === user.id}
+                                                    className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ml-4 ${
+                                                        user.is_support_staff
+                                                            ? 'bg-apple-green/10 text-apple-green hover:bg-apple-green/20 border border-apple-green/30'
+                                                            : 'bg-muted text-muted-foreground hover:bg-muted/80 border border-border'
+                                                    } disabled:opacity-50`}
+                                                >
+                                                    {togglingUserId === user.id ? '...' : user.is_support_staff ? 'Support Staff' : 'Make Support'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Create Market Modal */}
+                    {showCreateModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                            <div className="apple-card w-full max-w-[500px] p-6 max-h-[90vh] overflow-y-auto">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold text-black">Create New Market</h2>
+                                    <button
+                                        onClick={() => setShowCreateModal(false)}
+                                        className="text-muted-foreground hover:text-black transition-all"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-bold text-black mb-2">Market Question</label>
@@ -507,16 +648,13 @@ export default function AdminPanel() {
                                             onChange={(e) =>
                                                 setCreateForm({ ...createForm, category: e.target.value })
                                             }
-                                            className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                                            className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black"
                                         >
-                                            <option value="Politics">Politics</option>
-                                            <option value="Sports">Sports</option>
-                                            <option value="Technology">Technology</option>
-                                            <option value="Entertainment">Entertainment</option>
-                                            <option value="Business">Business</option>
-                                            <option value="Science">Science</option>
-                                            <option value="Health">Health</option>
-                                            <option value="Other">Other</option>
+                                            <option>Sports</option>
+                                            <option>Crypto</option>
+                                            <option>Politics</option>
+                                            <option>World Events</option>
+                                            <option>Entertainment</option>
                                         </select>
                                     </div>
 
@@ -534,7 +672,7 @@ export default function AdminPanel() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-black mb-2">Image URL (Optional)</label>
+                                        <label className="block text-sm font-bold text-black mb-2">Image URL</label>
                                         <input
                                             type="text"
                                             placeholder="https://example.com/image.jpg"
@@ -547,7 +685,7 @@ export default function AdminPanel() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-black mb-2">Starting Yes Probability</label>
+                                        <label className="block text-sm font-bold text-black mb-2">Yes Probability (%)</label>
                                         <input
                                             type="number"
                                             min={1}
@@ -561,7 +699,7 @@ export default function AdminPanel() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-black mb-2">End Date (Optional)</label>
+                                        <label className="block text-sm font-bold text-black mb-2">End Date</label>
                                         <input
                                             type="date"
                                             value={createForm.endDate}
@@ -572,16 +710,24 @@ export default function AdminPanel() {
                                         />
                                     </div>
 
-                                    <button
-                                        onClick={handleCreateMarket}
-                                        className="w-full h-12 bg-black text-white rounded-full font-bold transition-all hover:opacity-90"
-                                    >
-                                        Create Market
-                                    </button>
+                                    <div className="flex gap-3 pt-4">
+                                        <button
+                                            onClick={handleCreateMarket}
+                                            className="flex-1 h-12 bg-black text-white rounded-full font-bold transition-all hover:opacity-90"
+                                        >
+                                            Create Market
+                                        </button>
+                                        <button
+                                            onClick={() => setShowCreateModal(false)}
+                                            className="flex-1 h-12 border border-border rounded-full font-bold transition-all hover:bg-muted"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -20,6 +20,36 @@ interface MarketCardProps {
     };
 }
 
+const formatDate = (dateString: string): string => {
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const daysUntil = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: daysUntil > 365 ? 'numeric' : undefined
+        });
+        
+        const formatted = formatter.format(date);
+        
+        if (daysUntil < 0) {
+            return `Ended ${formatted}`;
+        } else if (daysUntil === 0) {
+            return `Today`;
+        } else if (daysUntil === 1) {
+            return `Tomorrow`;
+        } else if (daysUntil <= 7) {
+            return `${daysUntil}d · ${formatted}`;
+        } else {
+            return formatted;
+        }
+    } catch {
+        return dateString;
+    }
+};
+
 export default function MarketCard({ market }: MarketCardProps) {
     const dispatch = useAppDispatch();
     const savedMarketIds = useAppSelector(selectSavedMarketIds);
@@ -166,7 +196,7 @@ export default function MarketCard({ market }: MarketCardProps) {
                             <span>{market.volume || 'KSh 0'}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
-                            <span>{market.end_date}</span>
+                            <span>{formatDate(market.end_date)}</span>
                         </div>
                     </div>
                 </div>
