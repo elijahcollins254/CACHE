@@ -121,7 +121,7 @@ export default function SearchFilterBar() {
     };
 
     return (
-        <div className="fixed top-12 md:top-[52px] left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="fixed top-18 sm:top-14 md:top-12 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
             <div className="px-4 sm:px-6 py-3 border-b border-border">
                 {/* Search Bar - Centered */}
                 <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto mb-3" ref={searchBoxRef}>
