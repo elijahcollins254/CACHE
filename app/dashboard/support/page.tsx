@@ -433,6 +433,40 @@ export default function SupportDashboard() {
                 </div>
 
                 {/* Reply Input */}
+                <div className="border-t border-border/50 p-4">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Type your reply..."
+                      value={replyMessage}
+                      onChange={(e) => setReplyMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
+                      className="flex-1 px-4 py-2 bg-background border border-border rounded-lg text-foreground"
+                    />
+                    <button
+                      onClick={handleSendReply}
+                      disabled={!replyMessage.trim()}
+                      className="px-4 py-2 bg-foreground text-background rounded-lg font-semibold disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Send className="w-4 h-4" />
+                      Send
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border/50 flex items-center justify-center h-[calc(100vh-300px)]">
+                <p className="text-muted-foreground">Select a ticket to view details</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+                {/* Reply Input */}
                 <div className="border-t border-border/50 p-6 bg-gradient-to-r from-background to-muted/50">
                   <div className="flex gap-3">
                     <input
