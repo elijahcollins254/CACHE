@@ -38,7 +38,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background font-sans antialiased text-foreground">
       <Navbar />
-      <SearchFilterBar />
+      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <SearchFilterBar />
+      </Suspense>
 
       <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-40 md:pt-48 pb-24 sm:pb-8">
         {/* Markets Grid */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { Trophy, Search } from "lucide-react";
@@ -104,7 +104,9 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <SearchFilterBar />
+      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <SearchFilterBar />
+      </Suspense>
 
       <main className="mx-auto max-w-[1400px] px-4 md:px-6 pt-48 pb-20 relative z-0">
 

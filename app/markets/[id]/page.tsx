@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
@@ -433,7 +433,9 @@ export default function MarketDetail() {
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
             <Navbar />
-            <SearchFilterBar />
+            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+              <SearchFilterBar />
+            </Suspense>
 
             <main className="mx-auto pt-48 md:pt-56 max-w-7xl px-4 md:px-6">
                 {/* Back Button */}
