@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
@@ -246,7 +246,9 @@ export default function SupportDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <SearchFilterBar />
+      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <SearchFilterBar />
+      </Suspense>
 
       <main className="mx-auto max-w-[1600px] px-4 md:px-6 pt-48 pb-20">
         {/* Header */}
