@@ -438,14 +438,14 @@ export default function SupportDashboard() {
                     <input
                       type="text"
                       placeholder="Type your reply..."
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
+                      value={newReply}
+                      onChange={(e) => setNewReply(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
                       className="flex-1 px-4 py-2 bg-background border border-border rounded-lg text-foreground"
                     />
                     <button
                       onClick={handleSendReply}
-                      disabled={!replyMessage.trim()}
+                      disabled={!newReply.trim()}
                       className="px-4 py-2 bg-foreground text-background rounded-lg font-semibold disabled:opacity-50 flex items-center gap-2"
                     >
                       <Send className="w-4 h-4" />
@@ -457,47 +457,6 @@ export default function SupportDashboard() {
             ) : (
               <div className="rounded-2xl border border-border/50 flex items-center justify-center h-[calc(100vh-300px)]">
                 <p className="text-muted-foreground">Select a ticket to view details</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-                {/* Reply Input */}
-                <div className="border-t border-border/50 p-6 bg-gradient-to-r from-background to-muted/50">
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      value={newReply}
-                      onChange={(e) => setNewReply(e.target.value)}
-                      placeholder="Type your reply..."
-                      className="flex-1 px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20"
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" && !replying) {
-                          handleSendReply();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleSendReply}
-                      disabled={!newReply.trim() || replying}
-                      className="px-4 py-3 bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-50 transition flex items-center gap-2 font-semibold"
-                    >
-                      <Send className="w-4 h-4" />
-                      {replying ? "Sending..." : "Send"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-br from-muted to-muted/50 rounded-2xl p-12 border border-border/50 h-[calc(100vh-300px)] flex items-center justify-center">
-                <div className="text-center">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground text-lg">Select a ticket to view details</p>
-                </div>
               </div>
             )}
           </div>
