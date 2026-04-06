@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
-import { Command, Wallet, Phone, Lock, Eye, EyeOff } from "lucide-react";
+import { Command, Wallet, Phone, Lock, Eye, EyeOff, Chrome } from "lucide-react";
 
 export default function Login() {
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -128,6 +129,38 @@ export default function Login() {
                         {loading ? "Signing In..." : "Sign In"}
                     </button>
                 </form>
+
+                <div className="my-6 flex items-center gap-4">
+                    <div className="flex-1 h-px bg-border"></div>
+                    <span className="text-xs text-muted-foreground font-medium">or</span>
+                    <div className="flex-1 h-px bg-border"></div>
+                </div>
+
+                <button
+                    onClick={async () => {
+                        try {
+                            console.log("Starting Google sign-in...");
+                            const result = await signIn("google", { 
+                                redirect: true, 
+                                callbackUrl: "/" 
+                            });
+                            if (result?.error) {
+                                console.error("Sign-in error:", result.error);
+                                setError(`Authentication failed: ${result.error}`);
+                            }
+                            if (result?.ok === false) {
+                                setError("Google sign-in was cancelled or failed");
+                            }
+                        } catch (err) {
+                            console.error("Sign-in exception:", err);
+                            setError("An error occurred during sign-in");
+                        }
+                    }}
+                    className="w-full rounded-full bg-white border border-border py-3 text-sm font-bold text-black transition-all hover:bg-gray-50 flex items-center justify-center gap-2"
+                >
+                    <Chrome className="h-4 w-4" />
+                    Continue with Google
+                </button>
 
                 <p className="mt-8 text-center text-sm text-muted-foreground font-medium">
                     New to CACHE?{" "}
