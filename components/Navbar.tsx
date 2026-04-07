@@ -189,10 +189,7 @@ export default function Navbar() {
 
                 {/* Right Section: Auth */}
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
-                    {/* Theme Toggle - Always Visible */}
-                    <ThemeToggle />
-
-                    {/* Theme Toggle - Available for all users */}
+                    {/* Theme Toggle */}
                     <ThemeToggle />
 
                     {/* Auth Section */}
