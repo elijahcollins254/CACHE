@@ -26,7 +26,7 @@ export function SessionSyncProvider({ children }: { children: React.ReactNode })
       const backendUser = (session as any).backendUser;
       
       const userData = {
-        id: backendUser?.id || session.user.id,
+        id: backendUser?.id || session.user.email || "",
         email: session.user.email || "",
         full_name: session.user.name || "",
         phone_number: backendUser?.phone_number || null,
