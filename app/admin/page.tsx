@@ -49,6 +49,11 @@ export default function AdminPanel() {
         endDate: "",
         imageUrl: "",
         yesProbability: 50,
+        marketType: "BINARY",
+        options: [
+            { label: "", yesProbability: 50 },
+            { label: "", yesProbability: 50 },
+        ],
     });
 
     const loadMarkets = async () => {
@@ -212,18 +217,39 @@ export default function AdminPanel() {
             return;
         }
 
+        if (createForm.marketType === "OPTION_LIST") {
+            const validOptions = createForm.options.filter(opt => opt.label.trim());
+            if (validOptions.length < 2) {
+                setError("Option list markets require at least 2 options");
+                return;
+            }
+        }
+
         try {
+            const payload: any = {
+                question: createForm.question,
+                category: createForm.category,
+                description: createForm.description,
+                end_date: createForm.endDate,
+                image_url: createForm.imageUrl,
+                market_type: createForm.marketType,
+            };
+
+            if (createForm.marketType === "BINARY") {
+                payload.yes_probability = createForm.yesProbability;
+            } else if (createForm.marketType === "OPTION_LIST") {
+                payload.options = createForm.options
+                    .filter(opt => opt.label.trim())
+                    .map(opt => ({
+                        label: opt.label.trim(),
+                        yes_probability: Math.max(1, Math.min(99, opt.yesProbability || 50)),
+                    }));
+            }
+
             const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/admin/create/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    question: createForm.question,
-                    category: createForm.category,
-                    description: createForm.description,
-                    end_date: createForm.endDate,
-                    image_url: createForm.imageUrl,
-                    yes_probability: createForm.yesProbability,
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {
@@ -234,6 +260,11 @@ export default function AdminPanel() {
                     endDate: "",
                     imageUrl: "",
                     yesProbability: 50,
+                    marketType: "BINARY",
+                    options: [
+                        { label: "", yesProbability: 50 },
+                        { label: "", yesProbability: 50 },
+                    ],
                 });
                 setActiveTab("markets");
                 await loadMarkets();

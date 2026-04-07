@@ -22,6 +22,7 @@ export default function MarketDetail() {
     const [market, setMarket] = useState<any>(null);
     const [betAmount, setBetAmount] = useState("");
     const [selectedOutcome, setSelectedOutcome] = useState<"Yes" | "No">("Yes");
+    const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
     const [placingBet, setPlacingBet] = useState(false);
     const [message, setMessage] = useState("");
     const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
@@ -269,19 +270,32 @@ export default function MarketDetail() {
             return;
         }
 
+        // For option-list markets, require option selection
+        if (market.market_type === 'OPTION_LIST' && !selectedOptionId) {
+            setMessage("Please select an option");
+            return;
+        }
+
         setPlacingBet(true);
         setMessage("");
 
         try {
+            const payload: any = {
+                market_id: id,
+                outcome,
+                amount: betAmount,
+                action: activeTab,
+            };
+
+            // Add option_id for option-list markets
+            if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                payload.option_id = selectedOptionId;
+            }
+
             const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bet/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    market_id: id,
-                    outcome,
-                    amount: betAmount,
-                    action: activeTab,
-                }),
+                body: JSON.stringify(payload),
             });
 
             const data = await response.json();
@@ -717,28 +731,86 @@ export default function MarketDetail() {
 
                     {/* Right Column - Position Interface */}
                     <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 h-fit md:sticky md:top-12 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
-                        {/* Outcome Selector */}
+                        {/* Option List or Binary Outcome Selector */}
                         <div className="space-y-3 mb-4">
-                            <button
-                                onClick={() => setSelectedOutcome("Yes")}
-                                className={`w-full p-4 rounded-xl font-bold transition-all ${
-                                    selectedOutcome === "Yes"
-                                        ? "bg-green-500 text-white"
-                                        : "bg-muted/50 text-foreground hover:bg-muted/80"
-                                }`}
-                            >
-                                Yes {market.yes_probability}%
-                            </button>
-                            <button
-                                onClick={() => setSelectedOutcome("No")}
-                                className={`w-full p-4 rounded-xl font-bold transition-all ${
-                                    selectedOutcome === "No"
-                                        ? "bg-red-500 text-white"
-                                        : "bg-muted/50 text-foreground hover:bg-muted/80"
-                                }`}
-                            >
-                                No {noProbability}%
-                            </button>
+                            {market.market_type === 'OPTION_LIST' && market.options ? (
+                                <>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Select Option</label>
+                                    <div className="space-y-2">
+                                        {market.options.map((option: any) => {
+                                            const showYesProb = selectedOptionId === option.id ? option.yes_probability : option.yes_probability;
+                                            return (
+                                                <button
+                                                    key={option.id}
+                                                    onClick={() => setSelectedOptionId(option.id)}
+                                                    className={`w-full p-3 rounded-lg text-left font-semibold transition-all border-2 ${
+                                                        selectedOptionId === option.id
+                                                            ? "bg-foreground/10 border-foreground text-foreground"
+                                                            : "bg-muted/50 border-border text-foreground hover:border-foreground/50"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span>{option.label}</span>
+                                                        <span className="text-xs font-bold text-muted-foreground">Yes {showYesProb}%</span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    {/* Outcome selector for selected option */}
+                                    {selectedOptionId && (
+                                        <>
+                                            <label className="text-xs font-bold text-muted-foreground uppercase block mt-4 mb-2">Position</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button
+                                                    onClick={() => setSelectedOutcome("Yes")}
+                                                    className={`p-3 rounded-lg font-bold transition-all ${
+                                                        selectedOutcome === "Yes"
+                                                            ? "bg-green-500 text-white"
+                                                            : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                                    }`}
+                                                >
+                                                    Yes
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedOutcome("No")}
+                                                    className={`p-3 rounded-lg font-bold transition-all ${
+                                                        selectedOutcome === "No"
+                                                            ? "bg-red-500 text-white"
+                                                            : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                                    }`}
+                                                >
+                                                    No
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => setSelectedOutcome("Yes")}
+                                        className={`w-full p-4 rounded-xl font-bold transition-all ${
+                                            selectedOutcome === "Yes"
+                                                ? "bg-green-500 text-white"
+                                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                        }`}
+                                    >
+                                        Yes {market.yes_probability}%
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedOutcome("No")}
+                                        className={`w-full p-4 rounded-xl font-bold transition-all ${
+                                            selectedOutcome === "No"
+                                                ? "bg-red-500 text-white"
+                                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                        }`}
+                                    >
+                                        No {noProbability}%
+                                    </button>
+                                </>
+                            )}
                         </div>
 
                         {/* Buy/Sell Tabs */}
