@@ -716,18 +716,92 @@ export default function AdminPanel() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-black mb-2">Yes Probability (%)</label>
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            max={99}
-                                            value={createForm.yesProbability}
+                                        <label className="block text-sm font-bold text-black mb-2">Market Type</label>
+                                        <select
+                                            value={createForm.marketType}
                                             onChange={(e) =>
-                                                setCreateForm({ ...createForm, yesProbability: Number(e.target.value) })
+                                                setCreateForm({ ...createForm, marketType: e.target.value })
                                             }
                                             className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black"
-                                        />
+                                        >
+                                            <option value="BINARY">Binary (Yes/No)</option>
+                                            <option value="OPTION_LIST">Option List</option>
+                                        </select>
                                     </div>
+
+                                    {createForm.marketType === "BINARY" && (
+                                        <div>
+                                            <label className="block text-sm font-bold text-black mb-2">Yes Probability (%)</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={99}
+                                                value={createForm.yesProbability}
+                                                onChange={(e) =>
+                                                    setCreateForm({ ...createForm, yesProbability: Number(e.target.value) })
+                                                }
+                                                className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-black"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {createForm.marketType === "OPTION_LIST" && (
+                                        <div>
+                                            <label className="block text-sm font-bold text-black mb-2">Options</label>
+                                            <div className="space-y-2">
+                                                {createForm.options.map((option, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Option label"
+                                                            value={option.label}
+                                                            onChange={(e) => {
+                                                                const newOptions = [...createForm.options];
+                                                                newOptions[idx].label = e.target.value;
+                                                                setCreateForm({ ...createForm, options: newOptions });
+                                                            }}
+                                                            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={99}
+                                                            placeholder="Yes %"
+                                                            value={option.yesProbability}
+                                                            onChange={(e) => {
+                                                                const newOptions = [...createForm.options];
+                                                                newOptions[idx].yesProbability = Number(e.target.value);
+                                                                setCreateForm({ ...createForm, options: newOptions });
+                                                            }}
+                                                            className="w-20 px-2 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                                                        />
+                                                        {createForm.options.length > 2 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newOptions = createForm.options.filter((_, i) => i !== idx);
+                                                                    setCreateForm({ ...createForm, options: newOptions });
+                                                                }}
+                                                                className="px-3 py-2 border border-apple-red/50 text-apple-red rounded-lg text-sm hover:bg-apple-red/10 transition-all"
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        options: [...createForm.options, { label: "", yesProbability: 50 }],
+                                                    });
+                                                }}
+                                                className="mt-2 w-full px-3 py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
+                                            >
+                                                + Add Option
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <div>
                                         <label className="block text-sm font-bold text-black mb-2">End Date</label>
