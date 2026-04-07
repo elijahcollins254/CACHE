@@ -13,7 +13,7 @@ export function useNextAuthIntegration() {
     if (status === "authenticated" && session?.user) {
       // Sync session to localStorage for compatibility with existing auth
       const userData = {
-        id: session.user.id,
+        id: (session.user as any).id || session.user.email || "",
         email: session.user.email,
         name: session.user.name,
         image: session.user.image,
