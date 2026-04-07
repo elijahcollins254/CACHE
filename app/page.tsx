@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 
-const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved"];
+const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Mentions", "Saved", "Resolved"];
 
 export default function Home() {
   const dispatch = useAppDispatch();

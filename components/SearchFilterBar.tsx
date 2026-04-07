@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets
 import { setFilteredMarkets } from "@/lib/redux/slices/marketsSlice";
 import { Search, Sliders, TrendingUp } from "lucide-react";
 
-const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved"];
+const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved", "Mentions"];
 
 export default function SearchFilterBar() {
     const dispatch = useAppDispatch();
@@ -351,7 +351,7 @@ export default function SearchFilterBar() {
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             }`}
                         >
-                            {cat}
+                            {cat === "Mentions" ? "@" : cat}
                         </button>
                     ))}
                 </div>
