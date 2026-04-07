@@ -167,11 +167,6 @@ export default function Login() {
                     <Link href="/signup" className="text-apple-blue font-bold hover:underline">Create an account</Link>
                 </p>
             </div>
-
-                <p className="mt-8 text-[11px] text-muted-foreground font-medium text-center max-w-[300px] leading-relaxed">
-                    Your security is our priority.
-                    Password-protected decentralized access.
-                </p>
             </div>
         </div>
     );
