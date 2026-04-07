@@ -1,7 +1,7 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthOptions, type JWT, type Session } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -14,7 +14,7 @@ export const authOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async jwt({ token, account, profile, user }) {
+    async jwt({ token, account, profile, user }: any) {
       if (account) {
         token.accessToken = account.access_token;
         token.googleId = account.providerAccountId;
@@ -31,9 +31,12 @@ export const authOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: {
+      session: Session;
+      token: JWT;
+    }) {
       if (session.user) {
-        session.user.id = token.sub || "";
+        (session.user as any).id = token.sub || "";
         session.user.email = token.email || "";
         session.user.name = token.name || "";
         session.user.image = token.picture || "";
@@ -43,7 +46,13 @@ export const authOptions = {
       }
       return session;
     },
-    async signIn({ user, account, profile, email, credentials }) {
+    async signIn({ user, account, profile, email, credentials }: {
+      user?: any;
+      account?: any;
+      profile?: any;
+      email?: any;
+      credentials?: any;
+    }) {
       // Validate required fields
       if (!user?.email || !user?.name || !account?.providerAccountId) {
         console.error("Missing required OAuth fields:", {
