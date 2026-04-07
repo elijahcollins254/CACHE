@@ -43,7 +43,7 @@ export default function MarketDetail() {
     const [chatError, setChatError] = useState("");
     const [probabilityViewMode, setProbabilityViewMode] = useState<"percentage" | "graph">("graph");
     const [timePeriod, setTimePeriod] = useState<"1H" | "6H" | "1D" | "1W" | "1M" | "ALL">("ALL");
-    const [priceHistory, setPriceHistory] = useState<{yes: number[]; no: number[]}>({yes: [], no: []});
+    const [priceHistory, setPriceHistory] = useState<{[key: string]: {yes: number[]; no: number[]}}>({});
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -91,60 +91,135 @@ export default function MarketDetail() {
     const fetchPriceHistory = async () => {
         setLoadingChart(true);
         try {
-            const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/price-history/?period=${timePeriod}`,
-                {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.data && data.data.length > 0) {
-                    // Extract yes and no probabilities from history
-                    const yesProbs = data.data.map((d: any) => d.yes_probability);
-                    const noProbs = data.data.map((d: any) => d.no_probability);
-                    
-                    // If we have less than 8 points, pad with interpolated values
-                    if (yesProbs.length < 8) {
-                        while (yesProbs.length < 8) {
-                            yesProbs.unshift(yesProbs[0]);
-                            noProbs.unshift(noProbs[0]);
+            if (market.market_type === 'OPTION_LIST' && market.options) {
+                const histories: {[key: string]: {yes: number[]; no: number[]}} = {};
+                for (const option of market.options) {
+                    const response = await fetchWithAuth(
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/price-history/?period=${timePeriod}&option_id=${option.id}`,
+                        {
+                            method: "GET",
+                            headers: { "Content-Type": "application/json" },
                         }
-                    } else if (yesProbs.length > 8) {
-                        // If we have more than 8 points, sample them evenly
-                        const step = Math.floor(yesProbs.length / 8);
-                        const sampledYes = [];
-                        const sampledNo = [];
-                        for (let i = 0; i < 8; i++) {
-                            const index = i * step;
-                            sampledYes.push(yesProbs[index]);
-                            sampledNo.push(noProbs[index]);
+                    );
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.data && data.data.length > 0) {
+                            const yesProbs = data.data.map((d: any) => d.yes_probability);
+                            const noProbs = data.data.map((d: any) => d.no_probability);
+                            
+                            if (yesProbs.length < 8) {
+                                while (yesProbs.length < 8) {
+                                    yesProbs.unshift(yesProbs[0]);
+                                    noProbs.unshift(noProbs[0]);
+                                }
+                            } else if (yesProbs.length > 8) {
+                                const step = Math.floor(yesProbs.length / 8);
+                                const sampledYes = [];
+                                const sampledNo = [];
+                                for (let i = 0; i < 8; i++) {
+                                    const index = i * step;
+                                    sampledYes.push(yesProbs[index]);
+                                    sampledNo.push(noProbs[index]);
+                                }
+                                yesProbs.splice(0, yesProbs.length, ...sampledYes);
+                                noProbs.splice(0, noProbs.length, ...sampledNo);
+                            }
+                            
+                            histories[`option_${option.id}`] = {
+                                yes: yesProbs,
+                                no: noProbs,
+                            };
+                        } else {
+                            // No history, use current
+                            const yesProb = option.yes_probability;
+                            const noProb = option.no_probability;
+                            histories[`option_${option.id}`] = {
+                                yes: Array(8).fill(yesProb),
+                                no: Array(8).fill(noProb),
+                            };
                         }
-                        yesProbs.splice(0, yesProbs.length, ...sampledYes);
-                        noProbs.splice(0, noProbs.length, ...sampledNo);
+                    } else {
+                        // Fallback
+                        const yesProb = option.yes_probability;
+                        const noProb = option.no_probability;
+                        histories[`option_${option.id}`] = {
+                            yes: Array(8).fill(yesProb),
+                            no: Array(8).fill(noProb),
+                        };
                     }
-                    
-                    setPriceHistory({
-                        yes: yesProbs,
-                        no: noProbs,
-                    });
-                } else {
-                    // No history available, use generated data
-                    const generated = generateHistoricalPrices();
-                    setPriceHistory(generated);
                 }
+                setPriceHistory(histories);
             } else {
-                // Fallback to generated data if API fails
-                const generated = generateHistoricalPrices();
-                setPriceHistory(generated);
+                // BINARY market
+                const response = await fetchWithAuth(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/price-history/?period=${timePeriod}`,
+                    {
+                        method: "GET",
+                        headers: { "Content-Type": "application/json" },
+                    }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data && data.data.length > 0) {
+                        const yesProbs = data.data.map((d: any) => d.yes_probability);
+                        const noProbs = data.data.map((d: any) => d.no_probability);
+                        
+                        if (yesProbs.length < 8) {
+                            while (yesProbs.length < 8) {
+                                yesProbs.unshift(yesProbs[0]);
+                                noProbs.unshift(noProbs[0]);
+                            }
+                        } else if (yesProbs.length > 8) {
+                            const step = Math.floor(yesProbs.length / 8);
+                            const sampledYes = [];
+                            const sampledNo = [];
+                            for (let i = 0; i < 8; i++) {
+                                const index = i * step;
+                                sampledYes.push(yesProbs[index]);
+                                sampledNo.push(noProbs[index]);
+                            }
+                            yesProbs.splice(0, yesProbs.length, ...sampledYes);
+                            noProbs.splice(0, noProbs.length, ...sampledNo);
+                        }
+                        
+                        setPriceHistory({
+                            market: {
+                                yes: yesProbs,
+                                no: noProbs,
+                            }
+                        });
+                    } else {
+                        const generated = generateHistoricalPrices();
+                        setPriceHistory({
+                            market: generated
+                        });
+                    }
+                } else {
+                    const generated = generateHistoricalPrices();
+                    setPriceHistory({
+                        market: generated
+                    });
+                }
             }
         } catch (err) {
             console.error("Error fetching price history:", err);
-            // Fallback to generated data
-            const generated = generateHistoricalPrices();
-            setPriceHistory(generated);
+            if (market.market_type === 'OPTION_LIST' && market.options) {
+                const histories: {[key: string]: {yes: number[]; no: number[]}} = {};
+                for (const option of market.options) {
+                    const yesProb = option.yes_probability;
+                    const noProb = option.no_probability;
+                    histories[`option_${option.id}`] = {
+                        yes: Array(8).fill(yesProb),
+                        no: Array(8).fill(noProb),
+                    };
+                }
+                setPriceHistory(histories);
+            } else {
+                const generated = generateHistoricalPrices();
+                setPriceHistory({
+                    market: generated
+                });
+            }
         } finally {
             setLoadingChart(false);
         }
@@ -154,7 +229,7 @@ export default function MarketDetail() {
         if (market && market.id) {
             fetchPriceHistory();
         }
-    }, [timePeriod]);
+    }, [timePeriod, market]);
 
     const fetchMarketDetails = async () => {
         setChatLoading(true);
@@ -371,9 +446,7 @@ export default function MarketDetail() {
     };
 
     // Use fetched price history or fallback to generated data
-    const chartData = priceHistory && priceHistory.yes.length > 0 
-        ? priceHistory 
-        : generateHistoricalPrices();
+    const chartData = priceHistory;
 
     // Calculate estimated payout return
     const calculateEstimatedReturn = () => {
@@ -590,16 +663,37 @@ export default function MarketDetail() {
                                         <div className={isMobile ? "px-3 py-4" : "px-6 py-4"}>
                                             <svg width="100%" height={isMobile ? "220" : "280"} viewBox="0 0 900 280" className="w-full" style={{minHeight: isMobile ? '220px' : '280px'}}>
                                                 <defs>
-                                                    {/* Gradient for Yes */}
-                                                    <linearGradient id="yesGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                        <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.2" />
-                                                        <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
-                                                    </linearGradient>
-                                                    {/* Gradient for No */}
-                                                    <linearGradient id="noGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                        <stop offset="0%" stopColor="rgb(249, 115, 22)" stopOpacity="0.2" />
-                                                        <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
-                                                    </linearGradient>
+                                                    {market.market_type === 'BINARY' ? (
+                                                        <>
+                                                            {/* Gradient for Yes */}
+                                                            <linearGradient id="yesGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                                <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.2" />
+                                                                <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
+                                                            </linearGradient>
+                                                            {/* Gradient for No */}
+                                                            <linearGradient id="noGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                                <stop offset="0%" stopColor="rgb(249, 115, 22)" stopOpacity="0.2" />
+                                                                <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
+                                                            </linearGradient>
+                                                        </>
+                                                    ) : (
+                                                        market.options?.map((option: any, index: number) => {
+                                                            const colors = [
+                                                                "rgb(59, 130, 246)", // blue
+                                                                "rgb(249, 115, 22)", // orange
+                                                                "rgb(34, 197, 94)", // green
+                                                                "rgb(239, 68, 68)", // red
+                                                                "rgb(168, 85, 247)", // purple
+                                                            ];
+                                                            const color = colors[index % colors.length];
+                                                            return (
+                                                                <linearGradient key={`optionGradient${option.id}`} id={`optionGradient${option.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                                                    <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+                                                                    <stop offset="100%" stopColor={color} stopOpacity="0" />
+                                                                </linearGradient>
+                                                            );
+                                                        })
+                                                    )}
                                                 </defs>
 
                                                 {/* Horizontal Grid Lines & Labels */}
@@ -645,41 +739,79 @@ export default function MarketDetail() {
                                                     </text>
                                                 ))}
 
-                                                {/* Yes Area */}
-                                                <path
-                                                    d={`M 150 ${240 - (chartData.yes[0] * 2)} L 250 ${240 - (chartData.yes[1] * 2)} L 350 ${240 - (chartData.yes[2] * 2)} L 450 ${240 - (chartData.yes[3] * 2)} L 550 ${240 - (chartData.yes[4] * 2)} L 650 ${240 - (chartData.yes[5] * 2)} L 750 ${240 - (chartData.yes[6] * 2)} L 850 ${240 - (chartData.yes[7] * 2)} L 850 240 L 150 240 Z`}
-                                                    fill="url(#yesGradient2)"
-                                                />
+                                                {market.market_type === 'BINARY' ? (
+                                                    <>
+                                                        {/* Yes Area */}
+                                                        <path
+                                                            d={`M 150 ${240 - (chartData.market.yes[0] * 2)} L 250 ${240 - (chartData.market.yes[1] * 2)} L 350 ${240 - (chartData.market.yes[2] * 2)} L 450 ${240 - (chartData.market.yes[3] * 2)} L 550 ${240 - (chartData.market.yes[4] * 2)} L 650 ${240 - (chartData.market.yes[5] * 2)} L 750 ${240 - (chartData.market.yes[6] * 2)} L 850 ${240 - (chartData.market.yes[7] * 2)} L 850 240 L 150 240 Z`}
+                                                            fill="url(#yesGradient2)"
+                                                        />
 
-                                                {/* No Area */}
-                                                <path
-                                                    d={`M 150 ${240 - (chartData.no[0] * 2)} L 250 ${240 - (chartData.no[1] * 2)} L 350 ${240 - (chartData.no[2] * 2)} L 450 ${240 - (chartData.no[3] * 2)} L 550 ${240 - (chartData.no[4] * 2)} L 650 ${240 - (chartData.no[5] * 2)} L 750 ${240 - (chartData.no[6] * 2)} L 850 ${240 - (chartData.no[7] * 2)} L 850 240 L 150 240 Z`}
-                                                    fill="url(#noGradient2)"
-                                                />
+                                                        {/* No Area */}
+                                                        <path
+                                                            d={`M 150 ${240 - (chartData.market.no[0] * 2)} L 250 ${240 - (chartData.market.no[1] * 2)} L 350 ${240 - (chartData.market.no[2] * 2)} L 450 ${240 - (chartData.market.no[3] * 2)} L 550 ${240 - (chartData.market.no[4] * 2)} L 650 ${240 - (chartData.market.no[5] * 2)} L 750 ${240 - (chartData.market.no[6] * 2)} L 850 ${240 - (chartData.market.no[7] * 2)} L 850 240 L 150 240 Z`}
+                                                            fill="url(#noGradient2)"
+                                                        />
 
-                                                {/* Yes Line */}
-                                                <path
-                                                    d={`M 150 ${240 - (chartData.yes[0] * 2)} L 250 ${240 - (chartData.yes[1] * 2)} L 350 ${240 - (chartData.yes[2] * 2)} L 450 ${240 - (chartData.yes[3] * 2)} L 550 ${240 - (chartData.yes[4] * 2)} L 650 ${240 - (chartData.yes[5] * 2)} L 750 ${240 - (chartData.yes[6] * 2)} L 850 ${240 - (chartData.yes[7] * 2)}`}
-                                                    stroke="rgb(59, 130, 246)"
-                                                    strokeWidth="3"
-                                                    fill="none"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                />
+                                                        {/* Yes Line */}
+                                                        <path
+                                                            d={`M 150 ${240 - (chartData.market.yes[0] * 2)} L 250 ${240 - (chartData.market.yes[1] * 2)} L 350 ${240 - (chartData.market.yes[2] * 2)} L 450 ${240 - (chartData.market.yes[3] * 2)} L 550 ${240 - (chartData.market.yes[4] * 2)} L 650 ${240 - (chartData.market.yes[5] * 2)} L 750 ${240 - (chartData.market.yes[6] * 2)} L 850 ${240 - (chartData.market.yes[7] * 2)}`}
+                                                            stroke="rgb(59, 130, 246)"
+                                                            strokeWidth="3"
+                                                            fill="none"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
 
-                                                {/* No Line */}
-                                                <path
-                                                    d={`M 150 ${240 - (chartData.no[0] * 2)} L 250 ${240 - (chartData.no[1] * 2)} L 350 ${240 - (chartData.no[2] * 2)} L 450 ${240 - (chartData.no[3] * 2)} L 550 ${240 - (chartData.no[4] * 2)} L 650 ${240 - (chartData.no[5] * 2)} L 750 ${240 - (chartData.no[6] * 2)} L 850 ${240 - (chartData.no[7] * 2)}`}
-                                                    stroke="rgb(249, 115, 22)"
-                                                    strokeWidth="3"
-                                                    fill="none"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                />
+                                                        {/* No Line */}
+                                                        <path
+                                                            d={`M 150 ${240 - (chartData.market.no[0] * 2)} L 250 ${240 - (chartData.market.no[1] * 2)} L 350 ${240 - (chartData.market.no[2] * 2)} L 450 ${240 - (chartData.market.no[3] * 2)} L 550 ${240 - (chartData.market.no[4] * 2)} L 650 ${240 - (chartData.market.no[5] * 2)} L 750 ${240 - (chartData.market.no[6] * 2)} L 850 ${240 - (chartData.market.no[7] * 2)}`}
+                                                            stroke="rgb(249, 115, 22)"
+                                                            strokeWidth="3"
+                                                            fill="none"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
 
-                                                {/* Current Price Dots */}
-                                                <circle cx="850" cy={240 - (chartData.yes[7] * 2)} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                <circle cx="850" cy={240 - (chartData.no[7] * 2)} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                        {/* Current Price Dots */}
+                                                        <circle cx="850" cy={240 - (chartData.market.yes[7] * 2)} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                        <circle cx="850" cy={240 - (chartData.market.no[7] * 2)} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                    </>
+                                                ) : (
+                                                    market.options?.map((option: any, index: number) => {
+                                                        const colors = [
+                                                            "rgb(59, 130, 246)", // blue
+                                                            "rgb(249, 115, 22)", // orange
+                                                            "rgb(34, 197, 94)", // green
+                                                            "rgb(239, 68, 68)", // red
+                                                            "rgb(168, 85, 247)", // purple
+                                                        ];
+                                                        const color = colors[index % colors.length];
+                                                        const history = chartData[`option_${option.id}`];
+                                                        if (!history) return null;
+                                                        const pathD = `M 150 ${240 - (history.yes[0] * 2)} L 250 ${240 - (history.yes[1] * 2)} L 350 ${240 - (history.yes[2] * 2)} L 450 ${240 - (history.yes[3] * 2)} L 550 ${240 - (history.yes[4] * 2)} L 650 ${240 - (history.yes[5] * 2)} L 750 ${240 - (history.yes[6] * 2)} L 850 ${240 - (history.yes[7] * 2)}`;
+                                                        return (
+                                                            <g key={`option-${option.id}`}>
+                                                                {/* Area */}
+                                                                <path
+                                                                    d={`${pathD} L 850 240 L 150 240 Z`}
+                                                                    fill={`url(#optionGradient${option.id})`}
+                                                                />
+                                                                {/* Line */}
+                                                                <path
+                                                                    d={pathD}
+                                                                    stroke={color}
+                                                                    strokeWidth="3"
+                                                                    fill="none"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                />
+                                                                {/* Current Price Dot */}
+                                                                <circle cx="850" cy={240 - (history.yes[7] * 2)} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                            </g>
+                                                        );
+                                                    })
+                                                )}
                                             </svg>
                                         </div>
 
@@ -697,20 +829,69 @@ export default function MarketDetail() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                                    <span className="text-sm font-bold text-foreground">{market.yes_probability}%</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                                                    <span className="text-sm font-bold text-foreground">{noProbability}%</span>
-                                                </div>
+                                                {market.market_type === 'BINARY' ? (
+                                                    <>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                                            <span className="text-sm font-bold text-foreground">{market.yes_probability}%</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                                                            <span className="text-sm font-bold text-foreground">{noProbability}%</span>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    market.options?.map((option: any, index: number) => {
+                                                        const colors = [
+                                                            "bg-blue-500",
+                                                            "bg-orange-500",
+                                                            "bg-green-500",
+                                                            "bg-red-500",
+                                                            "bg-purple-500",
+                                                        ];
+                                                        const bgColor = colors[index % colors.length];
+                                                        return (
+                                                            <div key={option.id} className="flex items-center gap-2">
+                                                                <div className={`w-3 h-3 rounded-full ${bgColor}`}></div>
+                                                                <span className="text-sm font-bold text-foreground">{option.yes_probability}%</span>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
                         </div>
+
+                        {/* Options List for OPTION_LIST */}
+                        {market.market_type === 'OPTION_LIST' && market.options && (
+                            <div className="bg-muted rounded-2xl p-4">
+                                <h3 className="text-sm font-bold text-foreground mb-3">Select Option</h3>
+                                <div className="space-y-2">
+                                    {market.options.map((option: any) => {
+                                        const showYesProb = selectedOptionId === option.id ? option.yes_probability : option.yes_probability;
+                                        return (
+                                            <button
+                                                key={option.id}
+                                                onClick={() => setSelectedOptionId(option.id)}
+                                                className={`w-full p-3 rounded-lg text-left font-semibold transition-all border-2 ${
+                                                    selectedOptionId === option.id
+                                                        ? "bg-foreground/10 border-foreground text-foreground"
+                                                        : "bg-background border-border text-foreground hover:border-foreground/50"
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span>{option.label}</span>
+                                                    <span className="text-xs font-bold text-muted-foreground">Yes {showYesProb}%</span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Info Grid */}
                         <div className="grid grid-cols-3 gap-3">
@@ -731,64 +912,38 @@ export default function MarketDetail() {
 
                     {/* Right Column - Position Interface */}
                     <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 h-fit md:sticky md:top-12 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
-                        {/* Option List or Binary Outcome Selector */}
+                        {/* Position Selector */}
                         <div className="space-y-3 mb-4">
-                            {market.market_type === 'OPTION_LIST' && market.options ? (
-                                <>
-                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Select Option</label>
-                                    <div className="space-y-2">
-                                        {market.options.map((option: any) => {
-                                            const showYesProb = selectedOptionId === option.id ? option.yes_probability : option.yes_probability;
-                                            return (
-                                                <button
-                                                    key={option.id}
-                                                    onClick={() => setSelectedOptionId(option.id)}
-                                                    className={`w-full p-3 rounded-lg text-left font-semibold transition-all border-2 ${
-                                                        selectedOptionId === option.id
-                                                            ? "bg-foreground/10 border-foreground text-foreground"
-                                                            : "bg-muted/50 border-border text-foreground hover:border-foreground/50"
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <span>{option.label}</span>
-                                                        <span className="text-xs font-bold text-muted-foreground">Yes {showYesProb}%</span>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
+                            <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Position</label>
+                            {market.market_type === 'OPTION_LIST' ? (
+                                selectedOptionId ? (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setSelectedOutcome("Yes")}
+                                            className={`p-3 rounded-lg font-bold transition-all ${
+                                                selectedOutcome === "Yes"
+                                                    ? "bg-green-500 text-white"
+                                                    : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                            }`}
+                                        >
+                                            Yes
+                                        </button>
+                                        <button
+                                            onClick={() => setSelectedOutcome("No")}
+                                            className={`p-3 rounded-lg font-bold transition-all ${
+                                                selectedOutcome === "No"
+                                                    ? "bg-red-500 text-white"
+                                                    : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                            }`}
+                                        >
+                                            No
+                                        </button>
                                     </div>
-                                    
-                                    {/* Outcome selector for selected option */}
-                                    {selectedOptionId && (
-                                        <>
-                                            <label className="text-xs font-bold text-muted-foreground uppercase block mt-4 mb-2">Position</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <button
-                                                    onClick={() => setSelectedOutcome("Yes")}
-                                                    className={`p-3 rounded-lg font-bold transition-all ${
-                                                        selectedOutcome === "Yes"
-                                                            ? "bg-green-500 text-white"
-                                                            : "bg-muted/50 text-foreground hover:bg-muted/80"
-                                                    }`}
-                                                >
-                                                    Yes
-                                                </button>
-                                                <button
-                                                    onClick={() => setSelectedOutcome("No")}
-                                                    className={`p-3 rounded-lg font-bold transition-all ${
-                                                        selectedOutcome === "No"
-                                                            ? "bg-red-500 text-white"
-                                                            : "bg-muted/50 text-foreground hover:bg-muted/80"
-                                                    }`}
-                                                >
-                                                    No
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-                                </>
+                                ) : (
+                                    <div className="text-sm text-muted-foreground">Select an option first</div>
+                                )
                             ) : (
-                                <>
+                                <div className="space-y-2">
                                     <button
                                         onClick={() => setSelectedOutcome("Yes")}
                                         className={`w-full p-4 rounded-xl font-bold transition-all ${
@@ -809,7 +964,7 @@ export default function MarketDetail() {
                                     >
                                         No {noProbability}%
                                     </button>
-                                </>
+                                </div>
                             )}
                         </div>
 
