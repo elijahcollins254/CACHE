@@ -58,12 +58,29 @@ export function SessionSyncProvider({ children }: { children: React.ReactNode })
         }, 150);
       }
     } else if (status === "unauthenticated") {
-      // Clear auth on logout
+      // NextAuth session expired or invalid
+      // Check if we have localStorage user data that might be stale
       const storedUser = localStorage.getItem("poly_user");
       if (storedUser) {
-        console.log("[SessionSync] ❌ Clearing user on logout");
-        localStorage.removeItem("poly_user");
-        window.dispatchEvent(new Event("poly_auth_change"));
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.provider === "google") {
+            // For Google OAuth users, clear localStorage since session is invalid
+            console.log("[SessionSync] ❌ Clearing stale Google OAuth localStorage");
+            localStorage.removeItem("poly_user");
+            window.dispatchEvent(new Event("poly_auth_change"));
+            
+            // Redirect to login if not already there
+            const path = window.location.pathname;
+            if (path !== "/login" && path !== "/signup") {
+              router.push("/login");
+            }
+          }
+          // Phone users keep their localStorage (they don't rely on NextAuth)
+        } catch (e) {
+          console.error("[SessionSync] Error parsing localStorage:", e);
+          localStorage.removeItem("poly_user");
+        }
       }
     }
   }, [session, status, router]);
