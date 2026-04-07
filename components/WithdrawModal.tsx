@@ -58,8 +58,8 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
             return;
         }
 
-        if (withdrawAmount < 100) {
-            setError("Minimum withdrawal is KSh 100");
+        if (withdrawAmount < 10) {
+            setError("Minimum withdrawal is KSh 10");
             return;
         }
 
@@ -192,7 +192,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0"
                                 className="text-2xl font-bold w-full border-none focus:outline-none bg-transparent"
-                                min="100"
+                                min="10"
                                 max={parseFloat(balance)}
                                 required
                             />
@@ -246,7 +246,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={!amount || parseFloat(amount) < 100 || parseFloat(amount) > parseFloat(balance)}
+                            disabled={!amount || parseFloat(amount) < 10 || parseFloat(amount) > parseFloat(balance)}
                             className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             Withdraw KSh {amount || "0"}
@@ -254,7 +254,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
 
                         {/* Info Text */}
                         <p className="text-[11px] text-center text-muted-foreground">
-                            Minimum: KSh 100 | Limit: KSh {parseFloat(balance).toLocaleString()}
+                            Minimum: KSh 10 | Limit: KSh {parseFloat(balance).toLocaleString()}
                         </p>
                     </form>
                 </div>
