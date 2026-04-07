@@ -1,5 +1,6 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import { type JWT } from "next-auth/jwt";
+import { type Session } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 export const authOptions: NextAuthOptions = {
@@ -32,10 +33,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }: {
-      session: Session;
-      token: JWT;
-    }) {
+    async session({ session, token }: any) {
       if (session.user) {
         (session.user as any).id = token.sub || "";
         session.user.email = token.email || "";
@@ -47,13 +45,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user, account, profile, email, credentials }: {
-      user?: any;
-      account?: any;
-      profile?: any;
-      email?: any;
-      credentials?: any;
-    }) {
+    async signIn({ user, account, profile, email, credentials }: any) {
       // Validate required fields
       if (!user?.email || !user?.name || !account?.providerAccountId) {
         console.error("Missing required OAuth fields:", {
