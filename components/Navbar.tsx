@@ -192,6 +192,9 @@ export default function Navbar() {
                     {/* Theme Toggle - Always Visible */}
                     <ThemeToggle />
 
+                    {/* Theme Toggle - Available for all users */}
+                    <ThemeToggle />
+
                     {/* Auth Section */}
                     {user ? (
                         <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">

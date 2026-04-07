@@ -68,12 +68,12 @@ export default function Signup() {
 
                 <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Full Name</label>
+                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Username</label>
                         <div className="relative">
                             <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="text"
-                                placeholder="Kipchoge Keino"
+                                placeholder="Kibeezy"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="h-12 w-full rounded-2xl bg-muted pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all"
