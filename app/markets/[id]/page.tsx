@@ -868,27 +868,41 @@ export default function MarketDetail() {
                         {/* Options List for OPTION_LIST */}
                         {market.market_type === 'OPTION_LIST' && market.options && (
                             <div className="bg-muted rounded-2xl p-4">
-                                <h3 className="text-sm font-bold text-foreground mb-3">Select Option</h3>
-                                <div className="space-y-2">
-                                    {market.options.map((option: any) => {
-                                        const showYesProb = selectedOptionId === option.id ? option.yes_probability : option.yes_probability;
-                                        return (
-                                            <button
-                                                key={option.id}
-                                                onClick={() => setSelectedOptionId(option.id)}
-                                                className={`w-full p-3 rounded-lg text-left font-semibold transition-all border-2 ${
-                                                    selectedOptionId === option.id
-                                                        ? "bg-foreground/10 border-foreground text-foreground"
-                                                        : "bg-background border-border text-foreground hover:border-foreground/50"
-                                                }`}
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <span>{option.label}</span>
-                                                    <span className="text-xs font-bold text-muted-foreground">Yes {showYesProb}%</span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                                <h3 className="text-sm font-bold text-foreground mb-4">Options</h3>
+                                <div className="space-y-3">
+                                    {market.options.map((option: any) => (
+                                        <div key={option.id} className="space-y-2">
+                                            <div className="text-xs font-bold text-muted-foreground">{option.label}</div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedOptionId(option.id);
+                                                        setSelectedOutcome("Yes");
+                                                    }}
+                                                    className={`p-3 rounded-lg font-bold transition-all text-sm ${
+                                                        selectedOptionId === option.id && selectedOutcome === "Yes"
+                                                            ? "bg-green-500 text-white"
+                                                            : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
+                                                    }`}
+                                                >
+                                                    Buy {option.yes_probability}¢
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedOptionId(option.id);
+                                                        setSelectedOutcome("No");
+                                                    }}
+                                                    className={`p-3 rounded-lg font-bold transition-all text-sm ${
+                                                        selectedOptionId === option.id && selectedOutcome === "No"
+                                                            ? "bg-red-500 text-white"
+                                                            : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
+                                                    }`}
+                                                >
+                                                    Sell {100 - option.yes_probability}¢
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -911,58 +925,75 @@ export default function MarketDetail() {
                     </div>
 
                     {/* Right Column - Position Interface */}
-                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 h-fit md:sticky md:top-12 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
-                        {/* Position Selector */}
+                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 md:sticky md:top-12 md:h-fit">
+                        {/* Selected Option Display */}
+                        {market.market_type === 'OPTION_LIST' && selectedOptionId && (
+                            <div className="mb-4 p-3 bg-background rounded-lg border border-border">
+                                <div className="text-xs font-bold text-muted-foreground uppercase mb-1">Selected Option</div>
+                                <div className="text-sm font-bold text-foreground">
+                                    {market.options?.find((o: any) => o.id === selectedOptionId)?.label}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Position Display */}
                         <div className="space-y-3 mb-4">
-                            <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Position</label>
+                            <label className="text-xs font-bold text-muted-foreground uppercase block">Position</label>
                             {market.market_type === 'OPTION_LIST' ? (
                                 selectedOptionId ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            onClick={() => setSelectedOutcome("Yes")}
-                                            className={`p-3 rounded-lg font-bold transition-all ${
-                                                selectedOutcome === "Yes"
-                                                    ? "bg-green-500 text-white"
-                                                    : "bg-muted/50 text-foreground hover:bg-muted/80"
-                                            }`}
-                                        >
-                                            Yes
-                                        </button>
-                                        <button
-                                            onClick={() => setSelectedOutcome("No")}
-                                            className={`p-3 rounded-lg font-bold transition-all ${
-                                                selectedOutcome === "No"
-                                                    ? "bg-red-500 text-white"
-                                                    : "bg-muted/50 text-foreground hover:bg-muted/80"
-                                            }`}
-                                        >
-                                            No
-                                        </button>
+                                    <div className="space-y-2">
+                                        {(() => {
+                                            const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                                            return (
+                                                <>
+                                                    <button
+                                                        onClick={() => setSelectedOutcome("Yes")}
+                                                        className={`w-full p-4 rounded-lg font-bold transition-all text-sm ${
+                                                            selectedOutcome === "Yes"
+                                                                ? "bg-green-500 text-white"
+                                                                : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
+                                                        }`}
+                                                    >
+                                                        Yes <span className="font-bold">{option?.yes_probability}¢</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setSelectedOutcome("No")}
+                                                        className={`w-full p-4 rounded-lg font-bold transition-all text-sm ${
+                                                            selectedOutcome === "No"
+                                                                ? "bg-red-500 text-white"
+                                                                : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
+                                                        }`}
+                                                    >
+                                                        No <span className="font-bold">{100 - (option?.yes_probability || 0)}¢</span>
+                                                    </button>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 ) : (
-                                    <div className="text-sm text-muted-foreground">Select an option first</div>
+                                    <div className="text-sm text-muted-foreground p-3 bg-background rounded-lg">Select an option from the list</div>
                                 )
                             ) : (
                                 <div className="space-y-2">
                                     <button
                                         onClick={() => setSelectedOutcome("Yes")}
-                                        className={`w-full p-4 rounded-xl font-bold transition-all ${
+                                        className={`w-full p-4 rounded-lg font-bold transition-all text-sm ${
                                             selectedOutcome === "Yes"
                                                 ? "bg-green-500 text-white"
-                                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                                : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes {market.yes_probability}%
+                                        Yes <span className="font-bold">{market.yes_probability}¢</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
-                                        className={`w-full p-4 rounded-xl font-bold transition-all ${
+                                        className={`w-full p-4 rounded-lg font-bold transition-all text-sm ${
                                             selectedOutcome === "No"
                                                 ? "bg-red-500 text-white"
-                                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                                : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                         }`}
                                     >
-                                        No {noProbability}%
+                                        No <span className="font-bold">{noProbability}¢</span>
                                     </button>
                                 </div>
                             )}
