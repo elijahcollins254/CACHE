@@ -504,7 +504,7 @@ export default function AdminPanel() {
                                                     </div>
                                                     <div>
                                                         <p className="text-xs text-muted-foreground font-bold uppercase">Wagered</p>
-                                                        <p className="text-lg font-bold text-black">KSh {parseFloat(market.total_wagered).toLocaleString()}</p>
+                                                        <p className="text-lg font-bold text-black">KES {parseFloat(market.total_wagered).toLocaleString()}</p>
                                                     </div>
                                                 </div>
 
@@ -568,7 +568,7 @@ export default function AdminPanel() {
                                                     </div>
                                                     <div>
                                                         <p className="text-xs text-muted-foreground font-bold">Total Wagered</p>
-                                                        <p className="font-bold text-black">KSh {parseFloat(market.total_wagered).toLocaleString()}</p>
+                                                        <p className="font-bold text-black">KES {parseFloat(market.total_wagered).toLocaleString()}</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-xs text-muted-foreground font-bold">Yes Bets</p>
@@ -618,7 +618,7 @@ export default function AdminPanel() {
                                                             {user.kyc_verified ? '✓ KYC Verified' : 'KYC Pending'}
                                                         </span>
                                                         <span className="px-2 py-1 bg-muted rounded">
-                                                            Balance: KSh {parseFloat(user.balance).toLocaleString()}
+                                                            Balance: KES {parseFloat(user.balance).toLocaleString()}
                                                         </span>
                                                         {!user.is_active && (
                                                             <span className="px-2 py-1 bg-apple-red/10 text-apple-red rounded">Inactive</span>
@@ -663,7 +663,7 @@ export default function AdminPanel() {
                                         <label className="block text-sm font-bold text-black mb-2">Market Question</label>
                                         <input
                                             type="text"
-                                            placeholder="e.g., Will BTC reach KSh 5M by Dec 31?"
+                                            placeholder="e.g., Will BTC reach KES 5M by Dec 31?"
                                             value={createForm.question}
                                             onChange={(e) =>
                                                 setCreateForm({ ...createForm, question: e.target.value })

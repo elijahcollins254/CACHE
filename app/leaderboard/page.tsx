@@ -240,12 +240,12 @@ export default function LeaderboardPage() {
                         parseFloat(leader.balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600'
                       }`}>
                         {sortBy === "profit"
-                          ? `${(leader.profit_loss ?? 0) >= 0 ? '+' : ''}KSh ${(leader.profit_loss ?? 0).toLocaleString()}`
-                          : `KSh ${parseFloat(leader.balance).toLocaleString()}`}
+                          ? `${(leader.profit_loss ?? 0) >= 0 ? '+' : ''}KES ${(leader.profit_loss ?? 0).toLocaleString()}`
+                          : `KES ${parseFloat(leader.balance).toLocaleString()}`}
                       </p>
                     </div>
                     <div className="hidden md:col-span-3 md:text-right">
-                      <p className="font-semibold text-sm text-green-600 dark:text-green-400">KSh {parseFloat(leader.balance).toLocaleString()}</p>
+                      <p className="font-semibold text-sm text-green-600 dark:text-green-400">KES {parseFloat(leader.balance).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -273,7 +273,7 @@ export default function LeaderboardPage() {
                       <p className="text-xs font-semibold text-foreground truncate group-hover:text-foreground transition">{win.user_name}</p>
                       <p className="text-xs text-muted-foreground truncate mb-1">{win.market_title}</p>
                       <p className="text-xs font-bold text-green-600 dark:text-green-400">
-                        + KSh {win.profit.toLocaleString()}
+                        + KES {win.profit.toLocaleString()}
                       </p>
                     </div>
                   </div>

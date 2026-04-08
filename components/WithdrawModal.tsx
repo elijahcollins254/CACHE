@@ -59,7 +59,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
         }
 
         if (withdrawAmount < 10) {
-            setError("Minimum withdrawal is KSh 10");
+            setError("Minimum withdrawal is KES 10");
             return;
         }
 
@@ -136,7 +136,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                     <div className="bg-muted rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-4 text-center">
                         <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
                         <h2 className="text-lg font-bold text-foreground mb-1">Withdrawal Successful!</h2>
-                        <p className="text-muted-foreground text-xs mb-4">KSh {parseFloat(amount).toLocaleString()} sent to {phoneNumber}</p>
+                        <p className="text-muted-foreground text-xs mb-4">KES {parseFloat(amount).toLocaleString()} sent to {phoneNumber}</p>
                         <button
                             onClick={onClose}
                             className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:opacity-90"
@@ -169,7 +169,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                         <div>
                             <h2 className="text-base font-bold text-foreground">Withdraw</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                Balance: KSh {balance}
+                                Balance: KES {balance}
                             </p>
                         </div>
                         <button
@@ -185,7 +185,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                     <form onSubmit={handleWithdraw} className="p-4 space-y-3">
                         {/* Amount Input */}
                         <div className="bg-muted rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground mb-1">Amount (KSh)</p>
+                            <p className="text-xs text-muted-foreground mb-1">Amount (KES)</p>
                             <input
                                 type="number"
                                 value={amount}
@@ -217,7 +217,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                                                     : 'border-border text-muted-foreground cursor-not-allowed opacity-50'
                                             }`}
                                         >
-                                            +KSh {preset}
+                                            +KES {preset}
                                         </button>
                                     );
                                 })}
@@ -227,7 +227,7 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                         {/* Balance Limit */}
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 dark:bg-blue-950/40 dark:border-blue-900/40 dark:text-blue-200">
                             <p className="text-xs text-blue-700 dark:text-blue-200">
-                                <span className="font-semibold">Maximum Withdrawal:</span> KSh {parseFloat(balance).toLocaleString()}
+                                <span className="font-semibold">Maximum Withdrawal:</span> KES {parseFloat(balance).toLocaleString()}
                             </p>
                         </div>
 
@@ -249,12 +249,12 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                             disabled={!amount || parseFloat(amount) < 10 || parseFloat(amount) > parseFloat(balance)}
                             className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                            Withdraw KSh {amount || "0"}
+                            Withdraw KES {amount || "0"}
                         </button>
 
                         {/* Info Text */}
                         <p className="text-[11px] text-center text-muted-foreground">
-                            Minimum: KSh 10 | Limit: KSh {parseFloat(balance).toLocaleString()}
+                            Minimum: KES 10 | Limit: KES {parseFloat(balance).toLocaleString()}
                         </p>
                     </form>
                 </div>

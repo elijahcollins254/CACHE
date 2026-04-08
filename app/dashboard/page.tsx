@@ -119,7 +119,7 @@ export default function Dashboard() {
                     <div>
                         <div className="bg-background rounded-2xl p-6 border border-border">
                             <p className="text-muted-foreground text-sm font-medium mb-1">Cash Balance</p>
-                            <h2 className="text-3xl font-bold mb-6">KSh {parseFloat(balance).toLocaleString()}</h2>
+                            <h2 className="text-3xl font-bold mb-6">KES {parseFloat(balance).toLocaleString()}</h2>
                             
                             {/* Action Buttons */}
                             <div className="flex gap-3">
@@ -144,7 +144,7 @@ export default function Dashboard() {
                     <div>
                         <div className="bg-background rounded-2xl p-6 border border-border">
                             <p className="text-muted-foreground text-sm font-medium mb-1">Portfolio Value</p>
-                            <h2 className="text-3xl font-bold mb-1">KSh {parseFloat(portfolioValue).toLocaleString()}</h2>
+                            <h2 className="text-3xl font-bold mb-1">KES {parseFloat(portfolioValue).toLocaleString()}</h2>
                             <p className="text-xs text-muted-foreground mb-6">{statistics?.total_wagered && statistics.total_wagered > 0 ? `+${parseFloat(String(statistics.total_wagered)).toLocaleString()}` : '0.00'} (0%) past day</p>
                         </div>
                     </div>
@@ -154,7 +154,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <p className="text-muted-foreground text-sm font-medium">Profit/Loss</p>
-                                <h2 className="text-3xl font-bold text-foreground">KSh 0.00</h2>
+                                <h2 className="text-3xl font-bold text-foreground">KES 0.00</h2>
                             </div>
                         </div>
                         
@@ -250,7 +250,7 @@ export default function Dashboard() {
                                                     <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Stake Amount</p>
-                                                            <p className="font-bold text-foreground">KSh {Number(bet.amount).toLocaleString()}</p>
+                                                            <p className="font-bold text-foreground">KES {Number(bet.amount).toLocaleString()}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Probability</p>
@@ -258,7 +258,7 @@ export default function Dashboard() {
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Potential Payout</p>
-                                                            <p className="font-bold text-green-600">KSh {potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                                            <p className="font-bold text-green-600">KES {potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Placed</p>
@@ -313,17 +313,17 @@ export default function Dashboard() {
                                                             <span className="text-muted-foreground">0% → 0%</span>
                                                         </td>
                                                         <td className="py-4 px-4 text-sm font-medium">
-                                                            KSh {parseFloat(bet.amount).toLocaleString()}
+                                                            KES {parseFloat(bet.amount).toLocaleString()}
                                                         </td>
                                                         <td className="py-4 px-4 text-sm">
                                                             <span className="text-green-600 font-medium">
-                                                                {bet.payout ? `KSh ${parseFloat(bet.payout).toLocaleString()}` : "—"}
+                                                                {bet.payout ? `KES ${parseFloat(bet.payout).toLocaleString()}` : "—"}
                                                             </span>
                                                         </td>
                                                         <td className="py-4 px-4 text-right">
                                                             <div>
                                                                 <p className="font-medium text-sm">
-                                                                    {bet.payout ? `+KSh ${(parseFloat(bet.payout) - parseFloat(bet.amount)).toLocaleString()}` : "—"}
+                                                                    {bet.payout ? `+KES ${(parseFloat(bet.payout) - parseFloat(bet.amount)).toLocaleString()}` : "—"}
                                                                 </p>
                                                                 <p className={`text-xs ${
                                                                     bet.result === 'WON'
@@ -384,7 +384,7 @@ export default function Dashboard() {
                                                         <td className="py-4 px-4 text-sm max-w-[220px] truncate">{txn.description}</td>
                                                         <td className="py-4 px-4 text-sm font-medium whitespace-nowrap">
                                                             <span className={txn.type === 'DEPOSIT' ? 'text-green-600' : 'text-red-600'}>
-                                                                {txn.type === 'DEPOSIT' ? '+' : '-'} KSh {parseFloat(txn.amount).toLocaleString()}
+                                                                {txn.type === 'DEPOSIT' ? '+' : '-'} KES {parseFloat(txn.amount).toLocaleString()}
                                                             </span>
                                                         </td>
                                                         <td className="py-4 px-4 whitespace-nowrap">

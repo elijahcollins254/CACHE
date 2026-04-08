@@ -154,7 +154,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                     <div className="bg-background dark:bg-slate-950 border border-border rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-4 text-center">
                         <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
                         <h2 className="text-lg font-bold text-foreground mb-1">Deposit Successful!</h2>
-                        <p className="text-muted-foreground text-xs mb-4">KSh {parseFloat(amount).toLocaleString()} added</p>
+                        <p className="text-muted-foreground text-xs mb-4">KES {parseFloat(amount).toLocaleString()} added</p>
                         <button
                             onClick={onClose}
                             className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:opacity-90"
@@ -187,7 +187,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                         <div>
                             <h2 className="text-base font-bold text-foreground">Deposit</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                Balance: KSh {balance}
+                                Balance: KES {balance}
                             </p>
                         </div>
                         <button
@@ -203,7 +203,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                     <form onSubmit={handleDeposit} className="p-4 space-y-3">
                         {/* Amount Input */}
                         <div className="bg-muted rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground mb-1">Amount (KSh)</p>
+                            <p className="text-xs text-muted-foreground mb-1">Amount (KES)</p>
                             <input
                                 type="number"
                                 value={amount}
@@ -226,7 +226,7 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                                         onClick={() => setAmount(((parseFloat(amount) || 0) + preset).toString())}
                                         className="py-2 px-2 rounded-lg border border-border bg-background text-foreground hover:border-black hover:bg-muted font-semibold text-xs transition-all dark:bg-muted dark:hover:border-white"
                                     >
-                                        +KSh {preset}
+                                        +KES {preset}
                                     </button>
                                 ))}
                             </div>
@@ -250,12 +250,12 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
                             disabled={!amount || parseFloat(amount) < 1}
                             className="w-full bg-black text-white py-2 rounded-lg font-semibold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                            Deposit KSh {amount || "0"}
+                            Deposit KES {amount || "0"}
                         </button>
 
                         {/* Info Text */}
                         <p className="text-[11px] text-center text-muted-foreground">
-                            Minimum: KSh 1
+                            Minimum: KES 1
                         </p>
                     </form>
                 </div>

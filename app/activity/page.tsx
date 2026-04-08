@@ -11,28 +11,28 @@ const activities = [
         user: "0x71...2f4",
         action: "Bought YES",
         market: "Nairobi Rainfall March 2026",
-        amount: "KSh 45,000",
+        amount: "KES 45,000",
         time: "2 mins ago"
     },
     {
         user: "0x12...a8e",
         action: "Sold NO",
         market: "KES/USD stays below 130",
-        amount: "KSh 12,500",
+        amount: "KES 12,500",
         time: "15 mins ago"
     },
     {
         user: "0x9d...441",
         action: "Bought Patriots",
         market: "Seahawks vs Patriots",
-        amount: "KSh 250,000",
+        amount: "KES 250,000",
         time: "45 mins ago"
     },
     {
         user: "0xb2...c3d",
         action: "Claimed Profit",
         market: "Eliud Kipchoge Retirement",
-        amount: "KSh 8,200",
+        amount: "KES 8,200",
         time: "1 hour ago"
     }
 ];

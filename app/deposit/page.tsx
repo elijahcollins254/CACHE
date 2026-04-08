@@ -86,7 +86,7 @@ export default function DepositPage() {
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                     <CheckCircle2 className="h-20 w-20 text-green-600 mb-4" />
                     <h1 className="text-3xl font-bold text-foreground mb-2">Deposit Successful!</h1>
-                    <p className="text-muted-foreground mb-6">KSh {parseFloat(amount).toLocaleString()} added</p>
+                    <p className="text-muted-foreground mb-6">KES {parseFloat(amount).toLocaleString()} added</p>
                     <Link href="/dashboard" className="bg-foreground text-background px-6 py-3 rounded-lg font-semibold">
                         Go to Dashboard →
                     </Link>
@@ -133,7 +133,7 @@ export default function DepositPage() {
                                     onClick={() => setAmount(preset.toString())}
                                     className="p-3 rounded-lg border border-border hover:border-foreground hover:bg-muted font-semibold"
                                 >
-                                    KSh {preset.toLocaleString()}
+                                    KES {preset.toLocaleString()}
                                 </button>
                             ))}
                         </div>
@@ -162,7 +162,7 @@ export default function DepositPage() {
                         disabled={!amount || parseFloat(amount) < 1}
                         className="w-full bg-foreground text-background py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Deposit KSh {amount || "0"}
+                        Deposit KES {amount || "0"}
                     </button>
                 </form>
             </main>

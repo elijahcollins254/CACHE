@@ -103,7 +103,7 @@ export default function Withdraw() {
                     {/* Balance Display */}
                     <div className="apple-card p-6 mb-6">
                         <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider mb-2">Available Balance</p>
-                        <p className="text-4xl font-bold text-foreground">KSH {parseFloat(user.balance).toFixed(2)}</p>
+                        <p className="text-4xl font-bold text-foreground">KES {parseFloat(user.balance).toFixed(2)}</p>
                     </div>
 
                     {/* Withdrawal Form */}
@@ -127,7 +127,7 @@ export default function Withdraw() {
                             <div>
                                 <label className="block text-sm font-bold text-foreground mb-2">Withdrawal Amount</label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-3 text-muted-foreground font-bold">KSH</span>
+                                    <span className="absolute left-4 top-3 text-muted-foreground font-bold">KES</span>
                                     <input
                                         type="number"
                                         placeholder="0.00"
@@ -137,7 +137,7 @@ export default function Withdraw() {
                                         className="w-full pl-14 pr-4 py-3 border border-border rounded-lg text-foreground bg-background font-bold focus:outline-none focus:ring-2 focus:ring-foreground disabled:opacity-50"
                                     />
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-2">Max: KSH {parseFloat(user.balance).toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground mt-2">Max: KES {parseFloat(user.balance).toFixed(2)}</p>
                             </div>
 
                             <button
@@ -156,7 +156,7 @@ export default function Withdraw() {
                                         disabled={submitting || amt > parseFloat(user.balance)}
                                         className="px-3 py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        KSH {amt}
+                                        KES {amt}
                                     </button>
                                 ))}
                             </div>

@@ -911,7 +911,7 @@ export default function MarketDetail() {
                         <div className="grid grid-cols-3 gap-3">
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Volume</span>
-                                <div className="text-xl font-bold text-foreground mt-1">{market.volume || 'KSh 0'}</div>
+                                <div className="text-xl font-bold text-foreground mt-1">{market.volume || 'KES 0'}</div>
                             </div>
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Closes</span>
@@ -1055,7 +1055,7 @@ export default function MarketDetail() {
                                     {activeTab === "sell" ? "You'll receive" : "Total Return"}
                                 </span>
                                 <div className="text-3xl font-bold text-green-400">
-                                    KSh {estimatedReturn.toFixed(2)}
+                                    KES {estimatedReturn.toFixed(2)}
                                 </div>
                                 <span className="text-xs text-muted-foreground mt-1 block">
                                     Probability {selectedOutcome === "Yes" ? market.yes_probability : noProbability}%
@@ -1238,7 +1238,7 @@ export default function MarketDetail() {
                                                             </div>
                                                             <div className="text-right">
                                                                 <p className="font-semibold text-foreground">{position.quantity} shares</p>
-                                                                <p className="text-xs text-muted-foreground">KSh {Number(position.amount).toLocaleString()}</p>
+                                                                <p className="text-xs text-muted-foreground">KES {Number(position.amount).toLocaleString()}</p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -1261,7 +1261,7 @@ export default function MarketDetail() {
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-xs text-muted-foreground">{formatChatTimestamp(item.timestamp)}</p>
-                                                            <p className="text-sm font-semibold text-foreground">KSh {Number(item.amount).toLocaleString()}</p>
+                                                            <p className="text-sm font-semibold text-foreground">KES {Number(item.amount).toLocaleString()}</p>
                                                         </div>
                                                     </div>
                                                 ))
@@ -1422,7 +1422,7 @@ export default function MarketDetail() {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-background/75">Amount</span>
-                                <span className="font-bold">KSh {Number(lastBet.amount).toLocaleString()}</span>
+                                <span className="font-bold">KES {Number(lastBet.amount).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-background/75">Probability</span>

@@ -211,7 +211,7 @@ export default function Profile() {
                                 <DollarSign className="h-5 w-5 text-muted-foreground" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Current Balance</p>
-                                    <p className="font-bold text-foreground text-lg">KSh {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                                    <p className="font-bold text-foreground text-lg">KES {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -261,17 +261,17 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <div className="bg-background border border-border rounded-xl p-6">
                         <p className="text-sm text-muted-foreground mb-2">Total Deposited</p>
-                        <p className="text-2xl font-bold text-green-600">KSh {totalDeposited.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="text-2xl font-bold text-green-600">KES {totalDeposited.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <p className="text-xs text-muted-foreground mt-2">{depositTransactions} transactions</p>
                     </div>
                     <div className="bg-background border border-border rounded-xl p-6">
                         <p className="text-sm text-muted-foreground mb-2">Total Withdrawn</p>
-                        <p className="text-2xl font-bold text-red-600">KSh {totalWithdrawn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="text-2xl font-bold text-red-600">KES {totalWithdrawn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <p className="text-xs text-muted-foreground mt-2">{withdrawalTransactions} transactions</p>
                     </div>
                     <div className="bg-background border border-border rounded-xl p-6">
                         <p className="text-sm text-muted-foreground mb-2">Current Balance</p>
-                        <p className="text-2xl font-bold text-foreground">KSh {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="text-2xl font-bold text-foreground">KES {parseFloat(user.balance || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <p className="text-xs text-muted-foreground mt-2">Available</p>
                     </div>
                 </div>
@@ -330,7 +330,7 @@ export default function Profile() {
                                                 <td className="py-4 px-4 text-sm">{txn.description || '—'}</td>
                                                 <td className="py-4 px-4 text-sm font-medium">
                                                     <span className={getTransactionColor(txn.type)}>
-                                                        {txn.type === 'DEPOSIT' || txn.type === 'PAYOUT' ? '+' : '-'} KSh {parseFloat(txn.amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                        {txn.type === 'DEPOSIT' || txn.type === 'PAYOUT' ? '+' : '-'} KES {parseFloat(txn.amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-4">
