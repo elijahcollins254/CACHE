@@ -380,8 +380,19 @@ export default function MarketDetail() {
                 const userData = userStr ? JSON.parse(userStr) : {};
                 
                 const amountValue = Number(betAmount);
-                const probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
-                const winningsValue = (amountValue * probabilityValue) / 100;
+                let probabilityValue;
+                if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                    const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                    if (option) {
+                        probabilityValue = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
+                    } else {
+                        probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
+                    }
+                } else {
+                    probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
+                }
+                const inverseProbability = 100 - probabilityValue;
+                const winningsValue = (amountValue * inverseProbability) / 100;
                 setLastBet({
                     id: Math.random().toString(36).substr(2, 9),
                     market: market.question,
@@ -452,8 +463,22 @@ export default function MarketDetail() {
     const calculateEstimatedReturn = () => {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
-        const probability = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-        const winnings = (amount * probability) / 100;
+        
+        let probability;
+        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+            const option = market.options?.find((o: any) => o.id === selectedOptionId);
+            if (option) {
+                probability = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
+            } else {
+                probability = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+            }
+        } else {
+            probability = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+        }
+        
+        // Inverse probability model: lower probability outcomes pay out more
+        const inverseProbability = 100 - probability;
+        const winnings = (amount * inverseProbability) / 100;
         // Total return = stake + winnings
         return amount + winnings;
     };
@@ -925,7 +950,7 @@ export default function MarketDetail() {
                     </div>
 
                     {/* Right Column - Position Interface */}
-                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 md:sticky md:top-12 md:h-fit">
+                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 md:sticky md:top-32 md:h-fit">
                         {/* Selected Option Display */}
                         {market.market_type === 'OPTION_LIST' && selectedOptionId && (
                             <div className="mb-4 p-3 bg-background rounded-lg border border-border">
@@ -1058,7 +1083,14 @@ export default function MarketDetail() {
                                     KES {estimatedReturn.toFixed(2)}
                                 </div>
                                 <span className="text-xs text-muted-foreground mt-1 block">
-                                    Probability {selectedOutcome === "Yes" ? market.yes_probability : noProbability}%
+                                    Probability {(() => {
+                                        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                                            const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                                            return selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
+                                        } else {
+                                            return selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+                                        }
+                                    })()}%
                                 </span>
                             </div>
                         )}
