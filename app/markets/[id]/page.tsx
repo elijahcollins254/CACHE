@@ -841,7 +841,7 @@ export default function MarketDetail() {
                                                     </text>
                                                 ))}
 
-                                                {market.market_type === 'BINARY' ? (
+                                                {market.market_type === 'BINARY' && chartData?.market ? (
                                                     <>
                                                         {/* Yes Area */}
                                                         <path
