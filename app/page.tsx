@@ -44,27 +44,6 @@ export default function Home() {
       </Suspense>
 
       <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-40 md:pt-48 pb-24 sm:pb-8">
-        {/* Hero Section with Logo */}
-        <div className="mb-12 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex justify-center mb-6">
-            <div className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 animate-in zoom-in duration-700">
-              <Image 
-                src="/star-logo.svg" 
-                alt="CACHE Logo" 
-                width={96}
-                height={96}
-                className="h-full w-full drop-shadow-lg"
-              />
-            </div>
-          </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 bg-clip-text text-transparent mb-3">
-            CACHE
-          </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground font-semibold mb-8">
-            Stake it, Cache it.
-          </p>
-          <div className="h-1 w-24 mx-auto bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full"></div>
-        </div>
 
         {/* Markets Grid */}
         {loading ? (

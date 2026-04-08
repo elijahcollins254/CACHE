@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "CACHE - Prediction Markets",
   description: "Stake it, Cache it.",
   icons: {
-    icon: "/star-logo.svg",
+    icon: "/star-logo.png",
   },
 };
 

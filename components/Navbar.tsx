@@ -154,7 +154,7 @@ export default function Navbar() {
                     <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 flex-shrink-0">
                         <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center flex-shrink-0">
                             <Image 
-                                src="/star-logo.svg" 
+                                src="/star-logo.png" 
                                 alt="CACHE" 
                                 width={40}
                                 height={40}
