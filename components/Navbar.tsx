@@ -152,13 +152,13 @@ export default function Navbar() {
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 flex-shrink-0">
-                        <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center flex-shrink-0">
+                        <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center flex-shrink-0 rounded-md overflow-hidden">
                             <Image 
                                 src="/star-logo.png" 
                                 alt="CACHE" 
                                 width={40}
                                 height={40}
-                                className="h-full w-full"
+                                className="h-full w-full object-cover"
                             />
                         </div>
                         <span className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground hidden sm:inline">
