@@ -169,7 +169,7 @@ export default function Navbar() {
 
                 {/* Center Section: Balance */}
                 {user && (
-                    <div className="flex items-center gap-3 sm:gap-4 ml-3 sm:ml-0">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 ml-2 sm:ml-0 flex-shrink-0">
                         {/* Cash Balance */}
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
                             <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-green flex-shrink-0" />
@@ -195,7 +195,7 @@ export default function Navbar() {
                 )}
 
                 {/* Right Section: Auth */}
-                <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-5 flex-shrink-0">
                     {/* Theme Toggle */}
                     <ThemeToggle />
 

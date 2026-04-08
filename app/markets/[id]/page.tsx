@@ -464,6 +464,9 @@ export default function MarketDetail() {
 
     const noProbability = 100 - market.yes_probability;
 
+    // Trading fee constant
+    const TRADING_FEE_PERCENT = 2; // 2% fee
+
     // Generate historical price data based on time period
     const generateHistoricalPrices = () => {
         const numPoints = 8;
