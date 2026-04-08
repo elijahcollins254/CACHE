@@ -1,0 +1,27 @@
+<svg viewBox="0 0 768 768" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define gradient for the star -->
+  <defs>
+    <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFC700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF9500;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main star shape with gradient -->
+  <path d="M 384 100 L 460 300 L 670 300 L 510 430 L 580 620 L 384 490 L 188 620 L 258 430 L 98 300 L 308 300 Z" 
+        fill="url(#starGradient)" stroke="#FFA500" stroke-width="8" stroke-linejoin="round" filter="url(#glow)"/>
+  
+  <!-- Top inner lines for depth -->
+  <line x1="384" y1="100" x2="460" y2="300" stroke="#FFD700" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <line x1="384" y1="100" x2="308" y2="300" stroke="#FFD700" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  
+  <!-- Shine effect at top -->
+  <circle cx="510" cy="140" r="15" fill="#FFFF00" opacity="0.9" filter="url(#glow)"/>
+</svg>

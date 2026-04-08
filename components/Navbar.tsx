@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
@@ -150,11 +151,17 @@ export default function Navbar() {
                 {/* Left Section: Logo */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-1 transition-opacity hover:opacity-80 flex-shrink-0">
-                        <div className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md bg-black text-white shrink-0">
-                            <Command className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 flex-shrink-0">
+                        <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center flex-shrink-0">
+                            <Image 
+                                src="/star-logo.svg" 
+                                alt="CACHE" 
+                                width={40}
+                                height={40}
+                                className="h-full w-full"
+                            />
                         </div>
-                        <span className="text-xs sm:text-sm font-bold tracking-tight text-foreground">
+                        <span className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground hidden sm:inline">
                             CACHE
                         </span>
                     </Link>

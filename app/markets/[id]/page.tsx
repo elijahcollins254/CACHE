@@ -46,6 +46,9 @@ export default function MarketDetail() {
     const [priceHistory, setPriceHistory] = useState<{[key: string]: {yes: number[]; no: number[]}}>({});
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [limitPrice, setLimitPrice] = useState<number>(0.50); // Price per share in cents
+    const [shares, setShares] = useState<number>(100);
+    const [orderType, setOrderType] = useState<"market" | "limit">("limit");
 
     // Detect mobile on mount and resize
     useEffect(() => {
@@ -333,11 +336,6 @@ export default function MarketDetail() {
     };
 
     const handleBet = async (outcome: "Yes" | "No") => {
-        if (!betAmount || isNaN(Number(betAmount))) {
-            setMessage("Please enter a valid amount");
-            return;
-        }
-
         // Check if user is logged in first
         const user = localStorage.getItem("poly_user");
         if (!user) {
@@ -351,6 +349,19 @@ export default function MarketDetail() {
             return;
         }
 
+        // Validate inputs based on order type
+        if (orderType === "market") {
+            if (!betAmount || isNaN(Number(betAmount))) {
+                setMessage("Please enter a valid amount");
+                return;
+            }
+        } else {
+            if (limitPrice <= 0 || shares <= 0) {
+                setMessage("Please enter valid limit price and shares");
+                return;
+            }
+        }
+
         setPlacingBet(true);
         setMessage("");
 
@@ -358,9 +369,17 @@ export default function MarketDetail() {
             const payload: any = {
                 market_id: id,
                 outcome,
-                amount: betAmount,
                 action: activeTab,
+                order_type: orderType,
             };
+
+            // Build payload based on order type
+            if (orderType === "market") {
+                payload.amount = betAmount;
+            } else {
+                payload.limit_price = limitPrice / 100; // Convert cents to decimal
+                payload.shares = shares;
+            }
 
             // Add option_id for option-list markets
             if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
@@ -379,31 +398,48 @@ export default function MarketDetail() {
                 const userStr = localStorage.getItem("poly_user");
                 const userData = userStr ? JSON.parse(userStr) : {};
                 
-                const amountValue = Number(betAmount);
-                let probabilityValue;
-                if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                    const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                    if (option) {
-                        probabilityValue = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
-                    } else {
-                        probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
-                    }
-                } else {
-                    probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
-                }
-                const inverseProbability = 100 - probabilityValue;
-                const winningsValue = (amountValue * inverseProbability) / 100;
-                setLastBet({
+                let lastBetData: any = {
                     id: Math.random().toString(36).substr(2, 9),
                     market: market.question,
                     outcome,
-                    amount: betAmount,
-                    probability: probabilityValue,
-                    potentialWinnings: amountValue + winningsValue,
                     phoneNumber: userData.phone_number,
                     timestamp: new Date(),
-                });
+                };
+
+                if (orderType === "market") {
+                    const amountValue = Number(betAmount);
+                    let probabilityValue;
+                    if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                        const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                        if (option) {
+                            probabilityValue = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
+                        } else {
+                            probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
+                        }
+                    } else {
+                        probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
+                    }
+                    const inverseProbability = 100 - probabilityValue;
+                    const winningsValue = (amountValue * inverseProbability) / 100;
+                    lastBetData = {
+                        ...lastBetData,
+                        amount: betAmount,
+                        probability: probabilityValue,
+                        potentialWinnings: amountValue + winningsValue,
+                    };
+                } else {
+                    // Limit order
+                    lastBetData = {
+                        ...lastBetData,
+                        limitPrice: limitPrice,
+                        shares: shares,
+                        totalCost: limitStats.totalCost,
+                        toWin: limitStats.toWin,
+                        orderType: "limit",
+                    };
+                }
                 
+                setLastBet(lastBetData);
                 setShowReceipt(true);
                 setBetAmount("");
                 setMessage("");
@@ -484,6 +520,44 @@ export default function MarketDetail() {
     };
 
     const estimatedReturn = calculateEstimatedReturn();
+
+    // Limit order calculations
+    const calculateLimitOrderStats = () => {
+        const price = limitPrice / 100; // Convert cents to decimal (e.g., 50 cents = 0.50)
+        const totalCost = price * shares * 100; // Convert back to cents for display
+        
+        // If you win, you get $1 per share
+        // If you lose, you lose the cost paid
+        // Expected value based on probability
+        let probability;
+        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+            const option = market.options?.find((o: any) => o.id === selectedOptionId);
+            if (option) {
+                probability = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
+            } else {
+                probability = selectedOutcome === "Yes" ? market.yes_probability : (100 - market.yes_probability);
+            }
+        } else {
+            probability = selectedOutcome === "Yes" ? market.yes_probability : (100 - market.yes_probability);
+        }
+        
+        // Convert to decimal for calculation (0-1 instead of 0-100)
+        const probDecimal = probability / 100;
+        
+        // If win: get 100 cents per share minus trading fee (2%)
+        // If lose: lose the price paid per share
+        const winAmount = shares * 100 * (1 - TRADING_FEE_PERCENT / 100);
+        const potentialProfit = winAmount - totalCost;
+        
+        return {
+            totalCost: totalCost,
+            toWin: (shares * 100) - totalCost,
+            potentialProfit: potentialProfit,
+            winPayout: winAmount,
+        };
+    };
+
+    const limitStats = calculateLimitOrderStats();
 
     const formatDate = (dateString: string) => {
         try {
@@ -1048,51 +1122,139 @@ export default function MarketDetail() {
                             </button>
                         </div>
 
-                        {/* Amount Input */}
-                        <div className="mb-4">
-                            <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Amount</label>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={betAmount}
-                                    onChange={(e) => setBetAmount(e.target.value)}
-                                    className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
-                                />
-                            </div>
+                        {/* Order Type Toggle */}
+                        <div className="mb-4 flex gap-2 border-b border-border pb-3">
+                            <button
+                                onClick={() => setOrderType("market")}
+                                className={`flex-1 py-2 font-bold text-sm transition-colors rounded ${
+                                    orderType === "market"
+                                        ? "bg-foreground text-background"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                Market
+                            </button>
+                            <button
+                                onClick={() => setOrderType("limit")}
+                                className={`flex-1 py-2 font-bold text-sm transition-colors rounded ${
+                                    orderType === "limit"
+                                        ? "bg-foreground text-background"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                Limit
+                            </button>
                         </div>
 
-                        {/* Quick Select Buttons */}
-                        <div className="mb-4">
-                            <div className="grid grid-cols-5 gap-2">
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+500</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+1K</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+5K</button>
-                                <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10K</button>
-                            </div>
-                        </div>
-
-                        {/* Estimated Winnings */}
-                        {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                            <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
-                                <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">
-                                    {activeTab === "sell" ? "You'll receive" : "Total Return"}
-                                </span>
-                                <div className="text-3xl font-bold text-green-400">
-                                    KES {estimatedReturn.toFixed(2)}
+                        {orderType === "limit" ? (
+                            <>
+                                {/* Limit Price Input */}
+                                <div className="mb-4">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Limit Price</label>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setLimitPrice(Math.max(1, limitPrice - 1))}
+                                            className="w-10 h-10 rounded-lg bg-border text-foreground hover:bg-border/80 transition font-bold"
+                                        >
+                                            −
+                                        </button>
+                                        <div className="flex-1 text-2xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground">
+                                            {(limitPrice / 100).toFixed(2)}¢
+                                        </div>
+                                        <button
+                                            onClick={() => setLimitPrice(Math.min(100, limitPrice + 1))}
+                                            className="w-10 h-10 rounded-lg bg-border text-foreground hover:bg-border/80 transition font-bold"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
-                                <span className="text-xs text-muted-foreground mt-1 block">
-                                    Probability {(() => {
-                                        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                                            const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                                            return selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
-                                        } else {
-                                            return selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-                                        }
-                                    })()}%
-                                </span>
-                            </div>
+
+                                {/* Shares Input */}
+                                <div className="mb-4">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Shares</label>
+                                    <div className="relative mb-3">
+                                        <input
+                                            type="number"
+                                            placeholder="0"
+                                            value={shares}
+                                            onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 1))}
+                                            className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                        />
+                                    </div>
+                                    
+                                    {/* Quick Select Buttons for Shares */}
+                                    <div className="grid grid-cols-4 gap-2">
+                                        <button onClick={() => setShares(Math.max(1, shares - 100))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−100</button>
+                                        <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
+                                        <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
+                                        <button onClick={() => setShares(shares + 100)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
+                                    </div>
+                                </div>
+
+                                {/* Total and To Win Display */}
+                                <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase">Total</span>
+                                            <span className="text-2xl font-bold text-green-400">KES {limitStats.totalCost.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
+                                            <span className="text-xs text-muted-foreground">To win</span>
+                                            <span className="text-lg font-bold text-green-300">KES {limitStats.toWin.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Market Order - Amount Input */}
+                                <div className="mb-4">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Amount</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            placeholder="0"
+                                            value={betAmount}
+                                            onChange={(e) => setBetAmount(e.target.value)}
+                                            className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Quick Select Buttons */}
+                                <div className="mb-4">
+                                    <div className="grid grid-cols-5 gap-2">
+                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
+                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+500</button>
+                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+1K</button>
+                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+5K</button>
+                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10K</button>
+                                    </div>
+                                </div>
+
+                                {/* Estimated Winnings */}
+                                {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
+                                    <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
+                                        <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">
+                                            {activeTab === "sell" ? "You'll receive" : "Total Return"}
+                                        </span>
+                                        <div className="text-3xl font-bold text-green-400">
+                                            KES {estimatedReturn.toFixed(2)}
+                                        </div>
+                                        <span className="text-xs text-muted-foreground mt-1 block">
+                                            Probability {(() => {
+                                                if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                                                    const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                                                    return selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
+                                                } else {
+                                                    return selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+                                                }
+                                            })()}%
+                                        </span>
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         {/* Action Buttons */}
@@ -1444,7 +1606,7 @@ export default function MarketDetail() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-lg font-bold">Position Confirmed</h2>
+                            <h2 className="text-lg font-bold">{lastBet.orderType === "limit" ? "Limit Order" : "Position"} Confirmed</h2>
                         </div>
 
                         <div className="space-y-3 mb-4">
@@ -1452,14 +1614,38 @@ export default function MarketDetail() {
                                 <span className="text-background/75">Outcome</span>
                                 <span className={`font-bold ${lastBet.outcome === 'Yes' ? 'text-green-400' : 'text-red-400'}`}>{lastBet.outcome}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-background/75">Amount</span>
-                                <span className="font-bold">KES {Number(lastBet.amount).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-background/75">Probability</span>
-                                <span className="font-bold">{lastBet.probability}%</span>
-                            </div>
+                            
+                            {lastBet.orderType === "limit" ? (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-background/75">Limit Price</span>
+                                        <span className="font-bold">{(lastBet.limitPrice / 100).toFixed(2)}¢</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-background/75">Shares</span>
+                                        <span className="font-bold">{lastBet.shares}</span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-background/20 pt-2">
+                                        <span className="text-background/75">Total</span>
+                                        <span className="font-bold">KES {lastBet.totalCost.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-background/75">To win</span>
+                                        <span className="font-bold text-green-300">KES {lastBet.toWin.toFixed(2)}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-background/75">Amount</span>
+                                        <span className="font-bold">KES {Number(lastBet.amount).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-background/75">Probability</span>
+                                        <span className="font-bold">{lastBet.probability}%</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         <button

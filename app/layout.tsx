@@ -17,8 +17,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "CACHE",
+  title: "CACHE - Prediction Markets",
   description: "Stake it, Cache it.",
+  icons: {
+    icon: "/star-logo.svg",
+  },
 };
 
 export default function RootLayout({
