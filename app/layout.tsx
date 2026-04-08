@@ -17,10 +17,10 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "CACHE - Prediction Markets",
+  title: "CACHE",
   description: "Stake it, Cache it.",
   icons: {
-    icon: "/star-logo.png",
+    icon: "/cache.png",
   },
 };
 
