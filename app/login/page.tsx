@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
-import { Command, Wallet, Phone, Lock, Eye, EyeOff, Chrome } from "lucide-react";
+import { Phone, Lock, Eye, EyeOff, Chrome } from "lucide-react";
 
 export default function Login() {
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -67,10 +68,10 @@ export default function Login() {
             <Navbar />
             <div className="flex flex-col items-center justify-center pt-24 pb-12 px-6">
                 <Link href="/" className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-80">
-                    <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-black text-white">
-                        <Command className="h-6 w-6" />
+                    <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-black text-white overflow-hidden">
+                        <Image src="/cache.png" alt="CACHE" width={40} height={40} className="rounded-lg" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-black">CACHE</span>
+                    <span className="text-xl font-bold tracking-tight text-black dark:text-white">CACHE</span>
                 </Link>
 
                 <div className="apple-card w-full max-w-[400px] p-10">
@@ -156,7 +157,7 @@ export default function Login() {
                             setError("An error occurred during sign-in");
                         }
                     }}
-                    className="w-full rounded-full bg-white border border-border py-3 text-sm font-bold text-black transition-all hover:bg-gray-50 flex items-center justify-center gap-2"
+                    className="w-full rounded-full bg-blue-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                 >
                     <Chrome className="h-4 w-4" />
                     Continue with Google
