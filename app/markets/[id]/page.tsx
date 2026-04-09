@@ -1066,7 +1066,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                         }`}
                                                     >
-                                                        Yes <span className="font-bold">{option?.yes_probability}¢</span>
+                                                        Yes <span className="font-bold">{option?.yes_probability} BOB</span>
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOutcome("No")}
@@ -1076,7 +1076,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                         }`}
                                                     >
-                                                        No <span className="font-bold">{100 - (option?.yes_probability || 0)}¢</span>
+                                                        No <span className="font-bold">{100 - (option?.yes_probability || 0)} BOB</span>
                                                     </button>
                                                 </>
                                             );
