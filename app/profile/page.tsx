@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useAppDispatch, useAppSelector, selectUser } from "@/lib/redux/hooks";
 import { fetchUserData } from "@/lib/redux/slices/authSlice";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { ArrowLeft, Edit2, Check, X, TrendingUp, TrendingDown, DollarSign, Calendar, Phone, Mail } from "lucide-react";
 
 interface Transaction {
@@ -44,17 +45,8 @@ export default function Profile() {
     const fetchTransactions = async () => {
         try {
             setLoading(true);
-            const storedUser = localStorage.getItem('poly_user');
-            if (!storedUser) return;
-
-            const { phone_number } = JSON.parse(storedUser);
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/transactions/?phone_number=${phone_number}`,
-                {
-                    headers: {
-                        'X-User-Phone-Number': phone_number,
-                    },
-                }
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/transactions/`
             );
 
             if (response.ok) {
