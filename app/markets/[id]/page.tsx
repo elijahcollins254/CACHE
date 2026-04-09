@@ -1085,7 +1085,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes <span className="font-bold">{market.yes_probability}¢</span>
+                                        Yes <span className="font-bold">{market.yes_probability} BOB</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
@@ -1095,7 +1095,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                         }`}
                                     >
-                                        No <span className="font-bold">{noProbability}¢</span>
+                                        No <span className="font-bold">{noProbability} BOB</span>
                                     </button>
                                 </div>
                             )}
@@ -1162,7 +1162,7 @@ export default function MarketDetail() {
                                             −
                                         </button>
                                         <div className="flex-1 text-2xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground">
-                                            {(limitPrice / 100).toFixed(2)}¢
+                                            {limitPrice} BOB
                                         </div>
                                         <button
                                             onClick={() => setLimitPrice(Math.min(100, limitPrice + 1))}
@@ -1622,7 +1622,7 @@ export default function MarketDetail() {
                                 <>
                                     <div className="flex justify-between">
                                         <span className="text-background/75">Limit Price</span>
-                                        <span className="font-bold">{(lastBet.limitPrice / 100).toFixed(2)}¢</span>
+                                        <span className="font-bold">{lastBet.limitPrice} BOB</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-background/75">Shares</span>
