@@ -48,7 +48,7 @@ export default function MarketDetail() {
     const [isMobile, setIsMobile] = useState(false);
     const [limitPrice, setLimitPrice] = useState<number>(0.50); // Price per share in cents
     const [shares, setShares] = useState<number>(100);
-    const [orderType, setOrderType] = useState<"market" | "limit">("limit");
+    const [orderType, setOrderType] = useState<"market" | "limit">("market");
 
     // Detect mobile on mount and resize
     useEffect(() => {
