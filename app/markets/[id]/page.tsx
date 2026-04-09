@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
@@ -49,6 +49,26 @@ export default function MarketDetail() {
     const [limitPrice, setLimitPrice] = useState<number>(0.50); // Price per share in cents
     const [shares, setShares] = useState<number>(100);
     const [orderType, setOrderType] = useState<"market" | "limit">("market");
+    const chatInputRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to chat input when replying
+    useEffect(() => {
+        if (replyingToId && chatInputRef.current) {
+            setTimeout(() => {
+                chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }, [replyingToId]);
+    const chatInputRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to chat input when replying
+    useEffect(() => {
+        if (replyingToId && chatInputRef.current) {
+            setTimeout(() => {
+                chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }, [replyingToId]);
 
     // Detect mobile on mount and resize
     useEffect(() => {
@@ -987,7 +1007,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                     }`}
                                                 >
-                                                    Buy {option.yes_probability}¢
+                                                    Buy {option.yes_probability} BOB
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -1000,7 +1020,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                     }`}
                                                 >
-                                                    Sell {100 - option.yes_probability}¢
+                                                    Sell {100 - option.yes_probability} BOB
                                                 </button>
                                             </div>
                                         </div>
@@ -1481,7 +1501,11 @@ export default function MarketDetail() {
                                     </div>
                                 ) : (
                                     topLevelChatMessages.map((msg) => (
-                                        <div key={msg.id} className="rounded-2xl border border-border bg-background/80 p-4 space-y-3">
+                                        <div key={msg.id} className={`rounded-2xl border p-4 space-y-3 transition-colors ${
+                                            replyingToId === msg.id 
+                                                ? 'border-apple-blue bg-apple-blue/10 bg-background/80' 
+                                                : 'border-border bg-background/80'
+                                        }`}>
                                             <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                                                 <span className="font-semibold text-foreground">
                                                     {msg.user_name || 'Trader'}
@@ -1502,7 +1526,11 @@ export default function MarketDetail() {
                                             </div>
 
                                             {getRepliesForMessage(msg.id).map((reply) => (
-                                                <div key={reply.id} className="ml-5 rounded-2xl border border-border bg-muted p-4 space-y-3">
+                                                <div key={reply.id} className={`ml-5 rounded-2xl border p-4 space-y-3 transition-colors ${
+                                                    replyingToId === reply.id 
+                                                        ? 'border-apple-blue bg-apple-blue/10 bg-muted' 
+                                                        : 'border-border bg-muted'
+                                                }`}>
                                                     <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                                                         <span className="font-semibold text-foreground">
                                                             {reply.user_name || 'Trader'}
@@ -1525,7 +1553,11 @@ export default function MarketDetail() {
                                                         )}
                                                     </div>
                                                     {getRepliesForMessage(reply.id).map((nestedReply) => (
-                                                        <div key={nestedReply.id} className="ml-5 rounded-2xl border border-border bg-background p-4 space-y-3">
+                                                        <div key={nestedReply.id} className={`ml-5 rounded-2xl border p-4 space-y-3 transition-colors ${
+                                                            replyingToId === nestedReply.id 
+                                                                ? 'border-apple-blue bg-apple-blue/10 bg-background' 
+                                                                : 'border-border bg-background'
+                                                        }`}>
                                                             <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                                                                 <span className="font-semibold text-foreground">
                                                                     {nestedReply.user_name || 'Trader'}
@@ -1554,7 +1586,7 @@ export default function MarketDetail() {
                             </div>
 
                                     {/* Chat Input */}
-                                    <div className="mt-4 pt-4 border-t border-border">
+                                    <div ref={chatInputRef} className="mt-4 pt-4 border-t border-border">
                                         {replyingToId && (
                                             <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
                                                 <span>Replying to {replyingToName}</span>
