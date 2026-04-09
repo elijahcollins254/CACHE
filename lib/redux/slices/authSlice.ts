@@ -7,6 +7,10 @@ export interface User {
     full_name: string;
     balance: string;
     kyc_verified: boolean;
+    phone_locked?: boolean;
+    email?: string;
+    picture?: string;
+    provider?: string;
     date_joined?: string;
 }
 
