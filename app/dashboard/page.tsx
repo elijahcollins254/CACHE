@@ -56,15 +56,20 @@ export default function Dashboard() {
         // Check if user signed up with Google (email) and has no valid phone number
         const checkPhoneNumber = () => {
             const storedUser = localStorage.getItem('poly_user');
-            if (storedUser) {
-                const userData = JSON.parse(storedUser);
-                // Only show prompt for Google OAuth users without a valid phone number
-                if (userData.provider === 'google' && !hasValidPhoneNumber(userData)) {
-                    setShowPhonePrompt(true);
-                } else {
-                    // Hide prompt if phone number is now set
-                    setShowPhonePrompt(false);
-                }
+            
+            // Only show prompt if user is logged in
+            if (!storedUser) {
+                setShowPhonePrompt(false);
+                return;
+            }
+
+            const userData = JSON.parse(storedUser);
+            // Only show prompt for Google OAuth users without a valid phone number
+            if (userData.provider === 'google' && !hasValidPhoneNumber(userData)) {
+                setShowPhonePrompt(true);
+            } else {
+                // Hide prompt if phone number is now set or not a Google user
+                setShowPhonePrompt(false);
             }
         };
 

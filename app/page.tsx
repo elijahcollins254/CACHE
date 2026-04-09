@@ -43,25 +43,30 @@ export default function Home() {
            userData.phone_number.trim().length > 0;
   };
 
-  // Check if user needs to add phone number
+  // Check if user needs to add phone number (only show if logged in with Google and no phone)
   useEffect(() => {
     const checkPhoneNumber = () => {
       const storedUser = localStorage.getItem('poly_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        // Only show prompt for Google OAuth users without a valid phone number
-        if (userData.provider === 'google' && !hasValidPhoneNumber(userData)) {
-          setShowPhonePrompt(true);
-        } else {
-          // Hide prompt if phone number is now set
-          setShowPhonePrompt(false);
-        }
+      
+      // Only show prompt if user is logged in
+      if (!storedUser) {
+        setShowPhonePrompt(false);
+        return;
+      }
+
+      const userData = JSON.parse(storedUser);
+      // Only show prompt for Google OAuth users without a valid phone number
+      if (userData.provider === 'google' && !hasValidPhoneNumber(userData)) {
+        setShowPhonePrompt(true);
+      } else {
+        // Hide prompt if phone number is now set or not a Google user
+        setShowPhonePrompt(false);
       }
     };
 
     checkPhoneNumber();
 
-    // Listen for auth changes (e.g., when phone number is added)
+    // Listen for auth changes (e.g., when phone number is added or user logs out)
     window.addEventListener('poly_auth_change', checkPhoneNumber);
     return () => window.removeEventListener('poly_auth_change', checkPhoneNumber);
   }, []);
