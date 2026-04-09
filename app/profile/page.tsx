@@ -26,7 +26,7 @@ export default function Profile() {
     const user = useAppSelector(selectUser);
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editData, setEditData] = useState({ full_name: '' });
+    const [editData, setEditData] = useState({ full_name: '', phone_number: '' });
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeHistoryTab, setActiveHistoryTab] = useState<'all' | 'deposits' | 'withdrawals'>('all');
@@ -38,7 +38,10 @@ export default function Profile() {
             return;
         }
 
-        setEditData({ full_name: user.full_name || '' });
+        setEditData({ 
+            full_name: user.full_name || '',
+            phone_number: user.phone_number || ''
+        });
         fetchTransactions();
     }, [user, router]);
 
@@ -66,22 +69,23 @@ export default function Profile() {
             return;
         }
 
+        if (!editData.phone_number.trim()) {
+            alert('Phone number is required');
+            return;
+        }
+
         try {
             setIsSaving(true);
-            const storedUser = localStorage.getItem('poly_user');
-            if (!storedUser) return;
-
-            const { phone_number } = JSON.parse(storedUser);
-            const response = await fetch(
+            const response = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/update-profile/`,
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User-Phone-Number': phone_number,
                     },
                     body: JSON.stringify({
                         full_name: editData.full_name,
+                        phone_number: editData.phone_number,
                     }),
                 }
             );
@@ -234,6 +238,20 @@ export default function Profile() {
                                     onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
                                     className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-blue-400"
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-muted-foreground mb-2">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    placeholder="0712345678"
+                                    value={editData.phone_number}
+                                    onChange={(e) => setEditData({ ...editData, phone_number: e.target.value })}
+                                    disabled={user.phone_locked}
+                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                                {user.phone_locked && (
+                                    <p className="text-xs text-muted-foreground mt-1">Phone number is locked after first deposit</p>
+                                )}
                             </div>
                             <div className="flex gap-3">
                                 <button
