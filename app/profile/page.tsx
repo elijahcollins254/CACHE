@@ -265,7 +265,10 @@ export default function Profile() {
                                 <button
                                     onClick={() => {
                                         setIsEditing(false);
-                                        setEditData({ full_name: user.full_name || '' });
+                                        setEditData({ 
+                                            full_name: user.full_name || '',
+                                            phone_number: user.phone_number || ''
+                                        });
                                     }}
                                     className="px-6 py-2 border border-border rounded-lg hover:bg-muted transition font-medium dark:hover:bg-muted"
                                 >
