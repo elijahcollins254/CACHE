@@ -32,18 +32,6 @@ export default function Dashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-    const [showPhonePrompt, setShowPhonePrompt] = useState(false);
-    const [phoneInput, setPhoneInput] = useState("");
-    const [phoneLoading, setPhoneLoading] = useState(false);
-
-    // Helper function to check if user has a valid phone number
-    const hasValidPhoneNumber = (userData: any) => {
-        return userData?.phone_number && 
-               userData.phone_number !== null && 
-               userData.phone_number !== 'null' && 
-               userData.phone_number !== '' &&
-               userData.phone_number.trim().length > 0;
-    };
 
     useEffect(() => {
         if (authLoading) return;
@@ -53,31 +41,6 @@ export default function Dashboard() {
             return;
         }
 
-        // Check if user signed up with Google (email) and has no valid phone number
-        const checkPhoneNumber = () => {
-            const storedUser = localStorage.getItem('poly_user');
-            
-            // Only show prompt if user is logged in
-            if (!storedUser) {
-                setShowPhonePrompt(false);
-                return;
-            }
-
-            const userData = JSON.parse(storedUser);
-            // Only show prompt for Google OAuth users without a valid phone number
-            if (userData.provider === 'google' && !hasValidPhoneNumber(userData)) {
-                setShowPhonePrompt(true);
-            } else {
-                // Hide prompt if phone number is now set or not a Google user
-                setShowPhonePrompt(false);
-            }
-        };
-
-        checkPhoneNumber();
-
-        // Listen for auth changes (e.g., when phone number is added)
-        window.addEventListener('poly_auth_change', checkPhoneNumber);
-
         // Only fetch once per user session
         if (fetchAttemptedRef.current) return;
         fetchAttemptedRef.current = true;
@@ -86,59 +49,11 @@ export default function Dashboard() {
         dispatch(fetchDashboardData());
         dispatch(fetchTransactionHistory());
         dispatch(fetchUserData());
-
-        return () => window.removeEventListener('poly_auth_change', checkPhoneNumber);
     }, [authUser?.phone_number, authLoading, dispatch]);
 
     const handleLogout = () => {
         localStorage.removeItem("poly_user");
         window.location.href = "/login";
-    };
-
-    const handleAddPhoneNumber = async () => {
-        if (!phoneInput.trim()) {
-            alert("Please enter a phone number");
-            return;
-        }
-
-        try {
-            setPhoneLoading(true);
-            const storedUser = localStorage.getItem('poly_user');
-            if (!storedUser) return;
-
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/add-phone/`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-User-Email': JSON.parse(storedUser).email,
-                    },
-                    body: JSON.stringify({
-                        phone_number: phoneInput,
-                    }),
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                // Update localStorage with new phone number
-                const userData = JSON.parse(storedUser);
-                userData.phone_number = data.user.phone_number;
-                localStorage.setItem('poly_user', JSON.stringify(userData));
-                window.dispatchEvent(new Event('poly_auth_change'));
-                setShowPhonePrompt(false);
-                dispatch(fetchUserData());
-            } else {
-                const error = await response.json();
-                alert(error.error || "Failed to add phone number");
-            }
-        } catch (error) {
-            console.error("Error adding phone number:", error);
-            alert("Error adding phone number");
-        } finally {
-            setPhoneLoading(false);
-        }
     };
 
     if (authLoading || loading) {
@@ -516,54 +431,6 @@ export default function Dashboard() {
                 balance={balance}
                 phoneNumber={authUser?.phone_number || ""}
             />
-
-            {/* Phone Number Prompt Modal */}
-            {showPhonePrompt && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-background rounded-2xl border border-border p-8 max-w-md w-full mx-4 shadow-lg">
-                        <h2 className="text-2xl font-bold mb-2">Complete Your Profile</h2>
-                        <p className="text-muted-foreground mb-6">
-                            To enjoy full platform features, please add your phone number.
-                        </p>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-sm font-semibold text-muted-foreground mb-2 block">
-                                    Phone Number
-                                </label>
-                                <input
-                                    type="tel"
-                                    placeholder="e.g., 0712345678"
-                                    value={phoneInput}
-                                    onChange={(e) => setPhoneInput(e.target.value)}
-                                    disabled={phoneLoading}
-                                    className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-muted disabled:opacity-50"
-                                />
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    We use this for M-Pesa deposits and withdrawals
-                                </p>
-                            </div>
-
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowPhonePrompt(false)}
-                                    disabled={phoneLoading}
-                                    className="flex-1 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-muted transition disabled:opacity-50"
-                                >
-                                    Skip for now
-                                </button>
-                                <button
-                                    onClick={handleAddPhoneNumber}
-                                    disabled={phoneLoading || !phoneInput.trim()}
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-                                >
-                                    {phoneLoading ? "Adding..." : "Add Phone"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
