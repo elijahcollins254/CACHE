@@ -1474,37 +1474,6 @@ export default function MarketDetail() {
                                         </div>
                                     ) : null}
 
-                                    {/* Chat Input */}
-                                    <div className="mb-4 pb-4 border-b border-border">
-                                        {replyingToId && (
-                                            <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
-                                                <span>Replying to {replyingToName}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={cancelReply}
-                                                    className="text-xs font-bold text-apple-blue hover:underline"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        )}
-                                        <div className="flex gap-2 items-end">
-                                            <textarea
-                                                value={newChatMessage}
-                                                onChange={(e) => setNewChatMessage(e.target.value)}
-                                                placeholder="Add a comment..."
-                                                className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background/60 p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground resize-none"
-                                            />
-                                            <button
-                                                onClick={handleSendChat}
-                                                disabled={sendingChat}
-                                                className="bg-apple-blue hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
-                                            >
-                                                <Send className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
                                     <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
                                 {chatMessages.length === 0 ? (
                                     <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
@@ -1583,6 +1552,37 @@ export default function MarketDetail() {
                                     ))
                                 )}
                             </div>
+
+                                    {/* Chat Input */}
+                                    <div className="mt-4 pt-4 border-t border-border">
+                                        {replyingToId && (
+                                            <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
+                                                <span>Replying to {replyingToName}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelReply}
+                                                    className="text-xs font-bold text-apple-blue hover:underline"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2 items-end">
+                                            <textarea
+                                                value={newChatMessage}
+                                                onChange={(e) => setNewChatMessage(e.target.value)}
+                                                placeholder="Add a comment..."
+                                                className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background/60 p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground resize-none"
+                                            />
+                                            <button
+                                                onClick={handleSendChat}
+                                                disabled={sendingChat}
+                                                className="bg-apple-blue hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
+                                            >
+                                                <Send className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
 
                         </>
                     )}
