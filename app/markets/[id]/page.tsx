@@ -59,16 +59,6 @@ export default function MarketDetail() {
             }, 100);
         }
     }, [replyingToId]);
-    const chatInputRef = useRef<HTMLDivElement>(null);
-
-    // Scroll to chat input when replying
-    useEffect(() => {
-        if (replyingToId && chatInputRef.current) {
-            setTimeout(() => {
-                chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        }
-    }, [replyingToId]);
 
     // Detect mobile on mount and resize
     useEffect(() => {
@@ -397,7 +387,7 @@ export default function MarketDetail() {
             if (orderType === "market") {
                 payload.amount = betAmount;
             } else {
-                payload.limit_price = limitPrice / 100; // Convert cents to decimal
+                payload.limit_price = limitPrice; // limitPrice is already in BOB (1-100)
                 payload.shares = shares;
             }
 
@@ -546,8 +536,8 @@ export default function MarketDetail() {
 
     // Limit order calculations
     const calculateLimitOrderStats = () => {
-        const price = limitPrice / 100; // Convert cents to decimal (e.g., 50 cents = 0.50)
-        const totalCost = price * shares * 100; // Convert back to cents for display
+        // limitPrice is in BOB (1-100), total payout per share is 100 BOB
+        const totalCost = limitPrice * shares; // Cost to buy shares
         
         // If you win, you get $1 per share
         // If you lose, you lose the cost paid
@@ -567,7 +557,7 @@ export default function MarketDetail() {
         // Convert to decimal for calculation (0-1 instead of 0-100)
         const probDecimal = probability / 100;
         
-        // If win: get 100 cents per share minus trading fee (2%)
+        // If win: get 100 BOB per share minus trading fee (2%)
         // If lose: lose the price paid per share
         const winAmount = shares * 100 * (1 - TRADING_FEE_PERCENT / 100);
         const potentialProfit = winAmount - totalCost;
@@ -1209,7 +1199,7 @@ export default function MarketDetail() {
                                     {/* Quick Select Buttons for Shares */}
                                     <div className="grid grid-cols-4 gap-2">
                                         <button onClick={() => setShares(Math.max(1, shares - 100))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−100</button>
-                                        <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
+                                        <button onClick={() => setShares(Math.max(1, shares - 10))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−10</button>
                                         <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
                                         <button onClick={() => setShares(shares + 100)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
                                     </div>
@@ -1223,7 +1213,7 @@ export default function MarketDetail() {
                                             <span className="text-2xl font-bold text-green-400">KES {limitStats.totalCost.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
-                                            <span className="text-xs text-muted-foreground">To win</span>
+                                            <span className="text-xs text-muted-foreground">Return</span>
                                             <span className="text-lg font-bold text-green-300">KES {limitStats.toWin.toFixed(2)}</span>
                                         </div>
                                     </div>
@@ -1665,7 +1655,7 @@ export default function MarketDetail() {
                                         <span className="font-bold">KES {lastBet.totalCost.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-background/75">To win</span>
+                                        <span className="text-background/75">Return</span>
                                         <span className="font-bold text-green-300">KES {lastBet.toWin.toFixed(2)}</span>
                                     </div>
                                 </>
