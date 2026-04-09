@@ -175,7 +175,9 @@ export default function Profile() {
                         {!isEditing && (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition font-medium text-sm dark:hover:bg-muted"
+                                disabled={user.phone_locked}
+                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition font-medium text-sm dark:hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={user.phone_locked ? "Phone number is locked after first deposit" : ""}
                             >
                                 <Edit2 className="h-4 w-4" />
                                 Edit Profile
@@ -187,9 +189,17 @@ export default function Profile() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <Phone className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Phone Number</p>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm text-muted-foreground">Phone Number</p>
+                                        {user.phone_locked && (
+                                            <span className="text-xs bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300 px-2 py-0.5 rounded font-semibold">VERIFIED</span>
+                                        )}
+                                    </div>
                                     <p className="font-semibold text-foreground">{user.phone_number}</p>
+                                    {user.phone_locked && (
+                                        <p className="text-xs text-muted-foreground mt-1">Locked after first confirmed deposit to prevent fraud</p>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">

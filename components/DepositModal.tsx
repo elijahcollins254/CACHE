@@ -1,7 +1,8 @@
 "use client";
 
-import { X, Wallet, CheckCircle2 } from "lucide-react";
+import { X, Wallet, CheckCircle2, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface DepositModalProps {
@@ -12,9 +13,19 @@ interface DepositModalProps {
 
 const PRESET_AMOUNTS = [500, 1000, 2000, 5000];
 
+// Helper function to check if user has a valid phone number
+const hasValidPhoneNumber = (userData: any) => {
+    return userData?.phone_number && 
+           userData.phone_number !== null && 
+           userData.phone_number !== 'null' && 
+           userData.phone_number !== '' &&
+           userData.phone_number.trim().length > 0;
+};
+
 export default function DepositModal({ isOpen, onClose, balance }: DepositModalProps) {
+    const router = useRouter();
     const [amount, setAmount] = useState("");
-    const [step, setStep] = useState<"input" | "processing" | "success">("input");
+    const [step, setStep] = useState<"input" | "processing" | "success" | "no-phone">("input");
     const [error, setError] = useState("");
     const [transactionId, setTransactionId] = useState<number | null>(null);
 
@@ -33,6 +44,20 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
         };
     }, [isOpen, onClose]);
 
+    // Check if user has phone number when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            const storedUser = localStorage.getItem('poly_user');
+            if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                // Only show "no-phone" step if user doesn't have a valid phone number
+                if (!hasValidPhoneNumber(userData)) {
+                    setStep("no-phone");
+                }
+            }
+        }
+    }, [isOpen]);
+
     // Reset state when opening/closing
     useEffect(() => {
         if (!isOpen) {
@@ -42,6 +67,30 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
             setTransactionId(null);
         }
     }, [isOpen]);
+
+    // Lock phone number after first successful deposit
+    useEffect(() => {
+        if (step === "success" && transactionId) {
+            const lockPhone = async () => {
+                try {
+                    await fetchWithAuth(
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/lock-phone/`,
+                        { method: "POST" }
+                    );
+                    // Update localStorage to reflect phone_locked status
+                    const storedUser = localStorage.getItem('poly_user');
+                    if (storedUser) {
+                        const userData = JSON.parse(storedUser);
+                        userData.phone_locked = true;
+                        localStorage.setItem('poly_user', JSON.stringify(userData));
+                    }
+                } catch (err) {
+                    console.error("Error locking phone:", err);
+                }
+            };
+            lockPhone();
+        }
+    }, [step, transactionId]);
 
     // Poll transaction status while processing
     useEffect(() => {
@@ -118,6 +167,46 @@ export default function DepositModal({ isOpen, onClose, balance }: DepositModalP
     };
 
     if (!isOpen) return null;
+
+    // No phone number state
+    if (step === "no-phone") {
+        return (
+            <>
+                {/* Backdrop */}
+                <div
+                    className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm transition-opacity"
+                    onClick={onClose}
+                />
+                {/* Modal */}
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0 pointer-events-none">
+                    <div className="bg-background dark:bg-slate-950 border border-border rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto p-6 text-center">
+                        <AlertCircle className="h-12 w-12 text-orange-600 mx-auto mb-3" />
+                        <h2 className="text-lg font-bold text-foreground mb-2">Phone Number Required</h2>
+                        <p className="text-muted-foreground text-sm mb-6">
+                            Please add your phone number to make deposits. You'll use this for M-Pesa payments.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-muted transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    router.push('/profile');
+                                }}
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                            >
+                                Add Phone
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
 
     // Processing state
     if (step === "processing") {

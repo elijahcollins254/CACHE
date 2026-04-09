@@ -36,6 +36,15 @@ export default function Dashboard() {
     const [phoneInput, setPhoneInput] = useState("");
     const [phoneLoading, setPhoneLoading] = useState(false);
 
+    // Helper function to check if user has a valid phone number
+    const hasValidPhoneNumber = (userData: any) => {
+        return userData?.phone_number && 
+               userData.phone_number !== null && 
+               userData.phone_number !== 'null' && 
+               userData.phone_number !== '' &&
+               userData.phone_number.trim().length > 0;
+    };
+
     useEffect(() => {
         if (authLoading) return;
 
@@ -44,14 +53,25 @@ export default function Dashboard() {
             return;
         }
 
-        // Check if user signed up with Google (email) and has no phone number
-        const storedUser = localStorage.getItem('poly_user');
-        if (storedUser) {
-            const userData = JSON.parse(storedUser);
-            if (userData.provider === 'google' && (!userData.phone_number || userData.phone_number === 'null')) {
-                setShowPhonePrompt(true);
+        // Check if user signed up with Google (email) and has no valid phone number
+        const checkPhoneNumber = () => {
+            const storedUser = localStorage.getItem('poly_user');
+            if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                // Only show prompt for Google OAuth users without a valid phone number
+                if (userData.provider === 'google' && !hasValidPhoneNumber(userData)) {
+                    setShowPhonePrompt(true);
+                } else {
+                    // Hide prompt if phone number is now set
+                    setShowPhonePrompt(false);
+                }
             }
-        }
+        };
+
+        checkPhoneNumber();
+
+        // Listen for auth changes (e.g., when phone number is added)
+        window.addEventListener('poly_auth_change', checkPhoneNumber);
 
         // Only fetch once per user session
         if (fetchAttemptedRef.current) return;
@@ -61,6 +81,8 @@ export default function Dashboard() {
         dispatch(fetchDashboardData());
         dispatch(fetchTransactionHistory());
         dispatch(fetchUserData());
+
+        return () => window.removeEventListener('poly_auth_change', checkPhoneNumber);
     }, [authUser?.phone_number, authLoading, dispatch]);
 
     const handleLogout = () => {
@@ -97,7 +119,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 // Update localStorage with new phone number
                 const userData = JSON.parse(storedUser);
-                userData.phone_number = data.phone_number;
+                userData.phone_number = data.user.phone_number;
                 localStorage.setItem('poly_user', JSON.stringify(userData));
                 window.dispatchEvent(new Event('poly_auth_change'));
                 setShowPhonePrompt(false);
