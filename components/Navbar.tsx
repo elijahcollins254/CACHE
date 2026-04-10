@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
@@ -136,7 +137,10 @@ export default function Navbar() {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        // Terminate NextAuth session first (important for Google OAuth)
+        await signOut({ redirect: false });
+        // Clear local auth state
         localStorage.removeItem("poly_user");
         dispatch(logout());
         setIsProfileOpen(false);
