@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { fetchUserData } from "@/lib/redux/slices/authSlice";
 import { useAuth } from "@/lib/useAuth";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { ArrowLeft, Wallet, Smartphone, CreditCard, ChevronRight, CheckCircle2 } from "lucide-react";
@@ -11,6 +13,7 @@ const PRESET_AMOUNTS = [50, 100, 200, 500];
 
 export default function DepositPage() {
     const { user: authUser, loading: authLoading } = useAuth("/deposit");
+    const dispatch = useAppDispatch();
     const [amount, setAmount] = useState("");
     const [method, setMethod] = useState<"mpesa" | "card">("mpesa");
     const [step, setStep] = useState<"input" | "processing" | "success">("input");
@@ -55,6 +58,8 @@ export default function DepositPage() {
 
             const data = await response.json();
             if (response.ok) {
+                // Refresh balance immediately on navbar
+                dispatch(fetchUserData());
                 setTimeout(() => setStep("success"), 3000);
             } else {
                 setStep("input");

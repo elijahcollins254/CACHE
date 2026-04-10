@@ -31,6 +31,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(true);
     const [activeHistoryTab, setActiveHistoryTab] = useState<'all' | 'deposits' | 'withdrawals'>('all');
     const [isSaving, setIsSaving] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         if (!user) {
@@ -64,6 +65,8 @@ export default function Profile() {
     };
 
     const handleSaveProfile = async () => {
+        if (!user) return;
+
         if (!editData.full_name.trim()) {
             alert('Full name is required');
             return;
@@ -98,11 +101,21 @@ export default function Profile() {
             );
 
             if (response.ok) {
+                // Show success message
+                setSuccessMessage('Profile updated successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
+                
                 // Refresh user data
                 dispatch(fetchUserData());
                 setIsEditing(false);
+                
+                // If phone number was added, refresh page to update UI
+                if (!user.phone_locked && editData.phone_number !== user.phone_number) {
+                    setTimeout(() => window.location.reload(), 1000);
+                }
             } else {
                 const error = await response.json();
+                setSuccessMessage('');
                 alert(error.error || 'Failed to update profile');
             }
         } catch (error) {
@@ -182,14 +195,17 @@ export default function Profile() {
 
                 {/* Profile Card */}
                 <div className="bg-muted border border-border rounded-2xl p-8 mb-8">
+                    {successMessage && (
+                        <div className="mb-4 p-4 bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300 rounded-lg">
+                            {successMessage}
+                        </div>
+                    )}
                     <div className="flex items-start justify-between mb-6">
                         <h2 className="text-2xl font-bold">Account Information</h2>
                         {!isEditing && (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                disabled={user.phone_locked}
-                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition font-medium text-sm dark:hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-                                title={user.phone_locked ? "Phone number is locked after first deposit" : ""}
+                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition font-medium text-sm dark:hover:bg-muted"
                             >
                                 <Edit2 className="h-4 w-4" />
                                 Edit Profile
