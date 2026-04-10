@@ -69,13 +69,23 @@ export default function Profile() {
             return;
         }
 
-        if (!editData.phone_number.trim()) {
+        // Only require phone number if it's not locked
+        if (!user.phone_locked && !editData.phone_number.trim()) {
             alert('Phone number is required');
             return;
         }
 
         try {
             setIsSaving(true);
+            const updateData: any = {
+                full_name: editData.full_name,
+            };
+            
+            // Only include phone_number if it's not locked and has changed
+            if (!user.phone_locked && editData.phone_number !== user.phone_number) {
+                updateData.phone_number = editData.phone_number;
+            }
+            
             const response = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/update-profile/`,
                 {
@@ -83,10 +93,7 @@ export default function Profile() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        full_name: editData.full_name,
-                        phone_number: editData.phone_number,
-                    }),
+                    body: JSON.stringify(updateData),
                 }
             );
 
@@ -95,7 +102,8 @@ export default function Profile() {
                 dispatch(fetchUserData());
                 setIsEditing(false);
             } else {
-                alert('Failed to update profile');
+                const error = await response.json();
+                alert(error.error || 'Failed to update profile');
             }
         } catch (error) {
             console.error('Failed to update profile:', error);
