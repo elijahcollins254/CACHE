@@ -17,14 +17,19 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     };
 
     // Include user identifiers for backend authentication
-    // Backend validates using either phone_number OR email (see settings.py CORS config)
+    // Priority: provider type → email → phone_number
     if (user) {
+        // For Google OAuth users - use email even if phone_number exists
+        if (user.provider === "google" && user.email) {
+            headers["X-User-Email"] = user.email;
+            console.log("[fetchWithAuth] Using Google OAuth auth");
+        }
         // For phone-based auth users - PRIMARY identifier
-        if (user.phone_number) {
+        else if (user.phone_number) {
             headers["X-User-Phone-Number"] = user.phone_number;
             console.log("[fetchWithAuth] Using phone auth");
         } 
-        // For Google OAuth users - FALLBACK identifier
+        // Fallback to email
         else if (user.email) {
             headers["X-User-Email"] = user.email;
             console.log("[fetchWithAuth] Using email auth");
