@@ -27,13 +27,19 @@ export default function SearchFilterBar() {
     const [searchTab, setSearchTab] = useState<"markets" | "profiles">("markets");
     const [minProbability, setMinProbability] = useState(0);
     const [maxProbability, setMaxProbability] = useState(100);
+    const [minNoProbability, setMinNoProbability] = useState(0);
+    const [maxNoProbability, setMaxNoProbability] = useState(100);
     const [sortBy, setSortBy] = useState("volume");
+    const [probabilityFilter, setProbabilityFilter] = useState<"all" | "close" | "strong" | "custom">("all");
     const filterBoxRef = useRef<HTMLDivElement>(null);
     const searchBoxRef = useRef<HTMLDivElement>(null);
 
     // Get search results - show markets even when search is empty
     const searchResults = allMarkets
         .filter(m => {
+            // Never show resolved markets
+            if (m.status === "RESOLVED") return false;
+            
             if (searchQuery.trim().length === 0) return true; // Show all when empty
             return (
                 m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -93,7 +99,9 @@ export default function SearchFilterBar() {
             const matchSearch = m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 m.category.toLowerCase().includes(searchQuery.toLowerCase());
             const matchProbability = m.yes_probability >= minProbability && m.yes_probability <= maxProbability;
-            return matchSearch && matchProbability;
+            const noProbability = 100 - m.yes_probability;
+            const matchNoProbability = noProbability >= minNoProbability && noProbability <= maxNoProbability;
+            return matchSearch && matchProbability && matchNoProbability;
         }).sort((a, b) => {
             if (sortBy === "volume") {
                 const aVol = parseInt(a.volume.replace(/\D/g, '')) || 0;
@@ -106,12 +114,14 @@ export default function SearchFilterBar() {
         });
         
         dispatch(setFilteredMarkets(filtered));
-    }, [allMarkets, searchQuery, activeCategory, minProbability, maxProbability, sortBy, dispatch]);
+    }, [allMarkets, searchQuery, activeCategory, minProbability, maxProbability, minNoProbability, maxNoProbability, sortBy, dispatch]);
 
     const resetFilters = () => {
         setSearchQuery("");
         setMinProbability(0);
         setMaxProbability(100);
+        setMinNoProbability(0);
+        setMaxNoProbability(100);
         setSortBy("volume");
         setActiveCategory("Trending");
         // Reset URL param if on home page
@@ -202,8 +212,9 @@ export default function SearchFilterBar() {
                                                     ))}
                                                 </div>
                                                 {allMarkets.filter(m => 
-                                                    m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                    m.category.toLowerCase().includes(searchQuery.toLowerCase())
+                                                    (m.status !== "RESOLVED") &&
+                                                    (m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                    m.category.toLowerCase().includes(searchQuery.toLowerCase()))
                                                 ).length > 6 && (
                                                     <div className="border-t border-border p-3">
                                                         <button 
@@ -252,68 +263,122 @@ export default function SearchFilterBar() {
 
                         {/* Filter Dropdown */}
                         {isFilterOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-background border border-border rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold text-sm text-foreground">Filters</h3>
+                            <div className="absolute right-0 top-full mt-2 w-full sm:w-80 max-w-xs sm:max-w-md bg-gradient-to-b from-background to-muted border border-border rounded-xl shadow-2xl z-50 p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center justify-between mb-5">
+                                    <h3 className="font-bold text-base text-foreground">Filters</h3>
                                     <button
                                         onClick={() => setIsFilterOpen(false)}
-                                        className="text-muted-foreground hover:text-foreground transition-colors"
+                                        className="text-muted-foreground hover:text-foreground transition-colors p-1 hover:bg-muted rounded"
                                     >
                                         ✕
                                     </button>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     {/* Sort By */}
                                     <div>
-                                        <label className="block text-xs font-bold text-muted-foreground mb-2">Sort By</label>
-                                        <select
-                                            value={sortBy}
-                                            onChange={(e) => setSortBy(e.target.value)}
-                                            className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-foreground/50 transition-all"
-                                        >
-                                            <option value="volume">Highest Volume</option>
-                                            <option value="probability">Highest Probability</option>
-                                        </select>
+                                        <label className="block text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wide">Sort By</label>
+                                        <div className="flex gap-2">
+                                            {[
+                                                { value: "volume", label: "Volume" },
+                                                { value: "probability", label: "Probability" }
+                                            ].map(option => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => setSortBy(option.value)}
+                                                    className={`flex-1 px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                                        sortBy === option.value
+                                                            ? "bg-blue-500 text-white shadow-md"
+                                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    {/* Probability Range */}
+                                    {/* Divider */}
+                                    <div className="h-px bg-border" />
+
+                                    {/* Yes Probability */}
                                     <div>
-                                        <label className="block text-xs font-bold text-muted-foreground mb-2 transition-colors">
-                                            <span className="inline-block">Yes Probability:</span>
-                                            <span className="text-apple-green font-black ml-1">{minProbability}% - {maxProbability}%</span>
-                                        </label>
-                                        <div className="space-y-3">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-muted-foreground">Min: {minProbability}%</label>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <label className="block text-xs font-semibold text-foreground uppercase tracking-wide">Yes Probability</label>
+                                            <span className="text-sm font-bold text-green-500">{minProbability}% - {maxProbability}%</span>
+                                        </div>
+                                        <div className="space-y-3 bg-muted/50 p-3 rounded-lg">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] text-muted-foreground font-medium">Min: {minProbability}%</label>
                                                 <input
                                                     type="range"
                                                     min="0"
                                                     max="100"
                                                     value={minProbability}
                                                     onChange={(e) => setMinProbability(parseInt(e.target.value))}
-                                                    className="w-full h-2 bg-gradient-to-r from-red-400 to-yellow-400 rounded-lg appearance-none cursor-pointer accent-apple-green transition-all"
+                                                    className="w-full h-2.5 bg-gradient-to-r from-red-400 to-yellow-400 rounded-full appearance-none cursor-pointer accent-green-500 transition-all"
                                                     style={{
-                                                        background: `linear-gradient(to right, #f87171 0%, #fbbf24 ${minProbability}%, #e5e7eb ${minProbability}%, #e5e7eb 100%)`
+                                                        background: `linear-gradient(to right, #22c55e 0%, #22c55e ${minProbability}%, #e5e7eb ${minProbability}%, #e5e7eb 100%)`
                                                     }}
                                                 />
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-muted-foreground">Max: {maxProbability}%</label>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] text-muted-foreground font-medium">Max: {maxProbability}%</label>
                                                 <input
                                                     type="range"
                                                     min="0"
                                                     max="100"
                                                     value={maxProbability}
                                                     onChange={(e) => setMaxProbability(parseInt(e.target.value))}
-                                                    className="w-full h-2 bg-gradient-to-r from-yellow-400 to-green-400 rounded-lg appearance-none cursor-pointer accent-apple-green transition-all"
+                                                    className="w-full h-2.5 bg-gradient-to-r from-yellow-400 to-green-400 rounded-full appearance-none cursor-pointer accent-green-500 transition-all"
                                                     style={{
-                                                        background: `linear-gradient(to right, #fbbf24 0%, #10b981 ${maxProbability}%, #e5e7eb ${maxProbability}%, #e5e7eb 100%)`
+                                                        background: `linear-gradient(to right, #22c55e 0%, #22c55e ${maxProbability}%, #e5e7eb ${maxProbability}%, #e5e7eb 100%)`
                                                     }}
                                                 />
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* No Probability */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <label className="block text-xs font-semibold text-foreground uppercase tracking-wide">No Probability</label>
+                                            <span className="text-sm font-bold text-red-500">{minNoProbability}% - {maxNoProbability}%</span>
+                                        </div>
+                                        <div className="space-y-3 bg-muted/50 p-3 rounded-lg">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] text-muted-foreground font-medium">Min: {minNoProbability}%</label>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={minNoProbability}
+                                                    onChange={(e) => setMinNoProbability(parseInt(e.target.value))}
+                                                    className="w-full h-2.5 bg-gradient-to-r from-red-400 to-yellow-400 rounded-full appearance-none cursor-pointer accent-red-500 transition-all"
+                                                    style={{
+                                                        background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${minNoProbability}%, #e5e7eb ${minNoProbability}%, #e5e7eb 100%)`
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] text-muted-foreground font-medium">Max: {maxNoProbability}%</label>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={maxNoProbability}
+                                                    onChange={(e) => setMaxNoProbability(parseInt(e.target.value))}
+                                                    className="w-full h-2.5 bg-gradient-to-r from-yellow-400 to-red-400 rounded-full appearance-none cursor-pointer accent-red-500 transition-all"
+                                                    style={{
+                                                        background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${maxNoProbability}%, #e5e7eb ${maxNoProbability}%, #e5e7eb 100%)`
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div className="h-px bg-border" />
 
                                     {/* Reset Filters */}
                                     <button
@@ -321,9 +386,9 @@ export default function SearchFilterBar() {
                                             resetFilters();
                                             setIsFilterOpen(false);
                                         }}
-                                        className="w-full mt-4 px-4 py-2 text-xs font-bold text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                                        className="w-full px-4 py-2.5 text-xs font-bold text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-all hover:text-foreground uppercase tracking-wide"
                                     >
-                                        Reset Filters
+                                        Reset All Filters
                                     </button>
                                 </div>
                             </div>
