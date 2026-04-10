@@ -47,13 +47,13 @@ export default function Home() {
 
         {/* Markets Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="h-40 rounded-2xl bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 transition-opacity duration-300">
             {filteredMarkets.length > 0 ? (
               filteredMarkets.map((market, index) => (
                 <div key={market.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: `${index * 50}ms`}}>

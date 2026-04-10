@@ -145,59 +145,54 @@ export default function MarketCard({ market }: MarketCardProps) {
                 href={`/markets/${market.id}`}
                 className="hidden md:block overflow-hidden rounded-[20px] border border-border bg-muted backdrop-blur-sm p-5 md:p-6 cursor-pointer transition-all duration-300 hover:opacity-90 hover:shadow-lg active:scale-[0.98]"
             >
-                <div className="flex items-start justify-between mb-5 md:mb-6">
+                <div className="flex items-start justify-between mb-4">
                     <div className="h-12 w-12 md:h-14 md:w-14 shrink-0 overflow-hidden rounded-[12px] md:rounded-[14px] bg-muted/50 ring-1 ring-border">
                         {market.image_url && <img src={market.image_url} alt="" className="h-full w-full object-cover" />}
                     </div>
-                    <div className="flex items-center gap-2">
-                        {market.is_live && (
-                            <div className="flex items-center gap-1.5 rounded-full bg-red-950/30 px-2.5 md:px-3 py-1 md:py-1.5 ring-1 ring-red-900/30">
-                                <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-red-500 animate-pulse" />
-                                <span className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wider text-red-400">Live</span>
-                            </div>
-                        )}
-                        <button
-                            onClick={handleSaveToggle}
-                            className={`p-2 rounded-lg transition-all duration-200 ${
-                                isSaved
-                                    ? 'bg-yellow-600/30 text-yellow-400 hover:bg-yellow-600/50'
-                                    : 'bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground'
-                            }`}
-                            aria-label="Save market"
-                        >
-                            <Bookmark className="h-4 w-4" fill={isSaved ? "currentColor" : "none"} />
+                    <button
+                        onClick={handleSaveToggle}
+                        className={`p-2 rounded-lg transition-all duration-200 ${
+                            isSaved
+                                ? 'bg-yellow-600/30 text-yellow-400 hover:bg-yellow-600/50'
+                                : 'bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                        }`}
+                        aria-label="Save market"
+                    >
+                        <Bookmark className="h-4 w-4" fill={isSaved ? "currentColor" : "none"} />
+                    </button>
+                </div>
+
+                <div className="mb-4">
+                    <h3 className="text-sm md:text-base font-semibold leading-snug text-foreground mb-3">
+                        {market.question}
+                    </h3>
+
+                    {/* Outcomes - Yes/No Row */}
+                    <div className="flex gap-2 items-center">
+                        <div className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 bg-green-950/30 border border-green-900/30 rounded-lg">
+                            <span className="text-xs font-medium text-green-400">Yes</span>
+                            <span className="text-xs font-bold text-green-300">{market.yes_probability}%</span>
+                        </div>
+                        <button className="px-2 py-1.5 text-xs font-bold text-green-400 hover:bg-green-950/40 rounded transition-colors">
+                            Yes
+                        </button>
+                        <div className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 bg-red-950/30 border border-red-900/30 rounded-lg">
+                            <span className="text-xs font-medium text-red-400">No</span>
+                            <span className="text-xs font-bold text-red-300">{noProbability}%</span>
+                        </div>
+                        <button className="px-2 py-1.5 text-xs font-bold text-red-400 hover:bg-red-950/40 rounded transition-colors">
+                            No
                         </button>
                     </div>
                 </div>
 
-                <div className="grow mb-6">
-                    <h3 className="text-base md:text-lg font-semibold leading-snug tracking-tight text-foreground hover:text-apple-blue transition-colors duration-200 mb-4">
-                        {market.question}
-                    </h3>
-
-                    <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs md:text-sm font-medium text-muted-foreground">Yes Probability</span>
-                            <span className="text-sm md:text-base font-semibold text-foreground">{market.yes_probability}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden ring-1 ring-border">
-                            <div
-                                className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${market.yes_probability}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div className="flex items-center gap-4 md:gap-5">
-                        <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
-                            <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                            <TrendingUp className="h-3.5 w-3.5" />
                             <span>{market.volume || 'KES 0'}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
-                            <span>{formatDate(market.end_date)}</span>
-                        </div>
+                        <span>{formatDate(market.end_date)}</span>
                     </div>
                 </div>
             </Link>
