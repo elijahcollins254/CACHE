@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
-import { User, Phone, Lock, Eye, EyeOff, Chrome } from "lucide-react";
+import { User, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Signup() {
     const [fullName, setFullName] = useState("");
@@ -157,10 +157,16 @@ export default function Signup() {
                             setError("An error occurred during sign-up");
                         }
                     }}
-                    className="w-full rounded-full bg-blue-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    className="w-full rounded-xl bg-white border-2 border-gray-300 py-3.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400 hover:shadow-md active:bg-white active:border-gray-300 flex items-center justify-center gap-3 group"
                 >
-                    <Chrome className="h-4 w-4" />
-                    Sign up with Google
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                        <text x="2" y="18" fontSize="16" fontWeight="bold" fill="#4285F4">G</text>
+                        <text x="7" y="18" fontSize="16" fontWeight="bold" fill="#EA4335">o</text>
+                        <text x="12" y="18" fontSize="16" fontWeight="bold" fill="#FBBC04">o</text>
+                        <text x="16" y="18" fontSize="16" fontWeight="bold" fill="#4285F4">g</text>
+                        <text x="20" y="18" fontSize="16" fontWeight="bold" fill="#34A853">l</text>
+                    </svg>
+                    <span>Sign up with Google</span>
                 </button>
 
                 <p className="mt-8 text-center text-sm text-muted-foreground font-medium">

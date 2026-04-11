@@ -1747,9 +1747,9 @@ export default function MarketDetail() {
 
             {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
-                <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
-                    <div className="absolute inset-0 bg-black/30" onClick={() => setShowReceipt(false)}></div>
-                    <div className="relative bg-foreground text-background rounded-xl p-6 max-w-sm w-full shadow-xl animate-in zoom-in-95">
+                <div className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReceipt(false)}></div>
+                    <div className="relative bg-foreground text-background rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300 scale-95 origin-center"  style={{animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' as any}}>
                         <button
                             onClick={() => setShowReceipt(false)}
                             className="absolute top-4 right-4 text-background/60 hover:text-background transition"
