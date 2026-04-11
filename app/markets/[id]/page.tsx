@@ -48,7 +48,7 @@ export default function MarketDetail() {
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [limitPrice, setLimitPrice] = useState<number>(50); // Default to 50% probability
-    const [shares, setShares] = useState<number>(100);
+    const [shares, setShares] = useState<number>(100); // Supports fractional shares (e.g., 19.6, 10.25)
     const [orderType, setOrderType] = useState<"market" | "limit">("market");
     const chatInputRef = useRef<HTMLDivElement>(null);
     
@@ -1206,21 +1206,22 @@ export default function MarketDetail() {
 
                                 {/* Shares Input */}
                                 <div className="mb-3">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Shares</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Shares (Fractional OK)</label>
                                     <div className="relative mb-3">
                                         <input
                                             type="number"
                                             placeholder="0"
+                                            step="0.01"
                                             value={shares}
-                                            onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 1))}
+                                            onChange={(e) => setShares(Math.max(0.01, parseFloat(e.target.value) || 0.01))}
                                             className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
                                         />
                                     </div>
                                     
                                     {/* Quick Select Buttons for Shares */}
                                     <div className="grid grid-cols-4 gap-2">
-                                        <button onClick={() => setShares(Math.max(1, shares - 100))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−100</button>
-                                        <button onClick={() => setShares(Math.max(1, shares - 10))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−10</button>
+                                        <button onClick={() => setShares(Math.max(0.01, shares - 100))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−100</button>
+                                        <button onClick={() => setShares(Math.max(0.01, shares - 10))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−10</button>
                                         <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
                                         <button onClick={() => setShares(shares + 100)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
                                     </div>
