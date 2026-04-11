@@ -40,13 +40,15 @@ body {
 
 @layer components {
   .apple-glass {
-    background-color: var(--glass);
-    @apply backdrop-blur-md border-b border-border;
+    @apply bg-glass backdrop-blur-md border-b border-border;
   }
 
   .apple-card {
-    @apply bg-muted border border-border rounded-lg transition-all duration-500 hover:-translate-y-0.5;
-    box-shadow: var(--shadow-apple);
+    @apply bg-muted border border-border rounded-lg transition-all duration-500 hover:-translate-y-0.5 shadow-apple;
+  }
+
+  .apple-card:hover {
+    @apply shadow-apple-hover;
   }
 
   .apple-btn-primary {
@@ -61,10 +63,6 @@ body {
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
-}
-
-.apple-card:hover {
-  box-shadow: var(--shadow-apple-hover);
 }
 
 .no-scrollbar::-webkit-scrollbar {
