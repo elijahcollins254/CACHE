@@ -24,26 +24,6 @@
   --glass: rgba(30, 30, 30, 0.72);
 }
 
-@theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-apple-blue: var(--apple-blue);
-  --color-apple-green: var(--apple-green);
-  --color-apple-red: var(--apple-red);
-  --color-border: var(--border);
-  --color-glass: var(--glass);
-
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: var(--font-outfit), var(--font-sans);
-
-  --radius-apple: 22px;
-  --shadow-apple: 0 4px 24px rgba(0, 0, 0, 0.04);
-  --shadow-apple-hover: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
 body {
   background-color: #1a1a1a;
   color: var(--foreground);
