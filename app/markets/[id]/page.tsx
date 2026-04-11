@@ -4,10 +4,11 @@ import { useEffect, useState, Suspense, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
+import { useAMMPrice, type AMMPriceResult, getSlippageWarningLevel, formatPriceImpact } from "@/lib/useAMMPrice";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Send, BarChart3, Percent } from "lucide-react";
+import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Send, BarChart3, Percent, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function MarketDetail() {
@@ -50,6 +51,11 @@ export default function MarketDetail() {
     const [shares, setShares] = useState<number>(100);
     const [orderType, setOrderType] = useState<"market" | "limit">("market");
     const chatInputRef = useRef<HTMLDivElement>(null);
+    
+    // AMM pricing state
+    const { previewPrice } = useAMMPrice();
+    const [ammPrice, setAmmPrice] = useState<AMMPriceResult | null>(null);
+    const [ammLoading, setAmmLoading] = useState(false);
 
     // Scroll to chat input when replying
     useEffect(() => {
@@ -93,6 +99,19 @@ export default function MarketDetail() {
             setIsSaved(savedMarketIds.includes(Number(id)));
         }
     }, [allMarkets, id, savedMarketIds]);
+
+    // Preview AMM price when bet amount changes
+    useEffect(() => {
+        if (market && betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0) {
+            setAmmLoading(true);
+            previewPrice(market.id, selectedOutcome, betAmount, activeTab as 'buy' | 'sell').then((result) => {
+                setAmmPrice(result);
+                setAmmLoading(false);
+            });
+        } else {
+            setAmmPrice(null);
+        }
+    }, [market, betAmount, selectedOutcome, activeTab, previewPrice]);
 
     useEffect(() => {
         if (market && market.id) {
@@ -1245,29 +1264,75 @@ export default function MarketDetail() {
                                     </div>
                                 </div>
 
-                                {/* Estimated Winnings */}
+                                {/* Estimated Winnings / AMM Price Info */}
                                 {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                                    <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
-                                        <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">
-                                            {activeTab === "sell" ? "You'll receive" : "If correct: you get"}
-                                        </span>
-                                        <div className="text-3xl font-bold text-green-400">
-                                            KES {estimatedReturn.toFixed(2)}
+                                    <>
+                                        {ammPrice && ammPrice.is_amm && (
+                                            <div className={`rounded-lg p-4 mb-4 border-2 ${
+                                                getSlippageWarningLevel(ammPrice.price_impact) === 'none'
+                                                    ? 'bg-green-950/20 border-green-700/40'
+                                                    : getSlippageWarningLevel(ammPrice.price_impact) === 'warning'
+                                                    ? 'bg-yellow-950/20 border-yellow-700/40'
+                                                    : 'bg-red-950/20 border-red-700/40'
+                                            }`}>
+                                                <div className="flex items-start gap-2 mb-3">
+                                                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-400" />
+                                                    <div>
+                                                        <span className="text-xs font-bold text-muted-foreground uppercase block">
+                                                            AMM Pricing
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Price impact: {formatPriceImpact(ammPrice.price_impact)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="space-y-2 text-xs mb-3">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Market price:</span>
+                                                        <span className="font-semibold">{ammPrice.current_probability.toFixed(2)}%</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Execution price:</span>
+                                                        <span className="font-semibold text-green-400">{ammPrice.execution_price.toFixed(2)}%</span>
+                                                    </div>
+                                                    <div className="pt-2 border-t border-border flex justify-between">
+                                                        <span className="text-muted-foreground">After trade:</span>
+                                                        <span className="font-semibold">{ammPrice.new_probability.toFixed(2)}%</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {activeTab === 'buy' && ammPrice.shares_received && (
+                                                    <div className="text-xs font-bold text-green-400">
+                                                        You receive: {ammPrice.shares_received.toFixed(2)} shares
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        
+                                        <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">
+                                                {activeTab === "sell" ? "You'll receive" : "If correct: you get"}
+                                            </span>
+                                            <div className="text-3xl font-bold text-green-400">
+                                                KES {estimatedReturn.toFixed(2)}
+                                            </div>
+                                            <span className="text-xs text-muted-foreground mt-1 block">
+                                                @ {(() => {
+                                                    if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                                                        const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                                                        const prob = selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
+                                                        return `${prob}% (${(100 / prob).toFixed(2)}x)`;
+                                                    } else {
+                                                        const prob = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+                                                        return `${prob}% (${(100 / prob).toFixed(2)}x)`;
+                                                    }
+                                                })()}
+                                            </span>
                                         </div>
-                                        <span className="text-xs text-muted-foreground mt-1 block">
-                                            @ {(() => {
-                                                if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                                                    const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                                                    const prob = selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
-                                                    return `${prob}% (${(100 / prob).toFixed(2)}x)`;
-                                                } else {
-                                                    const prob = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-                                                    return `${prob}% (${(100 / prob).toFixed(2)}x)`;
-                                                }
-                                            })()}
-                                        </span>
-                                    </div>
+                                    </>
                                 )}
+
                             </>
                         )}
 
