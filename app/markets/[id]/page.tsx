@@ -455,8 +455,8 @@ export default function MarketDetail() {
             if (orderType === "market") {
                 payload.amount = betAmount;
             } else {
+                payload.amount = shares; // For limit orders, amount is the shares
                 payload.limit_price = limitPrice; // limitPrice is already in KES (1-100 scale)
-                payload.shares = shares;
             }
 
             // Add option_id for option-list markets
@@ -1461,7 +1461,7 @@ export default function MarketDetail() {
                         {market.description && (
                             <div className="bg-muted rounded-2xl p-4 border border-border">
                                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Description</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">{market.description}</p>
+                                <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">{market.description}</div>
                             </div>
                         )}
 
