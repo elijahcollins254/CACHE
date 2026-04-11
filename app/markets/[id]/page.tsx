@@ -50,6 +50,8 @@ export default function MarketDetail() {
     const [limitPrice, setLimitPrice] = useState<number>(50); // Default to 50% probability
     const [shares, setShares] = useState<number>(100); // Supports fractional shares (e.g., 19.6, 10.25)
     const [orderType, setOrderType] = useState<"market" | "limit">("market");
+    const [availableShares, setAvailableShares] = useState<number | null>(null);
+    const [loadingAvailableShares, setLoadingAvailableShares] = useState(false);
     const chatInputRef = useRef<HTMLDivElement>(null);
     
     // AMM pricing state
@@ -112,6 +114,53 @@ export default function MarketDetail() {
             setAmmPrice(null);
         }
     }, [market, betAmount, selectedOutcome, activeTab, previewPrice]);
+
+    // Auto-load available shares when switching to sell tab
+    useEffect(() => {
+        if (activeTab === "sell" && market && selectedOutcome) {
+            setLoadingAvailableShares(true);
+            const queryParams = new URLSearchParams({
+                outcome: selectedOutcome,
+            });
+            if (selectedOptionId) {
+                queryParams.append('option_id', selectedOptionId.toString());
+            }
+            
+            fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${market.id}/available-shares/?${queryParams}`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            )
+            .then((response) => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error("Failed to fetch available shares");
+            })
+            .then((data) => {
+                const available = data.available_quantity || 0;
+                setAvailableShares(available);
+                // Auto-populate shares field if user has shares to sell
+                if (available > 0) {
+                    setShares(available);
+                    setShareMessage(`You own ${available} shares. We've auto-loaded this amount!`);
+                } else {
+                    setShares(1);
+                    setShareMessage("You don't own any shares of this outcome to sell.");
+                }
+            })
+            .catch((err) => {
+                console.error("Error fetching available shares:", err);
+                setAvailableShares(0);
+                setShareMessage("Could not load available shares");
+            })
+            .finally(() => {
+                setLoadingAvailableShares(false);
+            });
+        }
+    }, [activeTab, market, selectedOutcome, selectedOptionId]);
 
     useEffect(() => {
         if (market && market.id) {
@@ -1225,6 +1274,17 @@ export default function MarketDetail() {
                                         <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
                                         <button onClick={() => setShares(shares + 100)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
                                     </div>
+
+                                    {/* Auto-Load Share Message (for Sell tab) */}
+                                    {activeTab === "sell" && shareMessage && (
+                                        <div className={`mt-2 p-2 rounded-md text-xs font-medium ${
+                                            availableShares && availableShares > 0
+                                                ? "bg-blue-950/40 text-blue-300 border border-blue-900/40"
+                                                : "bg-yellow-950/40 text-yellow-300 border border-yellow-900/40"
+                                        }`}>
+                                            {loadingAvailableShares ? "Loading your shares..." : shareMessage}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Total and To Win Display */}
