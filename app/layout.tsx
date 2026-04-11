@@ -18,7 +18,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "CACHE",
-  description: "Cache it.",
+  description: "Cache In, Cache Out.",
   icons: {
     icon: "/cache.png",
   },
