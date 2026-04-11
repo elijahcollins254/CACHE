@@ -80,13 +80,13 @@ export default function MarketCard({ market }: MarketCardProps) {
   return (
     <Link
       href={`/markets/${market.id}`}
-      className="group block overflow-hidden rounded-3xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-400 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] md:p-5"
+      className="group block overflow-hidden rounded-3xl border border-border bg-muted p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] md:p-5"
     >
       <div className="flex h-full flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 px-2.5 py-1 text-[11px] font-medium tracking-wide text-gray-600 dark:text-slate-300">
+              <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium tracking-wide text-muted-foreground">
                 {market.category}
               </span>
 
@@ -97,7 +97,7 @@ export default function MarketCard({ market }: MarketCardProps) {
               )}
             </div>
 
-            <h3 className="text-[15px] font-semibold leading-snug text-black dark:text-white line-clamp-3 transition-colors duration-300 group-hover:text-gray-900 dark:group-hover:text-white/95 md:text-[16px]">
+            <h3 className="text-[15px] font-semibold leading-snug text-foreground line-clamp-3 transition-colors duration-300 md:text-[16px]">
               {market.question}
             </h3>
           </div>
@@ -106,8 +106,8 @@ export default function MarketCard({ market }: MarketCardProps) {
             onClick={handleSaveToggle}
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
               isSaved
-                ? "border-amber-400/40 dark:border-amber-500 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shadow-sm dark:shadow-md"
-                : "border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:border-gray-400 dark:hover:border-slate-500 hover:bg-gray-200 dark:hover:bg-slate-600 hover:text-gray-700 dark:hover:text-slate-200"
+                ? "border-amber-400/40 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shadow-sm dark:shadow-md"
+                : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
             }`}
             aria-label="Save market"
           >
@@ -140,15 +140,15 @@ export default function MarketCard({ market }: MarketCardProps) {
           </div>
         </div>
 
-        <div className="mt-auto flex items-center justify-between border-t border-gray-300 dark:border-slate-700 pt-3 text-xs text-gray-600 dark:text-slate-400">
+        <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
-            <TrendingUp className="h-3.5 w-3.5 text-gray-500 dark:text-slate-500" />
-            <span className="font-medium text-gray-700 dark:text-slate-300">
+            <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-medium text-foreground">
               {market.volume || "KES 0"}
             </span>
           </div>
 
-          <span className="font-medium text-gray-600 dark:text-slate-400">{formatDate(market.end_date)}</span>
+          <span className="font-medium text-muted-foreground">{formatDate(market.end_date)}</span>
         </div>
       </div>
     </Link>
