@@ -1233,8 +1233,8 @@ export default function MarketDetail() {
                                             <span className="text-2xl font-bold text-green-400">KES {limitStats.totalCost.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
-                                            <span className="text-xs text-muted-foreground">Return</span>
-                                            <span className="text-lg font-bold text-green-300">KES {limitStats.toWin.toFixed(2)}</span>
+                                            <span className="text-xs text-muted-foreground">Total Return</span>
+                                            <span className="text-lg font-bold text-green-300">KES {(limitStats.totalCost + limitStats.toWin).toFixed(2)} <span className="text-xs text-green-400">({limitStats.totalCost.toFixed(2)} + {limitStats.toWin.toFixed(2)})</span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -1723,8 +1723,11 @@ export default function MarketDetail() {
                                         <span className="font-bold">KES {lastBet.totalCost.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-background/75">Return</span>
-                                        <span className="font-bold text-green-300">KES {lastBet.toWin.toFixed(2)}</span>
+                                        <span className="text-background/75">Total Return</span>
+                                        <span className="font-bold text-green-300">KES {(lastBet.totalCost + lastBet.toWin).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-background/60">
+                                        <span>({lastBet.totalCost.toFixed(2)} + {lastBet.toWin.toFixed(2)})</span>
                                     </div>
                                 </>
                             ) : (
