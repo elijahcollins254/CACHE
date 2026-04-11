@@ -17,6 +17,7 @@
   --shadow-apple-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
+html.dark,
 .dark {
   --background: #1a1a1a;
   --foreground: #ffffff;
@@ -30,12 +31,14 @@
   --shadow-apple-hover: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
+html,
 body {
-  background-color: #1a1a1a;
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.011em;
+  transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
 }
 
 @layer components {
@@ -43,6 +46,7 @@ body {
     background-color: var(--glass);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
+    transition: background-color 300ms ease-in-out, border-color 300ms ease-in-out;
   }
 
   .apple-card {
@@ -84,6 +88,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     transition: all 200ms;
+    border: 1px solid var(--border);
   }
 
   .apple-btn-secondary:hover {
