@@ -431,6 +431,7 @@ export default function MarketDetail() {
                     id: Math.random().toString(36).substr(2, 9),
                     market: market.question,
                     outcome,
+                    action: activeTab,
                     phoneNumber: userData.phone_number,
                     timestamp: new Date(),
                 };
@@ -1229,13 +1230,15 @@ export default function MarketDetail() {
                                 <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-3 mb-3 border border-green-900/40">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-xs font-bold text-muted-foreground uppercase">Total</span>
+                                            <span className="text-xs font-bold text-muted-foreground uppercase">{activeTab === "sell" ? "Proceeds" : "Total"}</span>
                                             <span className="text-2xl font-bold text-green-400">KES {limitStats.totalCost.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
-                                            <span className="text-xs text-muted-foreground">Total Return</span>
-                                            <span className="text-lg font-bold text-green-300">KES {(limitStats.totalCost + limitStats.toWin).toFixed(2)} <span className="text-xs text-green-400">({limitStats.totalCost.toFixed(2)} + {limitStats.toWin.toFixed(2)})</span></span>
-                                        </div>
+                                        {activeTab === "buy" && (
+                                            <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
+                                                <span className="text-xs text-muted-foreground">Total Return</span>
+                                                <span className="text-lg font-bold text-green-300">KES {(limitStats.totalCost + limitStats.toWin).toFixed(2)} <span className="text-xs text-green-400">({limitStats.totalCost.toFixed(2)} + {limitStats.toWin.toFixed(2)})</span></span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </>
@@ -1719,16 +1722,20 @@ export default function MarketDetail() {
                                         <span className="font-bold">{lastBet.shares}</span>
                                     </div>
                                     <div className="flex justify-between border-t border-background/20 pt-2">
-                                        <span className="text-background/75">Total</span>
+                                        <span className="text-background/75">{lastBet.action === "sell" ? "Proceeds" : "Total"}</span>
                                         <span className="font-bold">KES {lastBet.totalCost.toFixed(2)}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-background/75">Total Return</span>
-                                        <span className="font-bold text-green-300">KES {(lastBet.totalCost + lastBet.toWin).toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-background/60">
-                                        <span>({lastBet.totalCost.toFixed(2)} + {lastBet.toWin.toFixed(2)})</span>
-                                    </div>
+                                    {lastBet.action === "buy" && (
+                                        <>
+                                            <div className="flex justify-between">
+                                                <span className="text-background/75">Total Return</span>
+                                                <span className="font-bold text-green-300">KES {(lastBet.totalCost + lastBet.toWin).toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs text-background/60">
+                                                <span>({lastBet.totalCost.toFixed(2)} + {lastBet.toWin.toFixed(2)})</span>
+                                            </div>
+                                        </>
+                                    )}
                                 </>
                             ) : (
                                 <>
