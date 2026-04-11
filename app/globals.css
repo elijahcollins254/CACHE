@@ -12,6 +12,9 @@
 
   --border: rgba(0, 0, 0, 0.1);
   --glass: rgba(255, 255, 255, 0.72);
+  --radius-apple: 12px;
+  --shadow-apple: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-apple-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .dark {
@@ -22,6 +25,9 @@
 
   --border: rgba(255, 255, 255, 0.1);
   --glass: rgba(30, 30, 30, 0.72);
+  --radius-apple: 12px;
+  --shadow-apple: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-apple-hover: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 body {
@@ -38,7 +44,12 @@ body {
   }
 
   .apple-card {
-    @apply bg-muted border border-border rounded-[var(--radius-apple)] shadow-[var(--shadow-apple)] transition-all duration-500 ease-apple hover:shadow-[var(--shadow-apple-hover)] hover:-translate-y-0.5;
+    @apply bg-muted border border-border rounded-lg shadow-md transition-all duration-500 hover:shadow-lg hover:-translate-y-0.5;
+    box-shadow: var(--shadow-apple);
+  }
+
+  .apple-card:hover {
+    box-shadow: var(--shadow-apple-hover);
   }
 
   .apple-btn-primary {
@@ -46,7 +57,7 @@ body {
   }
 
   .apple-btn-secondary {
-    @apply bg-muted text-foreground rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:bg-[#e8e8ed] active:scale-95;
+    @apply bg-muted text-foreground rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-80 active:scale-95;
   }
 
   /* Touch-friendly target for mobile (minimum 44x44px Apple HIG) */
