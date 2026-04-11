@@ -47,7 +47,7 @@ export default function MarketDetail() {
     const [priceHistory, setPriceHistory] = useState<{[key: string]: {yes: number[]; no: number[]}}>({});
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [limitPrice, setLimitPrice] = useState<number>(0.50); // Price per share in cents
+    const [limitPrice, setLimitPrice] = useState<number>(50); // Default to 50% probability
     const [shares, setShares] = useState<number>(100);
     const [orderType, setOrderType] = useState<"market" | "limit">("market");
     const chatInputRef = useRef<HTMLDivElement>(null);
@@ -1192,7 +1192,7 @@ export default function MarketDetail() {
                                             −
                                         </button>
                                         <div className="flex-1 text-2xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground">
-                                            {limitPrice} KES
+                                            {limitPrice}%
                                         </div>
                                         <button
                                             onClick={() => setLimitPrice(Math.min(100, limitPrice + 1))}
@@ -1712,7 +1712,7 @@ export default function MarketDetail() {
                                 <>
                                     <div className="flex justify-between">
                                         <span className="text-background/75">Limit Price</span>
-                                        <span className="font-bold">{lastBet.limitPrice} KES</span>
+                                        <span className="font-bold">{lastBet.limitPrice}%</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-background/75">Shares</span>
