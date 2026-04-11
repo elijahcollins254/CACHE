@@ -85,7 +85,7 @@ export default function MarketCard({ market }: MarketCardProps) {
             {/* Mobile List View */}
             <Link
                 href={`/markets/${market.id}`}
-                className="block md:hidden border-b border-border bg-muted p-4 hover:bg-muted/80 active:bg-muted/60 transition-all duration-300 market-card-enter group"
+                className="block md:hidden border border-border bg-muted p-4 rounded-lg hover:bg-muted/80 active:bg-muted/60 transition-all duration-300 market-card-enter group first:mt-4 m-3"
             >
                 <div className="space-y-3">
                     {/* Question + Save Button */}
