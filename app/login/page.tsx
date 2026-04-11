@@ -159,14 +159,15 @@ export default function Login() {
                     }}
                     className="w-full rounded-xl bg-white border-2 border-gray-300 py-3.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400 hover:shadow-md active:bg-white active:border-gray-300 flex items-center justify-center gap-3 group"
                 >
+                    <span>Sign in with</span>
                     <svg className="h-5 w-5" viewBox="0 0 24 24">
                         <text x="2" y="18" fontSize="16" fontWeight="bold" fill="#4285F4">G</text>
                         <text x="7" y="18" fontSize="16" fontWeight="bold" fill="#EA4335">o</text>
                         <text x="12" y="18" fontSize="16" fontWeight="bold" fill="#FBBC04">o</text>
                         <text x="16" y="18" fontSize="16" fontWeight="bold" fill="#4285F4">g</text>
                         <text x="20" y="18" fontSize="16" fontWeight="bold" fill="#34A853">l</text>
+                        <text x="23" y="18" fontSize="16" fontWeight="bold" fill="#EA4335">e</text>
                     </svg>
-                    <span>Sign in with Google</span>
                 </button>
 
                 <p className="mt-8 text-center text-sm text-muted-foreground font-medium">
