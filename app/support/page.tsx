@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { MessageCircle, Send, Mail, Phone } from "lucide-react";
@@ -50,7 +50,9 @@ export default function Support() {
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8">
             <Navbar />
-            <SearchFilterBar />
+            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+                <SearchFilterBar />
+            </Suspense>
 
             <main className="mx-auto pt-48 md:pt-56 max-w-2xl px-4 md:px-6">
                 {/* Back Button */}
