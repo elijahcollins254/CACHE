@@ -1107,33 +1107,33 @@ export default function MarketDetail() {
                                 <div className="space-y-2">
                                     <button
                                         onClick={() => setSelectedOutcome("Yes")}
-                                        className={`w-full p-4 rounded-lg font-bold transition-all text-sm ${
+                                        className={`w-full p-3 rounded-lg font-bold transition-all text-sm ${
                                             selectedOutcome === "Yes"
                                                 ? "bg-green-500 text-white"
                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes <span className="font-bold">{market.yes_probability} KES</span>
+                                        Yes <span className="text-xs font-bold ml-1">({(100 / market.yes_probability).toFixed(2)}x)</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
-                                        className={`w-full p-4 rounded-lg font-bold transition-all text-sm ${
+                                        className={`w-full p-3 rounded-lg font-bold transition-all text-sm ${
                                             selectedOutcome === "No"
                                                 ? "bg-red-500 text-white"
                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                         }`}
                                     >
-                                        No <span className="font-bold">{noProbability} KES</span>
+                                        No <span className="text-xs font-bold ml-1">({(100 / noProbability).toFixed(2)}x)</span>
                                     </button>
                                 </div>
                             )}
                         </div>
 
                         {/* Buy/Sell Tabs */}
-                        <div className="flex gap-2 mb-4 border-b border-border">
+                        <div className="flex gap-2 mb-3 border-b border-border">
                             <button
                                 onClick={() => setActiveTab("buy")}
-                                className={`flex-1 py-3 font-bold text-sm transition-colors ${
+                                className={`flex-1 py-2 font-bold text-sm transition-colors ${
                                     activeTab === "buy"
                                         ? "text-foreground border-b-2 border-foreground -mb-[2px]"
                                         : "text-muted-foreground"
@@ -1143,7 +1143,7 @@ export default function MarketDetail() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("sell")}
-                                className={`flex-1 py-3 font-bold text-sm transition-colors ${
+                                className={`flex-1 py-2 font-bold text-sm transition-colors ${
                                     activeTab === "sell"
                                         ? "text-foreground border-b-2 border-foreground -mb-[2px]"
                                         : "text-muted-foreground"
@@ -1154,10 +1154,10 @@ export default function MarketDetail() {
                         </div>
 
                         {/* Order Type Toggle */}
-                        <div className="mb-4 flex gap-2 border-b border-border pb-3">
+                        <div className="mb-3 flex gap-2 border-b border-border pb-2">
                             <button
                                 onClick={() => setOrderType("market")}
-                                className={`flex-1 py-2 font-bold text-sm transition-colors rounded ${
+                                className={`flex-1 py-2 font-bold text-xs transition-colors rounded ${
                                     orderType === "market"
                                         ? "bg-foreground text-background"
                                         : "text-muted-foreground hover:text-foreground"
@@ -1167,7 +1167,7 @@ export default function MarketDetail() {
                             </button>
                             <button
                                 onClick={() => setOrderType("limit")}
-                                className={`flex-1 py-2 font-bold text-sm transition-colors rounded ${
+                                className={`flex-1 py-2 font-bold text-xs transition-colors rounded ${
                                     orderType === "limit"
                                         ? "bg-foreground text-background"
                                         : "text-muted-foreground hover:text-foreground"
@@ -1180,7 +1180,7 @@ export default function MarketDetail() {
                         {orderType === "limit" ? (
                             <>
                                 {/* Limit Price Input */}
-                                <div className="mb-4">
+                                <div className="mb-3">
                                     <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Limit Price</label>
                                     <div className="flex items-center gap-2">
                                         <button
@@ -1202,7 +1202,7 @@ export default function MarketDetail() {
                                 </div>
 
                                 {/* Shares Input */}
-                                <div className="mb-4">
+                                <div className="mb-3">
                                     <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Shares</label>
                                     <div className="relative mb-3">
                                         <input
@@ -1224,7 +1224,7 @@ export default function MarketDetail() {
                                 </div>
 
                                 {/* Total and To Win Display */}
-                                <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
+                                <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-3 mb-3 border border-green-900/40">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs font-bold text-muted-foreground uppercase">Total</span>
@@ -1240,8 +1240,8 @@ export default function MarketDetail() {
                         ) : (
                             <>
                                 {/* Market Order - Amount Input */}
-                                <div className="mb-4">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Amount</label>
+                                <div className="mb-3">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Amount</label>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -1254,7 +1254,7 @@ export default function MarketDetail() {
                                 </div>
 
                                 {/* Quick Select Buttons */}
-                                <div className="mb-4">
+                                <div className="mb-3">
                                     <div className="grid grid-cols-5 gap-2">
                                         <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
                                         <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+500</button>
