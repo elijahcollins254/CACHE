@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { ChevronLeft, ChevronRight, DollarSign, Search, Share2, Clock, Gift, Wallet, TrendingUp } from "lucide-react";
@@ -109,7 +109,9 @@ export default function HowItWorks() {
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8">
             <Navbar />
-            <SearchFilterBar />
+            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+                <SearchFilterBar />
+            </Suspense>
 
             <main className="mx-auto max-w-4xl px-4 md:px-6 pt-48 md:pt-56">
                 {/* Header */}
