@@ -40,7 +40,8 @@ body {
 
 @layer components {
   .apple-glass {
-    @apply bg-glass backdrop-blur-md border-b border-border;
+    background-color: var(--glass);
+    @apply backdrop-blur-md border-b border-border;
   }
 
   .apple-card {
