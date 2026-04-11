@@ -40,28 +40,64 @@ body {
 
 @layer components {
   .apple-glass {
-    @apply bg-glass backdrop-blur-md border-b border-border;
+    background-color: var(--glass);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
   }
 
   .apple-card {
-    @apply bg-muted border border-border rounded-lg transition-all duration-500 hover:-translate-y-0.5 shadow-apple;
+    background-color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-apple);
+    box-shadow: var(--shadow-apple);
+    transition: all 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .apple-card:hover {
-    @apply shadow-apple-hover;
+    box-shadow: var(--shadow-apple-hover);
+    transform: translateY(-2px);
   }
 
   .apple-btn-primary {
-    @apply bg-foreground text-background rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-95;
+    background-color: var(--foreground);
+    color: var(--background);
+    border-radius: 9999px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 200ms;
+  }
+
+  .apple-btn-primary:hover {
+    opacity: 0.9;
+  }
+
+  .apple-btn-primary:active {
+    transform: scale(0.95);
   }
 
   .apple-btn-secondary {
-    @apply bg-muted text-foreground rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-80 active:scale-95;
+    background-color: var(--muted);
+    color: var(--foreground);
+    border-radius: 9999px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 200ms;
+  }
+
+  .apple-btn-secondary:hover {
+    opacity: 0.8;
+  }
+
+  .apple-btn-secondary:active {
+    transform: scale(0.95);
   }
 
   /* Touch-friendly target for mobile (minimum 44x44px Apple HIG) */
   .touch-target {
-    @apply min-h-[44px] min-w-[44px];
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
