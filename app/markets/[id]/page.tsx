@@ -650,9 +650,9 @@ export default function MarketDetail() {
               <SearchFilterBar />
             </Suspense>
 
-            <main className="mx-auto pt-48 md:pt-56 max-w-7xl px-4 md:px-6">
+            <main className="mx-auto pt-48 md:pt-56 max-w-7xl px-4 md:px-6 page-enter-slide-up">
                 {/* Back Button */}
-                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-3 transition-colors">
+                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-3 transition-colors link-animated">
                     <ArrowLeft className="h-4 w-4" />
                     Back
                 </Link>
