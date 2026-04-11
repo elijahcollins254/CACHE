@@ -108,3 +108,133 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(128, 128, 128, 0.1) transparent;
 }
+
+/* Market Card Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardHoverGlow {
+  0% {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 0 20px rgba(0, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 30px rgba(139, 92, 246, 0.15);
+  }
+}
+
+@keyframes slideUpElement {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes probSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes buttonPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(250, 204, 21, 0);
+  }
+}
+
+@keyframes trendingBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.market-card-enter {
+  animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.market-card-title {
+  animation: slideUpElement 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s backwards;
+}
+
+.market-card-outcomes {
+  animation: slideUpElement 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s backwards;
+}
+
+.market-card-footer {
+  animation: slideUpElement 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s backwards;
+}
+
+.market-card-image {
+  animation: slideUpElement 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.market-card-button {
+  animation: slideUpElement 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s backwards;
+}
+
+.prob-animate {
+  animation: probSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card-hover-glow:hover {
+  animation: cardHoverGlow 0.4s ease-out forwards;
+}
+
+.save-button-pulse.saved {
+  animation: buttonPulse 2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Bar Chart Animations */
+@keyframes fillBarBottom {
+  from {
+    height: 0%;
+    opacity: 0;
+  }
+  to {
+    height: 100%;
+    opacity: 1;
+  }
+}
+
+@keyframes fillBarAnimated {
+  from {
+    max-height: 0;
+  }
+  to {
+    max-height: 100%;
+  }
+}
+
+.bar-fill {
+  animation: fillBarBottom 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: bottom;
+}
+
+.bar-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
