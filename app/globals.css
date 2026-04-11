@@ -24,7 +24,7 @@
   --glass: rgba(30, 30, 30, 0.72);
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
