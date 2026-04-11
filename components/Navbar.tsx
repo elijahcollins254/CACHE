@@ -226,18 +226,18 @@ export default function Navbar() {
                             <div className="relative notification-menu">
                                 <button
                                     onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                                    className="relative p-2.5 hover:bg-muted rounded-lg transition-colors"
+                                    className="relative p-2.5 hover:bg-muted rounded-lg transition-all duration-300"
                                     aria-label="Notifications"
                                 >
-                                    <Bell className="h-5 w-5" />
+                                    <Bell className="h-5 w-5 transition-transform duration-300 hover:scale-110" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                                        <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full notif-badge-pulse"></span>
                                     )}
                                 </button>
 
                                 {/* Notification Popup */}
                                 {isNotificationOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-80 bg-background border border-border rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute right-0 top-full mt-2 w-80 bg-background border border-border rounded-lg shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200 dropdown-enhanced">
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="font-bold text-sm text-foreground">
                                                 Notifications {unreadCount > 0 && `(${unreadCount})`}

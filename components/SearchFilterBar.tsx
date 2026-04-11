@@ -148,14 +148,14 @@ export default function SearchFilterBar() {
 
                         {/* Search Results Dropdown */}
                         {isSearchOpen && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 dropdown-enhanced">
                                 {/* Tab Navigation */}
                                 <div className="flex items-center gap-4 px-4 py-3 border-b border-border sticky top-0 bg-background">
                                     <button
                                         onClick={() => setSearchTab("markets")}
-                                        className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
+                                        className={`text-sm font-semibold pb-2 border-b-2 transition-all search-tab-underline ${
                                             searchTab === "markets"
-                                                ? "text-foreground border-foreground"
+                                                ? "text-foreground border-foreground active"
                                                 : "text-muted-foreground border-transparent hover:text-foreground"
                                         }`}
                                     >
@@ -163,9 +163,9 @@ export default function SearchFilterBar() {
                                     </button>
                                     <button
                                         onClick={() => setSearchTab("profiles")}
-                                        className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
+                                        className={`text-sm font-semibold pb-2 border-b-2 transition-all search-tab-underline ${
                                             searchTab === "profiles"
-                                                ? "text-foreground border-foreground"
+                                                ? "text-foreground border-foreground active"
                                                 : "text-muted-foreground border-transparent hover:text-foreground"
                                         }`}
                                     >
@@ -187,24 +187,24 @@ export default function SearchFilterBar() {
                                                                 setIsSearchOpen(false);
                                                                 setSearchQuery("");
                                                             }}
-                                                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors group"
+                                                            className="search-result-item flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-all duration-200 hover:shadow-md group"
                                                         >
                                                             <div className="flex-1 min-w-0 pt-0.5">
-                                                                <p className="text-sm font-semibold text-foreground group-hover:text-apple-blue transition-colors line-clamp-2">
+                                                                <p className="text-sm font-semibold text-foreground group-hover:text-purple-300 transition-all duration-200 line-clamp-2">
                                                                     {market.question}
                                                                 </p>
                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded group-hover:bg-muted/80 transition-all duration-200">
                                                                         {market.category}
                                                                     </span>
-                                                                    <span className="text-xs text-muted-foreground">
+                                                                    <span className="text-xs text-muted-foreground group-hover:text-muted-foreground/70 transition-all duration-200">
                                                                         {market.yes_probability}% Yes
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                                                                <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
-                                                                <span className="text-xs font-semibold text-foreground whitespace-nowrap">
+                                                            <div className="flex items-center gap-1.5 flex-shrink-0 transition-all duration-200 group-hover:text-purple-400">
+                                                                <TrendingUp className="h-3.5 w-3.5" />
+                                                                <span className="text-xs font-semibold whitespace-nowrap">
                                                                     {market.volume}
                                                                 </span>
                                                             </div>
@@ -263,7 +263,7 @@ export default function SearchFilterBar() {
 
                         {/* Filter Dropdown */}
                         {isFilterOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-full sm:w-80 max-w-xs sm:max-w-md bg-gradient-to-b from-background to-muted border border-border rounded-xl shadow-2xl z-50 p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="absolute right-0 top-full mt-2 w-full sm:w-80 max-w-xs sm:max-w-md bg-gradient-to-b from-background to-muted border border-border rounded-xl shadow-2xl z-50 p-5 animate-in fade-in slide-in-from-top-2 duration-300 dropdown-enhanced">
                                 <div className="flex items-center justify-between mb-5">
                                     <h3 className="font-bold text-base text-foreground">Filters</h3>
                                     <button
@@ -276,7 +276,7 @@ export default function SearchFilterBar() {
 
                                 <div className="space-y-5">
                                     {/* Sort By */}
-                                    <div>
+                                    <div className="filter-item">
                                         <label className="block text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wide">Sort By</label>
                                         <div className="flex gap-2">
                                             {[
@@ -302,7 +302,7 @@ export default function SearchFilterBar() {
                                     <div className="h-px bg-border" />
 
                                     {/* Yes Probability */}
-                                    <div>
+                                    <div className="filter-item">
                                         <div className="flex items-center justify-between mb-3">
                                             <label className="block text-xs font-semibold text-foreground uppercase tracking-wide">Yes Probability</label>
                                             <span className="text-sm font-bold text-green-500">{minProbability}% - {maxProbability}%</span>
@@ -340,7 +340,7 @@ export default function SearchFilterBar() {
                                     </div>
 
                                     {/* No Probability */}
-                                    <div>
+                                    <div className="filter-item">
                                         <div className="flex items-center justify-between mb-3">
                                             <label className="block text-xs font-semibold text-foreground uppercase tracking-wide">No Probability</label>
                                             <span className="text-sm font-bold text-red-500">{minNoProbability}% - {maxNoProbability}%</span>
@@ -398,7 +398,7 @@ export default function SearchFilterBar() {
 
                 {/* Category Tabs - Centered */}
                 <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-3xl mx-auto">
-                    {categories.map((cat) => (
+                    {categories.map((cat, index) => (
                         <button
                             key={cat}
                             onClick={() => {
@@ -410,11 +410,14 @@ export default function SearchFilterBar() {
                                     setActiveCategory(cat);
                                 }
                             }}
-                            className={`px-3.5 py-1.5 text-xs md:text-sm font-medium whitespace-nowrap rounded-lg transition-all ${
+                            className={`category-tab-item px-3.5 py-1.5 text-xs md:text-sm font-medium whitespace-nowrap rounded-lg transition-all duration-300 relative ${
                                 activeCategory === cat
                                     ? "bg-gray-900 text-white shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             }`}
+                            style={{
+                                animationDelay: `${index * 50}ms`
+                            }}
                         >
                             {cat === "Mentions" ? "@" : cat}
                         </button>
