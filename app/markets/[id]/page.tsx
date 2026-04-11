@@ -828,7 +828,7 @@ export default function MarketDetail() {
 
                                                 {/* Horizontal Grid Lines & Labels */}
                                                 {[240, 200, 160, 120, 80, 40].map((y, idx) => {
-                                                    const percent = 100 - (idx * 20);
+                                                    const percent = idx * 20;
                                                     return (
                                                         <g key={`h-grid-${y}`}>
                                                             <line x1="80" y1={y} x2="900" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-border opacity-30" />
