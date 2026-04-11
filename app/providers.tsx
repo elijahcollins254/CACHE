@@ -10,7 +10,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     return (
         <SessionProvider>
             <SessionSyncProvider>
-                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem storageKey="cache-theme">
                     <Provider store={store}>
                         {children}
                     </Provider>
