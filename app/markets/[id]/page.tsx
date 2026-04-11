@@ -1015,7 +1015,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                     }`}
                                                 >
-                                                    Buy {option.yes_probability} KES
+                                                    Yes ({(100 / option.yes_probability).toFixed(2)}x) {option.yes_probability}%
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -1028,7 +1028,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                     }`}
                                                 >
-                                                    Sell {100 - option.yes_probability} KES
+                                                    No ({(100 / (100 - option.yes_probability)).toFixed(2)}x) {100 - option.yes_probability}%
                                                 </button>
                                             </div>
                                         </div>
@@ -1074,6 +1074,8 @@ export default function MarketDetail() {
                                     <div className="space-y-2">
                                         {(() => {
                                             const option = market.options?.find((o: any) => o.id === selectedOptionId);
+                                            const yesOdds = option?.yes_probability ? (100 / option.yes_probability).toFixed(2) : '0';
+                                            const noOdds = option?.yes_probability ? (100 / (100 - option.yes_probability)).toFixed(2) : '0';
                                             return (
                                                 <>
                                                     <button
@@ -1084,7 +1086,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                         }`}
                                                     >
-                                                        Yes <span className="font-bold">{option?.yes_probability} KES</span>
+                                                        Yes ({yesOdds}x) <span className="font-bold">{option?.yes_probability}%</span>
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOutcome("No")}
@@ -1094,7 +1096,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                         }`}
                                                     >
-                                                        No <span className="font-bold">{100 - (option?.yes_probability || 0)} KES</span>
+                                                        No ({noOdds}x) <span className="font-bold">{100 - (option?.yes_probability || 0)}%</span>
                                                     </button>
                                                 </>
                                             );
