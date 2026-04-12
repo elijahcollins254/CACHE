@@ -182,7 +182,7 @@ export default function HowItWorks() {
                         {/* Example Market for Predict Step */}
                         {step.step === 3 && (
                             <div className="mt-6 pt-6 border-t border-white/20">
-                                <p className="text-xs font-semibold text-white/60 mb-3 uppercase">Example Market</p>
+                                <p className="text-xs font-semibold text-white/60 mb-3 uppercase">Will Jesus return before 2027?</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/20 hover:bg-white/15 transition-colors">
                                         <div className="flex items-center justify-between mb-2">
