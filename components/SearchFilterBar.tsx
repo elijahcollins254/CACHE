@@ -17,6 +17,7 @@ export default function SearchFilterBar() {
     const searchParams = useSearchParams();
     const allMarkets = useAppSelector(selectAllMarkets);
     const isMarketPage = pathname.includes("/markets/");
+    const [navbarHeight, setNavbarHeight] = useState(72); // Default mobile height
     
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -33,6 +34,24 @@ export default function SearchFilterBar() {
     const [filterMode, setFilterMode] = useState<"yes" | "no">("yes");
     const filterBoxRef = useRef<HTMLDivElement>(null);
     const searchBoxRef = useRef<HTMLDivElement>(null);
+
+    // Detect navbar height from window width for responsive sizing
+    useEffect(() => {
+        const updateNavbarHeight = () => {
+            const width = window.innerWidth;
+            if (width < 640) { // mobile
+                setNavbarHeight(72); // h-18 = 4.5rem
+            } else if (width < 768) { // sm
+                setNavbarHeight(56); // h-14 = 3.5rem
+            } else { // md and up
+                setNavbarHeight(48); // h-12 = 3rem
+            }
+        };
+
+        updateNavbarHeight();
+        window.addEventListener("resize", updateNavbarHeight);
+        return () => window.removeEventListener("resize", updateNavbarHeight);
+    }, []);
 
     // Get search results - show markets even when search is empty
     const searchResults = allMarkets
@@ -139,10 +158,11 @@ export default function SearchFilterBar() {
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-            {/* Search Bar - Hidden on mobile, Centered on desktop */}
-            <div className="hidden md:flex px-4 sm:px-6 py-3 border-b border-border">
-                <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto w-full" ref={searchBoxRef}>
+        <>
+            {/* Desktop Search Bar - Visible only on md and above */}
+            <div className="hidden md:block fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+                <div className="px-4 sm:px-6 py-3">
+                    <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto" ref={searchBoxRef}>
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
@@ -402,10 +422,12 @@ export default function SearchFilterBar() {
                         )}
                     </div>
                 </div>
+                </div>
             </div>
 
-            {/* Category Tabs - Always visible on all screens, centered */}
-            <div className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-border">
+            {/* Category Tabs - Always visible on all screens, positioned below navbar */}
+            <div className="fixed left-0 right-0 z-39 bg-background/95 backdrop-blur-md border-b border-border px-3 sm:px-6 py-2.5 sm:py-3"
+                style={{ top: `${navbarHeight}px` }}>
                 <div className="flex gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar max-w-full sm:max-w-3xl mx-auto">
                     {categories.map((cat, index) => (
                         <button
@@ -433,6 +455,6 @@ export default function SearchFilterBar() {
                     ))}
                 </div>
             </div>
-        </div>
+        </>
     );
 }
