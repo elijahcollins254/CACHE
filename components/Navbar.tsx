@@ -446,48 +446,52 @@ export default function Navbar() {
             </div>
         </nav>
 
-        {/* Mobile Bottom Navigation */}
-        {user && (
-            <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden apple-glass backdrop-blur-xl border-t border-border">
-                <div className="flex items-center justify-around h-20 px-2">
-                    {/* Home */}
-                    <Link
-                        href="/"
-                        className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/" ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                        <Home className={`h-6 w-6 ${pathname === "/" ? "font-bold" : ""}`} />
-                        <span className="text-[10px] font-semibold">Home</span>
-                    </Link>
+        {/* Mobile Bottom Navigation - Always visible for faster UX */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden apple-glass backdrop-blur-xl border-t border-border">
+            <div className="flex items-center justify-around h-20 px-2">
+                {/* Home */}
+                <Link
+                    href="/"
+                    className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/" ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                    <Home className={`h-6 w-6 ${pathname === "/" ? "font-bold" : ""}`} />
+                    <span className="text-[10px] font-semibold">Home</span>
+                </Link>
 
-                    {/* Search */}
-                    <button
-                        onClick={() => setIsMobileSearchOpen(true)}
-                        className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Search className="h-6 w-6" />
-                        <span className="text-[10px] font-semibold">Search</span>
-                    </button>
+                {/* Search */}
+                <button
+                    onClick={() => setIsMobileSearchOpen(true)}
+                    className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <Search className="h-6 w-6" />
+                    <span className="text-[10px] font-semibold">Search</span>
+                </button>
 
-                    {/* Deposit */}
-                    <button
-                        onClick={() => setIsDepositModalOpen(true)}
-                        className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-apple-green transition-colors"
-                    >
-                        <DollarSign className="h-6 w-6" />
-                        <span className="text-[10px] font-semibold">Deposit</span>
-                    </button>
+                {/* Deposit */}
+                <button
+                    onClick={() => {
+                        if (user) {
+                            setIsDepositModalOpen(true);
+                        } else {
+                            router.push("/login");
+                        }
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-apple-green transition-colors"
+                >
+                    <DollarSign className="h-6 w-6" />
+                    <span className="text-[10px] font-semibold">Deposit</span>
+                </button>
 
-                    {/* Portfolio */}
-                    <Link
-                        href="/dashboard"
-                        className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                        <BarChart3 className={`h-6 w-6 ${pathname === "/dashboard" ? "font-bold" : ""}`} />
-                        <span className="text-[10px] font-semibold">Portfolio</span>
-                    </Link>
-                </div>
+                {/* Portfolio */}
+                <Link
+                    href="/dashboard"
+                    className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                    <BarChart3 className={`h-6 w-6 ${pathname === "/dashboard" ? "font-bold" : ""}`} />
+                    <span className="text-[10px] font-semibold">Portfolio</span>
+                </Link>
             </div>
-        )}
+        </div>
 
         {/* Deposit Modal */}
         <DepositModal
