@@ -93,7 +93,7 @@ export default function Dashboard() {
         <div className="min-h-screen bg-background pb-20">
             <Navbar />
 
-            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
+            <main className="mx-auto pt-32 sm:pt-24 max-w-[1200px] px-4 md:px-6">
                 {/* Header */}
                 <div className="mb-8 flex items-center justify-between">
                     <div className="flex items-center gap-4">

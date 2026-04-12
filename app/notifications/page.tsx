@@ -60,7 +60,7 @@ export default function NotificationsPage() {
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
-            <main className="mx-auto pt-24 max-w-2xl px-4 md:px-6 pb-20">
+            <main className="mx-auto pt-32 sm:pt-24 max-w-2xl px-4 md:px-6 pb-20">
                 {/* Header */}
                 <div className="mb-8">
                     <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-6 transition-colors">
