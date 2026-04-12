@@ -52,6 +52,7 @@ export default function MarketDetail() {
     const [orderType, setOrderType] = useState<"market" | "limit">("market");
     const [availableShares, setAvailableShares] = useState<number | null>(null);
     const [loadingAvailableShares, setLoadingAvailableShares] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const chatInputRef = useRef<HTMLDivElement>(null);
     
     // AMM pricing state
@@ -76,6 +77,19 @@ export default function MarketDetail() {
         checkMobile();
         window.addEventListener("resize", checkMobile);
         return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    // Check if user is admin
+    useEffect(() => {
+        const userStr = localStorage.getItem("poly_user");
+        if (userStr) {
+            try {
+                const userData = JSON.parse(userStr);
+                setIsAdmin(userData.is_staff || userData.is_superuser || false);
+            } catch {
+                setIsAdmin(false);
+            }
+        }
     }, []);
 
     // Fetch markets if not already loaded
@@ -1333,7 +1347,7 @@ export default function MarketDetail() {
                                 {/* Estimated Winnings / AMM Price Info */}
                                 {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
                                     <>
-                                        {ammPrice && ammPrice.is_amm && (
+                                        {ammPrice && ammPrice.is_amm && isAdmin && (
                                             <div className={`rounded-lg p-4 mb-4 border-2 ${
                                                 getSlippageWarningLevel(ammPrice.price_impact) === 'none'
                                                     ? 'bg-green-950/20 border-green-700/40'
