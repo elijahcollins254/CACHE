@@ -88,7 +88,7 @@ export default function Support() {
                             <Phone className="h-5 w-5 text-apple-green" />
                             <h3 className="font-bold text-foreground">Call Us</h3>
                         </div>
-                        <p className="text-sm text-muted-foreground">+254 712 345 678</p>
+                        <p className="text-sm text-muted-foreground">+254718693484</p>
                         <p className="text-xs text-muted-foreground mt-1">Mon-Fri, 9AM-5PM EAT</p>
                     </a>
                 </div>
