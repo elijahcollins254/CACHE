@@ -83,7 +83,7 @@ export default function Support() {
                         <p className="text-sm text-muted-foreground">support@cache.app</p>
                         <p className="text-xs text-muted-foreground mt-1">We respond within 24 hours</p>
                     </a>
-                    <a href="tel:+254712345678" className="bg-muted rounded-2xl p-6 hover:bg-muted/80 transition-colors border border-border">
+                    <a href="tel:+254718693484" className="bg-muted rounded-2xl p-6 hover:bg-muted/80 transition-colors border border-border">
                         <div className="flex items-center gap-3 mb-2">
                             <Phone className="h-5 w-5 text-apple-green" />
                             <h3 className="font-bold text-foreground">Call Us</h3>

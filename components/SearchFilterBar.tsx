@@ -140,9 +140,9 @@ export default function SearchFilterBar() {
 
     return (
         <div className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-            <div className="px-4 sm:px-6 py-3 border-b border-border">
-                {/* Search Bar - Hidden on mobile, Centered on desktop */}
-                <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto mb-3 hidden sm:flex" ref={searchBoxRef}>
+            {/* Search Bar - Hidden on mobile, Centered on desktop */}
+            <div className="hidden sm:block px-4 sm:px-6 py-3 border-b border-border">
+                <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto" ref={searchBoxRef}>
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
@@ -402,8 +402,10 @@ export default function SearchFilterBar() {
                         )}
                     </div>
                 </div>
+            </div>
 
-                {/* Category Tabs - Always visible, centered */}
+            {/* Category Tabs - Always visible on all screens, centered */}
+            <div className="px-4 sm:px-6 py-3 border-b border-border">
                 <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-3xl mx-auto">
                     {categories.map((cat, index) => (
                         <button

@@ -508,17 +508,19 @@ export default function Navbar() {
                 {/* Bottom Sheet */}
                 <div 
                     ref={searchSheetRef}
-                    className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background rounded-t-2xl flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 duration-300"
+                    className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background rounded-t-2xl flex flex-col max-h-[50vh] animate-in slide-in-from-bottom-10 duration-300"
                     onTouchStart={(e) => setDragStart(e.touches[0].clientY)}
                     onTouchEnd={(e) => {
                         const dragEnd = e.changedTouches[0].clientY;
-                        if (dragEnd - dragStart > 100) {
+                        const dragDistance = dragEnd - dragStart;
+                        // Auto-close if dragged down 100px OR if dragged to around halfway (50vh = ~360px, halfway = ~180px)
+                        if (dragDistance > 100 || dragDistance > 80) {
                             setIsMobileSearchOpen(false);
                         }
                     }}
                 >
                     {/* Drag Handle */}
-                    <div className="flex justify-center pt-3 pb-2">
+                    <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
                         <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
                     </div>
 
@@ -554,74 +556,58 @@ export default function Navbar() {
                         ))}
                     </div>
 
-                    {/* Search Results or Topics Grid */}
+                    {/* Filtered Results */}
                     <div className="flex-1 overflow-y-auto px-4 py-4">
-                        {mobileSearchQuery.trim() ? (
-                            <>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Results ({
-                                    allMarkets.filter(m => 
-                                        m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase()) &&
-                                        m.status !== "RESOLVED"
-                                    ).length
-                                })</p>
-                                <div className="space-y-2">
-                                    {allMarkets
-                                        .filter(m => 
-                                            m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase()) &&
-                                            m.status !== "RESOLVED"
-                                        )
-                                        .slice(0, 10)
-                                        .map((market) => (
-                                            <Link
-                                                key={market.id}
-                                                href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
-                                                onClick={() => {
-                                                    setIsMobileSearchOpen(false);
-                                                    setMobileSearchQuery("");
-                                                }}
-                                                className="block p-3 rounded-lg bg-muted hover:bg-muted/80 transition-all"
-                                            >
-                                                <p className="text-sm font-semibold text-foreground line-clamp-2 mb-1">
-                                                    {market.question}
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs bg-background/50 px-2 py-0.5 rounded text-muted-foreground">
-                                                        {market.category}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {market.yes_probability}% Yes
-                                                    </span>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Browse by topic</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[
-                                        { label: "Live Crypto", icon: "📈" },
-                                        { label: "Politics", icon: "🏛️" },
-                                        { label: "Middle East", icon: "🌍" },
-                                        { label: "Crypto Trading", icon: "💰" },
-                                        { label: "Sports", icon: "⚽" },
-                                        { label: "Pop Culture", icon: "🎬" },
-                                        { label: "Technology", icon: "💻" },
-                                        { label: "AI & ML", icon: "🤖" },
-                                    ].map((topic) => (
-                                        <button
-                                            key={topic.label}
-                                            onClick={() => setMobileSearchQuery(topic.label)}
-                                            className="flex items-center gap-2 px-3 py-3 rounded-lg bg-muted hover:bg-muted/80 transition-all text-left"
-                                        >
-                                            <span className="text-lg">{topic.icon}</span>
-                                            <span className="text-xs font-semibold text-foreground">{topic.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
+                        {(() => {
+                            // Filter markets by search query if provided
+                            let filtered = mobileSearchQuery.trim()
+                                ? allMarkets.filter(m => 
+                                    m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase()) &&
+                                    m.status !== "RESOLVED" &&
+                                    m.category === mobileActiveCategory
+                                )
+                                : allMarkets.filter(m => 
+                                    m.status !== "RESOLVED" &&
+                                    m.category === mobileActiveCategory
+                                );
+
+                            return (
+                                <>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                                        {mobileSearchQuery.trim() ? "Search Results" : mobileActiveCategory} ({filtered.length})
+                                    </p>
+                                    <div className="space-y-2">
+                                        {filtered.length > 0 ? (
+                                            filtered.slice(0, 10).map((market) => (
+                                                <Link
+                                                    key={market.id}
+                                                    href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
+                                                    onClick={() => {
+                                                        setIsMobileSearchOpen(false);
+                                                        setMobileSearchQuery("");
+                                                    }}
+                                                    className="block p-3 rounded-lg bg-muted hover:bg-muted/80 transition-all"
+                                                >
+                                                    <p className="text-sm font-semibold text-foreground line-clamp-2 mb-1">
+                                                        {market.question}
+                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs bg-background/50 px-2 py-0.5 rounded text-muted-foreground">
+                                                            {market.category}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {market.yes_probability}% Yes
+                                                        </span>
+                                                    </div>
+                                                </Link>
+                                            ))
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground text-center py-8">No markets found in this category</p>
+                                        )}
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </>
