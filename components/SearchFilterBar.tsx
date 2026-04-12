@@ -110,11 +110,16 @@ export default function SearchFilterBar() {
         } else if (activeCategory === "Resolved") {
             marketsToFilter = allMarkets.filter(m => m.status === "RESOLVED");
         } else if (activeCategory === "Closing Soon") {
-            // Filter markets closing within the next 7 days
+            // Filter markets closing within the next 7 days OR marked as closing_soon
             const now = new Date();
             const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             marketsToFilter = allMarkets.filter(m => {
                 if (m.status === "RESOLVED") return false;
+                
+                // Check if explicitly marked as closing_soon
+                if (m.closing_soon) return true;
+                
+                // Or check if end_date is within 7 days
                 if (!m.end_date) return false;
                 const closingDate = new Date(m.end_date);
                 return closingDate >= now && closingDate <= sevenDaysFromNow;
@@ -141,7 +146,13 @@ export default function SearchFilterBar() {
             return matchSearch && matchProbability;
         }).sort((a, b) => {
             // Determine sort order based on active category
-            if (activeCategory === "New") {
+            if (activeCategory === "Closing Soon") {
+                // Sort by end_date ascending (closest deadline first)
+                if (!a.end_date || !b.end_date) return 0;
+                const dateA = new Date(a.end_date).getTime();
+                const dateB = new Date(b.end_date).getTime();
+                return dateA - dateB;
+            } else if (activeCategory === "New") {
                 // Sort by ID descending (newer markets have higher IDs)
                 return b.id - a.id;
             } else if (activeCategory === "Trending" || sortBy === "volume") {

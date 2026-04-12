@@ -12,6 +12,7 @@ export interface Market {
     image_url?: string;
     is_live?: boolean;
     saved?: boolean;
+    closing_soon?: boolean; // Flag for markets marked as closing soon
 }
 
 interface MarketsState {
