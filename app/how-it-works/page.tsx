@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, DollarSign, Search, Share2, Clock, Gift, Wal
 
 const steps = [
     {
-        title: "Deposit",
+        title: "Cache In",
         description: "Fund with M-Pesa",
         details: [
             "Click 'Deposit' in your wallet",
@@ -55,7 +55,7 @@ const steps = [
         step: 4
     },
     {
-        title: "Win",
+        title: "Cache Out",
         description: "Get Paid",
         details: [
             "Correct predictions earn KES 100 per share",

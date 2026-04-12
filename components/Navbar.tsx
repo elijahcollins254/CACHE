@@ -172,11 +172,11 @@ export default function Navbar() {
                 {/* Center Section: Balance */}
                 {user && (
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 ml-2 sm:ml-0 flex-shrink-0">
-                        {/* Cash Balance */}
+                        {/* Cache Balance */}
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg bg-gradient-to-r from-apple-green/10 to-apple-blue/10 border border-apple-green/20">
                             <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-green flex-shrink-0" />
                             <div className="flex flex-col gap-0">
-                                <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Cash</span>
+                                <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Cache</span>
                                 <span className="text-[10px] sm:text-xs font-bold text-foreground">
                                     <span className="text-apple-green font-black">{balance}</span>
                                 </span>

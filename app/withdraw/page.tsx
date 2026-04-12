@@ -96,7 +96,7 @@ export default function Withdraw() {
                         </Link>
                         <div>
                             <h1 className="text-3xl font-bold text-foreground">Withdraw</h1>
-                            <p className="text-muted-foreground">Cash out your balance</p>
+                            <p className="text-muted-foreground">Cache out your balance</p>
                         </div>
                     </div>
 

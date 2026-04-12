@@ -116,10 +116,10 @@ export default function Dashboard() {
 
                 {/* Portfolio & Profit/Loss Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Cash Balance & Action Buttons */}
+                    {/* Cache Balance & Action Buttons */}
                     <div>
                         <div className="bg-background rounded-2xl p-6 border border-border">
-                            <p className="text-muted-foreground text-sm font-medium mb-1">Cash Balance</p>
+                            <p className="text-muted-foreground text-sm font-medium mb-1">Cache Balance</p>
                             <h2 className="text-3xl font-bold mb-6">KES {parseFloat(balance).toLocaleString()}</h2>
                             
                             {/* Action Buttons */}
