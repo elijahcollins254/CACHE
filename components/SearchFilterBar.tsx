@@ -18,6 +18,7 @@ export default function SearchFilterBar() {
     const allMarkets = useAppSelector(selectAllMarkets);
     const isMarketPage = pathname.includes("/markets/");
     const [navbarHeight, setNavbarHeight] = useState(72); // Default mobile height
+    const [isDesktop, setIsDesktop] = useState(false);
     
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -35,10 +36,11 @@ export default function SearchFilterBar() {
     const filterBoxRef = useRef<HTMLDivElement>(null);
     const searchBoxRef = useRef<HTMLDivElement>(null);
 
-    // Detect navbar height from window width for responsive sizing
+    // Detect navbar height and desktop status from window width for responsive sizing
     useEffect(() => {
         const updateNavbarHeight = () => {
             const width = window.innerWidth;
+            setIsDesktop(width >= 768);
             if (width < 640) { // mobile
                 setNavbarHeight(72); // h-18 = 4.5rem
             } else if (width < 768) { // sm
@@ -159,8 +161,9 @@ export default function SearchFilterBar() {
 
     return (
         <>
-            {/* Desktop Search Bar - Visible only on md and above */}
-            <div className="hidden md:block fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+            {/* Desktop Search Bar - Visible only on md and above, positioned below navbar */}
+            <div className="hidden md:block fixed left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border"
+                style={{ top: '48px' }}>
                 <div className="px-4 sm:px-6 py-3">
                     <div className="relative flex items-center gap-1.5 max-w-3xl mx-auto" ref={searchBoxRef}>
                     <div className="relative flex-1">
@@ -425,9 +428,9 @@ export default function SearchFilterBar() {
                 </div>
             </div>
 
-            {/* Category Tabs - Always visible on all screens, positioned below navbar */}
+            {/* Category Tabs - Always visible on all screens, positioned below navbar (and search bar on desktop) */}
             <div className="fixed left-0 right-0 z-39 bg-background/95 backdrop-blur-md border-b border-border px-3 sm:px-6 py-2.5 sm:py-3"
-                style={{ top: `${navbarHeight}px` }}>
+                style={{ top: (navbarHeight + (isDesktop ? 60 : 0)) + 'px' }}>
                 <div className="flex gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar max-w-full sm:max-w-3xl mx-auto">
                     {categories.map((cat, index) => (
                         <button

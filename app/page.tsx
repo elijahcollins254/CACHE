@@ -43,7 +43,7 @@ export default function Home() {
         <SearchFilterBar />
       </Suspense>
 
-      <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-32 sm:pt-28 md:pt-56 pb-24 sm:pb-8 page-enter-slide-up">
+      <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-32 sm:pt-28 md:pt-40 pb-24 sm:pb-8 page-enter-slide-up">
 
         {/* Markets Grid */}
         {loading ? (
