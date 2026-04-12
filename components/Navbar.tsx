@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading } from "@/lib/redux/hooks";
+import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading, selectAllMarkets } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
 import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle } from "lucide-react";
+import { generateMarketSlug } from "@/lib/slugify";
 import DepositModal from "./DepositModal";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
     const pathname = usePathname();
+    const router = useRouter();
     const dispatch = useAppDispatch();
     
     // Redux state
@@ -23,12 +25,17 @@ export default function Navbar() {
     const notifications = useAppSelector(selectNotifications);
     const unreadCount = useAppSelector(selectUnreadCount);
     const isLoadingNotifications = useAppSelector(selectNotificationsLoading);
+    const allMarkets = useAppSelector(selectAllMarkets);
     
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+    const [mobileActiveCategory, setMobileActiveCategory] = useState("Trending");
+    const [dragStart, setDragStart] = useState(0);
+    const searchSheetRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const checkUser = () => {
@@ -489,67 +496,135 @@ export default function Navbar() {
             balance={balance}
         />
 
-        {/* Mobile Search Modal */}
+        {/* Mobile Search Modal - Bottom Sheet */}
         {isMobileSearchOpen && (
-            <div className="fixed inset-0 z-50 sm:hidden bg-background flex flex-col h-screen">
-                {/* Search Modal Header */}
-                <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
-                    <button
-                        onClick={() => setIsMobileSearchOpen(false)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        ✕
-                    </button>
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Search markets..."
-                            autoFocus
-                            className="w-full h-9 rounded-lg bg-muted pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground focus:bg-muted/80 transition-all"
-                        />
+            <>
+                {/* Overlay */}
+                <div 
+                    className="fixed inset-0 z-40 sm:hidden bg-black/50 backdrop-blur-sm"
+                    onClick={() => setIsMobileSearchOpen(false)}
+                />
+                
+                {/* Bottom Sheet */}
+                <div 
+                    ref={searchSheetRef}
+                    className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background rounded-t-2xl flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 duration-300"
+                    onTouchStart={(e) => setDragStart(e.touches[0].clientY)}
+                    onTouchEnd={(e) => {
+                        const dragEnd = e.changedTouches[0].clientY;
+                        if (dragEnd - dragStart > 100) {
+                            setIsMobileSearchOpen(false);
+                        }
+                    }}
+                >
+                    {/* Drag Handle */}
+                    <div className="flex justify-center pt-3 pb-2">
+                        <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
                     </div>
-                </div>
 
-                {/* Category Tabs */}
-                <div className="overflow-x-auto no-scrollbar px-4 py-3 border-b border-border flex gap-2">
-                    {["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved", "Closing Soon"].map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => setIsMobileSearchOpen(false)}
-                            className="px-3 py-1.5 text-xs font-medium whitespace-nowrap rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all"
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </div>
+                    {/* Search Input */}
+                    <div className="px-4 py-3 border-b border-border">
+                        <div className="flex items-center gap-2">
+                            <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <input
+                                type="text"
+                                placeholder="Search markets..."
+                                value={mobileSearchQuery}
+                                onChange={(e) => setMobileSearchQuery(e.target.value)}
+                                autoFocus
+                                className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+                            />
+                        </div>
+                    </div>
 
-                {/* Topics Grid */}
-                <div className="flex-1 overflow-y-auto px-4 py-4">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Topics</p>
-                    <div className="grid grid-cols-2 gap-2">
-                        {[
-                            { label: "Live Crypto", icon: "📈" },
-                            { label: "Politics", icon: "🏛️" },
-                            { label: "Middle East", icon: "🌍" },
-                            { label: "Crypto", icon: "💰" },
-                            { label: "Sports", icon: "⚽" },
-                            { label: "Pop Culture", icon: "🎬" },
-                            { label: "Tech", icon: "💻" },
-                            { label: "AI", icon: "🤖" },
-                        ].map((topic) => (
+                    {/* Category Tabs */}
+                    <div className="overflow-x-auto no-scrollbar px-4 py-3 border-b border-border flex gap-2">
+                        {["Trending", "Breaking", "New", "Politics", "Sports", "Crypto"].map((cat) => (
                             <button
-                                key={topic.label}
-                                onClick={() => setIsMobileSearchOpen(false)}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-all text-left"
+                                key={cat}
+                                onClick={() => setMobileActiveCategory(cat)}
+                                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap rounded-lg transition-all ${
+                                    mobileActiveCategory === cat
+                                        ? "bg-foreground text-background"
+                                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                                }`}
                             >
-                                <span className="text-lg">{topic.icon}</span>
-                                <span className="text-xs font-semibold text-foreground">{topic.label}</span>
+                                {cat}
                             </button>
                         ))}
                     </div>
+
+                    {/* Search Results or Topics Grid */}
+                    <div className="flex-1 overflow-y-auto px-4 py-4">
+                        {mobileSearchQuery.trim() ? (
+                            <>
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Results ({
+                                    allMarkets.filter(m => 
+                                        m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase()) &&
+                                        m.status !== "RESOLVED"
+                                    ).length
+                                })</p>
+                                <div className="space-y-2">
+                                    {allMarkets
+                                        .filter(m => 
+                                            m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase()) &&
+                                            m.status !== "RESOLVED"
+                                        )
+                                        .slice(0, 10)
+                                        .map((market) => (
+                                            <Link
+                                                key={market.id}
+                                                href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
+                                                onClick={() => {
+                                                    setIsMobileSearchOpen(false);
+                                                    setMobileSearchQuery("");
+                                                }}
+                                                className="block p-3 rounded-lg bg-muted hover:bg-muted/80 transition-all"
+                                            >
+                                                <p className="text-sm font-semibold text-foreground line-clamp-2 mb-1">
+                                                    {market.question}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs bg-background/50 px-2 py-0.5 rounded text-muted-foreground">
+                                                        {market.category}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {market.yes_probability}% Yes
+                                                    </span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Browse by topic</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { label: "Live Crypto", icon: "📈" },
+                                        { label: "Politics", icon: "🏛️" },
+                                        { label: "Middle East", icon: "🌍" },
+                                        { label: "Crypto Trading", icon: "💰" },
+                                        { label: "Sports", icon: "⚽" },
+                                        { label: "Pop Culture", icon: "🎬" },
+                                        { label: "Technology", icon: "💻" },
+                                        { label: "AI & ML", icon: "🤖" },
+                                    ].map((topic) => (
+                                        <button
+                                            key={topic.label}
+                                            onClick={() => setMobileSearchQuery(topic.label)}
+                                            className="flex items-center gap-2 px-3 py-3 rounded-lg bg-muted hover:bg-muted/80 transition-all text-left"
+                                        >
+                                            <span className="text-lg">{topic.icon}</span>
+                                            <span className="text-xs font-semibold text-foreground">{topic.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
-            </div>
+            </>
         )}
         </>
     );
