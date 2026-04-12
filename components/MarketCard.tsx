@@ -18,6 +18,13 @@ interface MarketCardProps {
     end_date: string;
     is_live?: boolean;
     saved?: boolean;
+    market_type?: string;
+    options?: Array<{
+      id: number;
+      label: string;
+      yes_probability: number;
+      no_probability?: number;
+    }>;
   };
 }
 
@@ -78,6 +85,64 @@ export default function MarketCard({ market }: MarketCardProps) {
   const yesOdds = yesProbability > 0 ? (100 / yesProbability).toFixed(2) : "∞";
   const noOdds = noProbability > 0 ? (100 / noProbability).toFixed(2) : "∞";
 
+  const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
+
+  const renderProbabilities = () => {
+    if (isOptionMarket) {
+      return (
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-2 min-w-min pb-1">
+            {market.options?.map((option) => {
+              const optionYesProb = option.yes_probability;
+              const optionOdds = optionYesProb > 0 ? (100 / optionYesProb).toFixed(2) : "∞";
+              return (
+                <div
+                  key={option.id}
+                  className="shrink-0 rounded-2xl border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 p-3 transition-all duration-300 group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 min-w-[140px]"
+                >
+                  <div className="mb-2 text-xs font-semibold text-blue-700 dark:text-blue-300 line-clamp-2">
+                    {option.label}
+                  </div>
+                  <div className="text-xl font-semibold tracking-tight text-blue-900 dark:text-blue-100">
+                    {optionYesProb}%
+                  </div>
+                  <div className="text-xs font-medium text-blue-600 dark:text-blue-300 mt-1">
+                    {optionOdds}x
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Binary market - show Yes/No
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-3 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">{yesOdds}x</span>
+          </div>
+          <div className="mt-2 text-2xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
+            {yesProbability}%
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-3 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-rose-700 dark:text-rose-300">No</span>
+            <span className="text-xs font-medium text-rose-600 dark:text-rose-300">{noOdds}x</span>
+          </div>
+          <div className="mt-2 text-2xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
+            {noProbability}%
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Link
       href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
@@ -119,27 +184,7 @@ export default function MarketCard({ market }: MarketCardProps) {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-3 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
-              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">{yesOdds}x</span>
-            </div>
-            <div className="mt-2 text-2xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
-              {yesProbability}%
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-3 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-rose-700 dark:text-rose-300">No</span>
-              <span className="text-xs font-medium text-rose-600 dark:text-rose-300">{noOdds}x</span>
-            </div>
-            <div className="mt-2 text-2xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
-              {noProbability}%
-            </div>
-          </div>
-        </div>
+        {renderProbabilities()}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">

@@ -85,6 +85,16 @@ body {
   scrollbar-width: none;
 }
 
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Tiny invisible scrollbars */
 ::-webkit-scrollbar {
   width: 2px;
