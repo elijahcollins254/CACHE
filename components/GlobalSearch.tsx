@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAppSelector, selectAllMarkets } from "@/lib/redux/hooks";
+import { generateMarketSlug } from "@/lib/slugify";
 import { Search, TrendingUp } from "lucide-react";
 
 export default function GlobalSearch() {
@@ -69,7 +70,7 @@ export default function GlobalSearch() {
                                 {filteredMarkets.map((market) => (
                                     <Link
                                         key={market.id}
-                                        href={`/markets/${market.id}`}
+                                        href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
                                         onClick={handleSearchSelect}
                                         className="flex items-start gap-3 px-4 py-3 hover:bg-muted border-b border-border last:border-b-0 transition-colors group"
                                     >

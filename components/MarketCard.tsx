@@ -4,6 +4,7 @@ import { TrendingUp, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
+import { generateMarketSlug } from "@/lib/slugify";
 import { useEffect, useState } from "react";
 
 interface MarketCardProps {
@@ -79,7 +80,7 @@ export default function MarketCard({ market }: MarketCardProps) {
 
   return (
     <Link
-      href={`/markets/${market.id}`}
+      href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
       className="group block overflow-hidden rounded-3xl border border-border bg-muted p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] md:p-5"
     >
       <div className="flex h-full flex-col gap-4">

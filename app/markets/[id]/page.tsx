@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { useAMMPrice, type AMMPriceResult, getSlippageWarningLevel, formatPriceImpact } from "@/lib/useAMMPrice";
+import { extractMarketId } from "@/lib/slugify";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -12,7 +13,8 @@ import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Se
 import Link from "next/link";
 
 export default function MarketDetail() {
-    const { id } = useParams();
+    const { id: paramId } = useParams();
+    const marketId = extractMarketId(paramId);
     const dispatch = useAppDispatch();
     
     // Redux state
@@ -109,12 +111,12 @@ export default function MarketDetail() {
 
     // Set market from Redux data and update saved status
     useEffect(() => {
-        if (allMarkets.length > 0) {
-            const found = allMarkets.find((m: any) => m.id.toString() === id);
+        if (allMarkets.length > 0 && marketId) {
+            const found = allMarkets.find((m: any) => m.id === marketId);
             setMarket(found);
-            setIsSaved(savedMarketIds.includes(Number(id)));
+            setIsSaved(savedMarketIds.includes(marketId));
         }
-    }, [allMarkets, id, savedMarketIds]);
+    }, [allMarkets, marketId, savedMarketIds]);
 
     // Preview AMM price when bet amount changes
     useEffect(() => {
@@ -190,7 +192,7 @@ export default function MarketDetail() {
                 const histories: {[key: string]: {yes: number[]; no: number[]}} = {};
                 for (const option of market.options) {
                     const response = await fetchWithAuth(
-                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/price-history/?period=${timePeriod}&option_id=${option.id}`,
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/price-history/?period=${timePeriod}&option_id=${option.id}`,
                         {
                             method: "GET",
                             headers: { "Content-Type": "application/json" },
@@ -247,7 +249,7 @@ export default function MarketDetail() {
             } else {
                 // BINARY market
                 const response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/price-history/?period=${timePeriod}`,
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/price-history/?period=${timePeriod}`,
                     {
                         method: "GET",
                         headers: { "Content-Type": "application/json" },
@@ -332,7 +334,7 @@ export default function MarketDetail() {
 
         try {
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/details/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/details/`,
                 {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
@@ -373,7 +375,7 @@ export default function MarketDetail() {
 
         try {
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${id}/chat/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/chat/`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -459,7 +461,7 @@ export default function MarketDetail() {
 
         try {
             const payload: any = {
-                market_id: id,
+                market_id: marketId,
                 outcome,
                 action: activeTab,
                 order_type: orderType,
@@ -666,16 +668,16 @@ export default function MarketDetail() {
     const topLevelChatMessages = chatMessages.filter((msg) => !msg.parent_id);
 
     const handleSaveToggle = () => {
-        dispatch(toggleSaveMarket(Number(id)));
+        dispatch(toggleSaveMarket(marketId));
         setIsSaved(!isSaved);
         
         // Update localStorage
         const savedIds = [...savedMarketIds];
         if (isSaved) {
-            const index = savedIds.indexOf(Number(id));
+            const index = savedIds.indexOf(marketId);
             if (index > -1) savedIds.splice(index, 1);
         } else {
-            savedIds.push(Number(id));
+            savedIds.push(marketId);
         }
         localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
     };
@@ -1455,7 +1457,7 @@ export default function MarketDetail() {
                                 {allMarkets.slice(0, 3).map((rec_market: any) => (
                                     <Link 
                                         key={rec_market.id}
-                                        href={`/markets/${rec_market.id}`}
+                                        href={`/markets/${rec_market.id}-${generateMarketSlug(rec_market.question)}`}
                                         className="block p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
                                     >
                                         <p className="text-xs font-semibold text-foreground truncate">{rec_market.question}</p>

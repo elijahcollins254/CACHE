@@ -28,6 +28,7 @@ export default function Navbar() {
     const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
     useEffect(() => {
         const checkUser = () => {
@@ -451,14 +452,14 @@ export default function Navbar() {
                         <span className="text-[10px] font-semibold">Home</span>
                     </Link>
 
-                    {/* Trending */}
-                    <Link
-                        href="/"
+                    {/* Search */}
+                    <button
+                        onClick={() => setIsMobileSearchOpen(true)}
                         className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        <TrendingUp className="h-6 w-6" />
-                        <span className="text-[10px] font-semibold">Trending</span>
-                    </Link>
+                        <Search className="h-6 w-6" />
+                        <span className="text-[10px] font-semibold">Search</span>
+                    </button>
 
                     {/* Deposit */}
                     <button
@@ -487,6 +488,69 @@ export default function Navbar() {
             onClose={() => setIsDepositModalOpen(false)}
             balance={balance}
         />
+
+        {/* Mobile Search Modal */}
+        {isMobileSearchOpen && (
+            <div className="fixed inset-0 z-50 sm:hidden bg-background flex flex-col h-screen">
+                {/* Search Modal Header */}
+                <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
+                    <button
+                        onClick={() => setIsMobileSearchOpen(false)}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        ✕
+                    </button>
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="Search markets..."
+                            autoFocus
+                            className="w-full h-9 rounded-lg bg-muted pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground focus:bg-muted/80 transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Category Tabs */}
+                <div className="overflow-x-auto no-scrollbar px-4 py-3 border-b border-border flex gap-2">
+                    {["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved", "Closing Soon"].map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => setIsMobileSearchOpen(false)}
+                            className="px-3 py-1.5 text-xs font-medium whitespace-nowrap rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all"
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Topics Grid */}
+                <div className="flex-1 overflow-y-auto px-4 py-4">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Topics</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        {[
+                            { label: "Live Crypto", icon: "📈" },
+                            { label: "Politics", icon: "🏛️" },
+                            { label: "Middle East", icon: "🌍" },
+                            { label: "Crypto", icon: "💰" },
+                            { label: "Sports", icon: "⚽" },
+                            { label: "Pop Culture", icon: "🎬" },
+                            { label: "Tech", icon: "💻" },
+                            { label: "AI", icon: "🤖" },
+                        ].map((topic) => (
+                            <button
+                                key={topic.label}
+                                onClick={() => setIsMobileSearchOpen(false)}
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-all text-left"
+                            >
+                                <span className="text-lg">{topic.icon}</span>
+                                <span className="text-xs font-semibold text-foreground">{topic.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 }

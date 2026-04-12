@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { ChevronLeft, ChevronRight, DollarSign, Search, Share2, Clock, Gift, Wallet, TrendingUp } from "lucide-react";
@@ -10,72 +10,80 @@ const steps = [
         title: "Deposit",
         description: "Fund with M-Pesa",
         details: [
-            "Quick & secure",
-            "Instant verification"
+            "Click 'Deposit' in your wallet",
+            "Enter your amount and complete the STK push",
+            "Funds arrive instantly with verification"
         ],
         icon: DollarSign,
-        color: "from-green-500 to-emerald-600",
+        color: "from-amber-700 to-yellow-700",
         step: 1
     },
     {
         title: "Browse",
-        description: "Explore markets",
+        description: "Explore Markets",
         details: [
-            "Politics, sports, weather",
-            "Real-time odds"
+            "Discover predictions on politics, sports & weather",
+            "Filter by category and sort by odds",
+            "Get real-time probability updates"
         ],
         icon: Search,
-        color: "from-blue-500 to-cyan-600",
+        color: "from-slate-600 to-slate-700",
         step: 2
     },
     {
         title: "Predict",
-        description: "Buy Yes or No",
+        description: "Buy Shares",
         details: [
-            "Choose your outcome",
-            "Set your amount"
+            "Select a market and choose Yes or No",
+            "Enter your investment amount",
+            "Your shares appear in your portfolio instantly"
         ],
         icon: Share2,
-        color: "from-purple-500 to-pink-600",
+        color: "from-rose-700 to-amber-600",
         step: 3
     },
     {
         title: "Wait",
-        description: "Market resolves",
+        description: "Market Resolves",
         details: [
-            "Automatic updates",
-            "Real-world events"
+            "Watch probabilities update in real-time",
+            "Track the countdown to market closing",
+            "Resolution happens automatically on closing date"
         ],
         icon: Clock,
-        color: "from-orange-500 to-red-600",
+        color: "from-orange-700 to-yellow-700",
         step: 4
     },
     {
         title: "Win",
-        description: "Get paid instantly",
+        description: "Get Paid",
         details: [
-            "KES 100 per share",
-            "Auto payments"
+            "Correct predictions earn KES 100 per share",
+            "Payouts are automatic and instant",
+            "Funds appear in your wallet immediately"
         ],
         icon: Gift,
-        color: "from-cyan-500 to-blue-600",
+        color: "from-green-700 to-emerald-700",
         step: 5
     },
     {
         title: "Evolve",
-        description: "Withdraw or reinvest",
+        description: "Next Steps",
         details: [
-            "Take your profits",
-            "Play again"
+            "Withdraw profits to your M-Pesa anytime",
+            "Reinvest your earnings in new markets",
+            "No limits on how many times you can play"
         ],
         icon: Wallet,
-        color: "from-teal-500 to-green-600",
+        color: "from-teal-700 to-green-700",
         step: 6
     }
 ];
 
 export default function HowItWorks() {
     const [currentStep, setCurrentStep] = useState(0);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const touchRef = useRef<HTMLDivElement>(null);
 
     const handleNext = () => {
         setCurrentStep((prev) => (prev + 1) % steps.length);
@@ -83,6 +91,25 @@ export default function HowItWorks() {
 
     const handlePrev = () => {
         setCurrentStep((prev) => (prev - 1 + steps.length) % steps.length);
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStart(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (!touchStart) return;
+        const touchEnd = e.changedTouches[0].clientX;
+        const distance = touchStart - touchEnd;
+
+        if (Math.abs(distance) > 50) {
+            if (distance > 0) {
+                handleNext();
+            } else {
+                handlePrev();
+            }
+        }
+        setTouchStart(null);
     };
 
     const step = steps[currentStep];
@@ -95,15 +122,17 @@ export default function HowItWorks() {
                 <SearchFilterBar />
             </Suspense>
 
-            <main className="mx-auto max-w-4xl px-4 md:px-6 pt-12 md:pt-16">
+            <main className="mx-auto max-w-4xl px-4 md:px-6 pt-6 md:pt-8 h-screen flex flex-col">
                 {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">How CACHE Works</h1>
-                    <p className="text-sm text-muted-foreground">Six simple steps to predict and earn</p>
+                <div className="text-center mb-4 md:mb-6">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-2">Cache.co.ke</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">How CACHE Works</h1>
+                    <p className="text-sm md:text-base font-semibold text-foreground mb-1">Cache In, Cache Out</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Swipe or click to explore</p>
                 </div>
 
                 {/* Step Counter */}
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-4">
                     <div className="flex items-center gap-1">
                         {steps.map((_, idx) => (
                             <div key={idx} className="flex items-center">
@@ -125,22 +154,27 @@ export default function HowItWorks() {
                 </div>
 
                 {/* Main Slide Content */}
-                <div className="mb-6">
-                    <div className={`bg-gradient-to-br ${step.color} rounded-2xl p-8 text-white shadow-lg animate-in fade-in slide-in-from-right-8 duration-300`} style={{animation: 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'}}>
+                <div 
+                    className="flex-1 mb-4 md:mb-6 cursor-grab active:cursor-grabbing"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    ref={touchRef}
+                >
+                    <div className={`bg-gradient-to-br ${step.color} rounded-3xl p-6 md:p-10 text-white shadow-lg animate-in fade-in slide-in-from-right-8 duration-300 h-full flex flex-col justify-between`} style={{animation: 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'}}>
                         <div className="flex items-start gap-4 mb-6">
-                            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
-                                <StepIcon className="h-6 w-6 text-white" />
+                            <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
+                                <StepIcon className="h-7 w-7 text-white" />
                             </div>
                             <div>
-                                <div className="text-white/80 font-semibold text-xs mb-1">STEP {step.step}</div>
+                                <div className="text-white/80 font-semibold text-xs mb-1">STEP {step.step} OF {steps.length}</div>
                                 <h2 className="text-2xl md:text-3xl font-bold">{step.title}</h2>
-                                <p className="text-white/90 text-sm mt-1">{step.description}</p>
+                                <p className="text-white/90 text-sm mt-2">{step.description}</p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {step.details.map((detail, idx) => (
-                                <div key={idx} className="bg-white/10 rounded-lg p-2.5 backdrop-blur-sm">
-                                    <p className="text-xs text-white/95">{detail}</p>
+                                <div key={idx} className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors">
+                                    <p className="text-sm text-white/95 leading-relaxed">{detail}</p>
                                 </div>
                             ))}
                         </div>
@@ -148,24 +182,24 @@ export default function HowItWorks() {
                 </div>
 
                 {/* Navigation Controls */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                     <button
                         onClick={handlePrev}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all hover:scale-105 duration-200"
+                        className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all hover:scale-105 duration-200"
                     >
                         <ChevronLeft className="h-4 w-4" />
-                        Prev
+                        <span className="hidden md:inline">Prev</span>
                     </button>
 
                     <div className="text-center">
-                        <p className="text-lg font-bold text-foreground">{currentStep + 1} of {steps.length}</p>
+                        <p className="text-sm md:text-base font-bold text-foreground">{currentStep + 1} of {steps.length}</p>
                     </div>
 
                     <button
                         onClick={handleNext}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background font-semibold text-sm transition-all hover:scale-105 duration-200"
+                        className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-foreground text-background font-semibold text-sm transition-all hover:scale-105 duration-200"
                     >
-                        Next
+                        <span className="hidden md:inline">Next</span>
                         <ChevronRight className="h-4 w-4" />
                     </button>
                 </div>

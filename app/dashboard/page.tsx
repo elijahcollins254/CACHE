@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioValue, selectStatistics, selectBets, selectTransactions, selectPortfolioLoading, selectPortfolioError } from "@/lib/redux/hooks";
 import { fetchDashboardData, fetchTransactionHistory } from "@/lib/redux/slices/portfolioSlice";
 import { fetchUserData } from "@/lib/redux/slices/authSlice";
+import { generateMarketSlug } from "@/lib/slugify";
 import Navbar from "@/components/Navbar";
 import DepositModal from "@/components/DepositModal";
 import WithdrawModal from "@/components/WithdrawModal";
@@ -267,7 +268,7 @@ export default function Dashboard() {
                                                     </div>
 
                                                     <Link
-                                                        href={`/markets/${bet.market_id}`}
+                                                        href={`/markets/${bet.market_id}-${generateMarketSlug(bet.market_question)}`}
                                                         className="mt-3 w-full inline-block text-center py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
                                                     >
                                                         View Market
