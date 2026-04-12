@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { useAMMPrice, type AMMPriceResult, getSlippageWarningLevel, formatPriceImpact } from "@/lib/useAMMPrice";
-import { extractMarketId } from "@/lib/slugify";
+import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
