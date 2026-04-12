@@ -119,9 +119,16 @@ export default function SearchFilterBar() {
                 const closingDate = new Date(m.end_date);
                 return closingDate >= now && closingDate <= sevenDaysFromNow;
             });
+        } else if (activeCategory === "Trending") {
+            // Show all non-resolved markets, ranked by volume
+            marketsToFilter = allMarkets.filter(m => m.status !== "RESOLVED");
+        } else if (activeCategory === "New") {
+            // Show all non-resolved markets, ranked by newest (highest ID = newest)
+            marketsToFilter = allMarkets.filter(m => m.status !== "RESOLVED");
         } else {
+            // Other categories filter by category name
             marketsToFilter = allMarkets.filter(m => {
-                const matchCategory = activeCategory === "Trending" || m.category === activeCategory;
+                const matchCategory = m.category === activeCategory;
                 return matchCategory && m.status !== "RESOLVED";
             });
         }
@@ -133,7 +140,12 @@ export default function SearchFilterBar() {
             const matchProbability = probability >= minProbability && probability <= maxProbability;
             return matchSearch && matchProbability;
         }).sort((a, b) => {
-            if (sortBy === "volume") {
+            // Determine sort order based on active category
+            if (activeCategory === "New") {
+                // Sort by ID descending (newer markets have higher IDs)
+                return b.id - a.id;
+            } else if (activeCategory === "Trending" || sortBy === "volume") {
+                // Sort by volume descending
                 const aVol = parseInt(a.volume.replace(/\D/g, '')) || 0;
                 const bVol = parseInt(b.volume.replace(/\D/g, '')) || 0;
                 return bVol - aVol;
