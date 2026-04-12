@@ -94,8 +94,8 @@ export default function SearchFilterBar() {
             const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             marketsToFilter = allMarkets.filter(m => {
                 if (m.status === "RESOLVED") return false;
-                if (!m.closing_date) return false;
-                const closingDate = new Date(m.closing_date);
+                if (!m.end_date) return false;
+                const closingDate = new Date(m.end_date);
                 return closingDate >= now && closingDate <= sevenDaysFromNow;
             });
         } else {
