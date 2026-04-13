@@ -229,81 +229,122 @@ export default function Dashboard() {
                     <div className="p-6">
                         {activeTab === "active" && (
                             <div>
-                                {bets.filter(b => b.result === 'PENDING').length > 0 ? (
-                                    <div className="space-y-4">
-                                        {bets.filter(b => b.result === 'PENDING').map((bet: any) => {
-                                            // LMSR position value calculation
-                                            // Value = shares × 100 KES × probability of winning outcome
-                                            
-                                            // Get share quantity from bet
-                                            const shares = Number(bet.quantity || 1);
-                                            
-                                            // Get current market probability
-                                            const marketYesProbability = Number(bet.current_yes_probability || 50) / 100;
-                                            
-                                            // Determine winning probability based on bet outcome
-                                            const winningProbability = bet.outcome === 'Yes' 
-                                                ? marketYesProbability
-                                                : (1 - marketYesProbability);
-                                            
-                                            // Position value = shares × 100 KES payout × probability
-                                            const maxPayout = 100; // KES per share
-                                            const currentValue = shares * maxPayout * winningProbability;
-                                            const profit = currentValue - Number(bet.amount);
-                                            
-                                            return (
-                                                <div key={bet.id} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
-                                                    <div className="flex items-start justify-between mb-4">
-                                                        <div className="flex-1">
-                                                            <h3 className="font-bold text-foreground text-lg">{bet.market_question}</h3>
-                                                            <p className="text-sm text-muted-foreground mt-1">
-                                                                Position on <span className={`font-semibold ${bet.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{bet.outcome}</span>
-                                                            </p>
+                                {(() => {
+                                    // Calculate net positions by (market_id, outcome)
+                                    const netPositions: { [key: string]: any } = {};
+                                    
+                                    bets.filter(b => b.result === 'PENDING').forEach((bet: any) => {
+                                        const positionKey = `${bet.market_id}-${bet.outcome}`;
+                                        
+                                        if (!netPositions[positionKey]) {
+                                            netPositions[positionKey] = {
+                                                market_id: bet.market_id,
+                                                market_question: bet.market_question,
+                                                outcome: bet.outcome,
+                                                current_yes_probability: bet.current_yes_probability,
+                                                market_q_yes: bet.market_q_yes,
+                                                market_q_no: bet.market_q_no,
+                                                market_b: bet.market_b,
+                                                total_bought: 0,
+                                                total_sold: 0,
+                                                total_cost: 0,
+                                                bets: []
+                                            };
+                                        }
+                                        
+                                        netPositions[positionKey].bets.push(bet);
+                                        
+                                        // BUY action: add to quantity
+                                        if (bet.action === 'BUY') {
+                                            netPositions[positionKey].total_bought += Number(bet.quantity || 1);
+                                            netPositions[positionKey].total_cost += Number(bet.amount);
+                                        } else if (bet.action === 'SELL') {
+                                            netPositions[positionKey].total_sold += Number(bet.quantity || 1);
+                                        }
+                                    });
+                                    
+                                    const positions = Object.values(netPositions).filter((pos: any) => pos.total_bought > pos.total_sold);
+                                    
+                                    return positions.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {positions.map((position: any) => {
+                                                // Net shares after selling
+                                                const shares = position.total_bought - position.total_sold;
+                                                
+                                                if (shares <= 0) return null;
+                                                
+                                                // Get current market probability
+                                                const marketYesProbability = Number(position.current_yes_probability || 50) / 100;
+                                                
+                                                // Determine winning probability based on bet outcome
+                                                const winningProbability = position.outcome === 'Yes' 
+                                                    ? marketYesProbability
+                                                    : (1 - marketYesProbability);
+                                                
+                                                // Position value = net_shares × 100 KES payout × probability
+                                                const maxPayout = 100;
+                                                const currentValue = shares * maxPayout * winningProbability;
+                                                const profit = currentValue - position.total_cost;
+                                                
+                                                return (
+                                                    <div key={`${position.market_id}-${position.outcome}`} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
+                                                        <div className="flex items-start justify-between mb-4">
+                                                            <div className="flex-1">
+                                                                <h3 className="font-bold text-foreground text-lg">{position.market_question}</h3>
+                                                                <p className="text-sm text-muted-foreground mt-1">
+                                                                    Position on <span className={`font-semibold ${position.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{position.outcome}</span>
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                                                                PENDING
+                                                            </span>
                                                         </div>
-                                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-                                                            PENDING
-                                                        </span>
-                                                    </div>
 
-                                                    <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Stake Amount</p>
-                                                            <p className="font-bold text-foreground">KES {Number(bet.amount).toLocaleString()}</p>
+                                                        <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Total Invested</p>
+                                                                <p className="font-bold text-foreground">KES {Number(position.total_cost).toLocaleString()}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Net Shares</p>
+                                                                <p className="font-bold text-foreground">{shares.toFixed(2)}</p>
+                                                                {position.total_sold > 0 && (
+                                                                    <p className="text-xs text-muted-foreground mt-1">({position.total_bought.toFixed(2)} bought, {position.total_sold.toFixed(2)} sold)</p>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Current Value</p>
+                                                                <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    KES {currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">P&L</p>
+                                                                <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    {profit >= 0 ? '+' : ''} KES {profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Shares</p>
-                                                            <p className="font-bold text-foreground">{shares.toFixed(2)}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Current Value</p>
-                                                            <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                KES {currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Placed</p>
-                                                            <p className="font-bold text-foreground">{new Date(bet.timestamp).toLocaleDateString()}</p>
-                                                        </div>
-                                                    </div>
 
-                                                    <Link
-                                                        href={`/markets/${bet.market_id}-${generateMarketSlug(bet.market_question)}`}
-                                                        className="mt-3 w-full inline-block text-center py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
-                                                    >
-                                                        View Market
-                                                    </Link>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div className="py-12 text-center">
-                                        <p className="text-muted-foreground mb-4">No active positions yet</p>
-                                        <Link href="/" className="text-apple-blue hover:underline font-bold">
-                                            Start trading markets
-                                        </Link>
-                                    </div>
-                                )}
+                                                        <Link
+                                                            href={`/markets/${position.market_id}-${generateMarketSlug(position.market_question)}`}
+                                                            className="mt-3 w-full inline-block text-center py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
+                                                        >
+                                                            View Market
+                                                        </Link>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="py-12 text-center">
+                                            <p className="text-muted-foreground mb-4">No active positions yet</p>
+                                            <Link href="/" className="text-apple-blue hover:underline font-bold">
+                                                Start trading markets
+                                            </Link>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
                         {activeTab === "positions" && (

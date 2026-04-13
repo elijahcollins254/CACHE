@@ -1519,18 +1519,34 @@ export default function MarketDetail() {
 
                         {/* Action Buttons */}
                         <div className="space-y-3">
-                            <button
-                                onClick={() => handleBet(selectedOutcome)}
-                                disabled={placingBet}
-                                className={`w-full text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 ${
-                                    selectedOutcome === "Yes"
-                                        ? "bg-green-500 hover:opacity-90"
-                                        : "bg-red-500 hover:opacity-90"
-                                }`}
-                            >
-                                {activeTab === "buy" ? "Buy " : "Sell "} {selectedOutcome}
-                            </button>
+                            {market.status === 'CLOSED' ? (
+                                <button
+                                    disabled
+                                    className="w-full text-white font-bold py-3 rounded-lg transition-all opacity-50 bg-muted cursor-not-allowed"
+                                >
+                                    Trading Closed
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleBet(selectedOutcome)}
+                                    disabled={placingBet}
+                                    className={`w-full text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 ${
+                                        selectedOutcome === "Yes"
+                                            ? "bg-green-500 hover:opacity-90"
+                                            : "bg-red-500 hover:opacity-90"
+                                    }`}
+                                >
+                                    {activeTab === "buy" ? "Buy " : "Sell "} {selectedOutcome}
+                                </button>
+                            )}
                         </div>
+
+                        {/* Market Status Message */}
+                        {market.status === 'CLOSED' && (
+                            <div className="mt-3 p-3 rounded-lg bg-yellow-950/40 text-yellow-500 text-sm font-medium text-center">
+                                This market has closed for trading
+                            </div>
+                        )}
 
                         {/* Message */}
                         {message && (
