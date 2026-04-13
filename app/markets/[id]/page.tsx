@@ -12,6 +12,94 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Send, BarChart3, Percent, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
+// ============================================================================
+// LMSR (Logarithmic Market Scoring Rule) Utilities
+// ============================================================================
+
+const LMSR_B = 100.0; // Liquidity parameter (default)
+const PAYOUT_PER_SHARE = 100; // KES per share
+
+/**
+ * Calculate LMSR cost function: C(q) = b * ln(exp(q_yes/b) + exp(q_no/b))
+ */
+function lmsrCost(q_yes: number, q_no: number, b: number = LMSR_B): number {
+    try {
+        const exp_yes = Math.exp(q_yes / b);
+        const exp_no = Math.exp(q_no / b);
+        return b * Math.log(exp_yes + exp_no);
+    } catch {
+        return Math.max(q_yes, q_no) / b + b;
+    }
+}
+
+/**
+ * Calculate cost to buy shares using LMSR
+ */
+function calculateLMSRBuyCost(
+    q_yes_before: number,
+    q_no_before: number,
+    shares: number,
+    outcome: string,
+    b: number = LMSR_B
+): number {
+    const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before + shares : q_yes_before;
+    const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before + shares;
+    
+    const cost_before = lmsrCost(q_yes_before, q_no_before, b);
+    const cost_after = lmsrCost(q_yes_after, q_no_after, b);
+    
+    return (cost_after - cost_before) * PAYOUT_PER_SHARE;
+}
+
+/**
+ * Calculate payout from selling shares using LMSR
+ */
+function calculateLMSRSellPayout(
+    q_yes_before: number,
+    q_no_before: number,
+    shares: number,
+    outcome: string,
+    b: number = LMSR_B
+): number {
+    const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before - shares : q_yes_before;
+    const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before - shares;
+    
+    const cost_before = lmsrCost(q_yes_before, q_no_before, b);
+    const cost_after = lmsrCost(q_yes_after, q_no_after, b);
+    
+    return (cost_before - cost_after) * PAYOUT_PER_SHARE;
+}
+
+/**
+ * Estimate shares received from buying a given KES amount
+ */
+function estimateSharesFromKES(
+    amount_kes: number,
+    q_yes: number,
+    q_no: number,
+    outcome: string,
+    b: number = LMSR_B
+): number {
+    // Binary search to find shares that cost approximately amount_kes
+    let low = 0;
+    let high = amount_kes * 2; // Upper bound
+    let result = 0;
+    
+    for (let i = 0; i < 20; i++) {
+        const mid = (low + high) / 2;
+        const cost = calculateLMSRBuyCost(q_yes, q_no, mid, outcome, b);
+        
+        if (cost < amount_kes) {
+            result = mid;
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    
+    return result;
+}
+
 export default function MarketDetail() {
     const { id: paramId } = useParams();
     const marketId = extractMarketId(paramId);
@@ -593,47 +681,38 @@ export default function MarketDetail() {
     // Use fetched price history or fallback to generated data
     const chartData = priceHistory;
 
-    // Calculate estimated payout return (LMSR: shares × 100)
+    // Calculate estimated payout return using LMSR
     const calculateEstimatedReturn = () => {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
         
-        // In LMSR, if you buy shares at a cost, and the market resolves in your favor,
-        // you get 100 KES per share (regardless of entry price)
-        // So the return is simply: shares * 100
-        // (number of shares is determined by the cost function & current market state)
-        // For now, we show potential payout as shares × 100, which is what you'd win
-        const shares = amount / market.yes_probability; // Rough approximation
-        return shares * 100;
+        // Estimate shares that will be bought for this KES amount
+        // Use current market q values (default to 0 if not available)
+        const q_yes = 0; // Market starts at 50/50
+        const q_no = 0;
+        const estimatedShares = estimateSharesFromKES(amount, q_yes, q_no, selectedOutcome);
+        
+        // If you win, you get 100 KES per share
+        return estimatedShares * PAYOUT_PER_SHARE;
     };
 
     const estimatedReturn = calculateEstimatedReturn();
 
-    // Limit order calculations
+    // Limit order calculations using LMSR
     const calculateLimitOrderStats = () => {
-        // limitPrice is in KES (0-100 scale representing 0-100% probability)
-        // Each share costs limitPrice, wins 100 KES per share
-        const totalCost = limitPrice * shares; // Cost to buy shares
+        // limitPrice is interpreted as the price per share in KES (0-100)
+        // For LMSR: scale by (limitPrice / 100) to normalize
+        const normalizedPrice = limitPrice / 100; // Convert 0-100 scale to 0-1
+        const totalCost = limitPrice * shares; // Cost = price × quantity
         
-        let probability;
-        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-            const option = market.options?.find((o: any) => o.id === selectedOptionId);
-            if (option) {
-                probability = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
-            } else {
-                probability = selectedOutcome === "Yes" ? market.yes_probability : (100 - market.yes_probability);
-            }
-        } else {
-            probability = selectedOutcome === "Yes" ? market.yes_probability : (100 - market.yes_probability);
-        }
-        
-        // Polymarket: if win, get 100 KES per share minus 2% trading fee
-        const winAmount = shares * 100 * (1 - TRADING_FEE_PERCENT / 100);
+        // In LMSR: winning payout is always 100 KES per share
+        // After 2% trading fee: 100 * (1 - 0.02) = 98 per share
+        const winAmount = shares * PAYOUT_PER_SHARE * (1 - TRADING_FEE_PERCENT / 100);
         const potentialProfit = winAmount - totalCost;
         
         return {
             totalCost: totalCost,
-            toWin: (shares * 100) - totalCost,
+            toWin: (shares * PAYOUT_PER_SHARE) - totalCost,
             potentialProfit: potentialProfit,
             winPayout: winAmount,
         };
