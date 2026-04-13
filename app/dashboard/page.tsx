@@ -232,19 +232,23 @@ export default function Dashboard() {
                                 {bets.filter(b => b.result === 'PENDING').length > 0 ? (
                                     <div className="space-y-4">
                                         {bets.filter(b => b.result === 'PENDING').map((bet: any) => {
-                                            // Calculate current position value using LMSR pricing
-                                            // In LMSR: current_value = shares × current_market_probability
-                                            // If quantity is not available, estimate from amount/entry_probability
-                                            const shares = Number(bet.quantity || (Number(bet.amount) / (bet.entry_probability || 50) * 100));
+                                            // LMSR position value calculation
+                                            // Value = shares × 100 KES × probability of winning outcome
                                             
-                                            // Use current market probability for position value
-                                            const currentMarketYesProb = bet.current_yes_probability || bet.entry_probability || 50;
-                                            const currentPrice = bet.outcome === 'Yes' 
-                                                ? currentMarketYesProb
-                                                : (100 - currentMarketYesProb);
+                                            // Get share quantity from bet
+                                            const shares = Number(bet.quantity || 1);
                                             
-                                            // Position value = shares × (probability/100) × 100 KES payout
-                                            const currentValue = shares * (currentPrice / 100) * 100;
+                                            // Get current market probability
+                                            const marketYesProbability = Number(bet.current_yes_probability || 50) / 100;
+                                            
+                                            // Determine winning probability based on bet outcome
+                                            const winningProbability = bet.outcome === 'Yes' 
+                                                ? marketYesProbability
+                                                : (1 - marketYesProbability);
+                                            
+                                            // Position value = shares × 100 KES payout × probability
+                                            const maxPayout = 100; // KES per share
+                                            const currentValue = shares * maxPayout * winningProbability;
                                             const profit = currentValue - Number(bet.amount);
                                             
                                             return (
