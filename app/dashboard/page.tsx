@@ -232,8 +232,15 @@ export default function Dashboard() {
                                 {bets.filter(b => b.result === 'PENDING').length > 0 ? (
                                     <div className="space-y-4">
                                         {bets.filter(b => b.result === 'PENDING').map((bet) => {
-                                            // Calculate potential winnings
-                                            const potentialWin = (Number(bet.amount) * bet.entry_probability) / 100;
+                                            // Calculate current position value using LMSR pricing
+                                            // current_value = shares × current_price × 100
+                                            const shares = Number(bet.quantity);
+                                            const currentPrice = bet.outcome === 'Yes' 
+                                                ? market?.yes_probability || 50 
+                                                : (100 - (market?.yes_probability || 50));
+                                            const currentValue = shares * currentPrice;
+                                            const profit = currentValue - Number(bet.amount);
+                                            
                                             return (
                                                 <div key={bet.id} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
                                                     <div className="flex items-start justify-between mb-4">
@@ -254,12 +261,14 @@ export default function Dashboard() {
                                                             <p className="font-bold text-foreground">KES {Number(bet.amount).toLocaleString()}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Probability</p>
-                                                            <p className="font-bold text-foreground">{bet.entry_probability}%</p>
+                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Shares</p>
+                                                            <p className="font-bold text-foreground">{shares.toFixed(2)}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Potential Payout</p>
-                                                            <p className="font-bold text-green-600">KES {potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Current Value</p>
+                                                            <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                KES {currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                            </p>
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground mb-1 font-medium">Placed</p>

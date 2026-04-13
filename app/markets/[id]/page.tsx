@@ -593,29 +593,18 @@ export default function MarketDetail() {
     // Use fetched price history or fallback to generated data
     const chartData = priceHistory;
 
-    // Calculate estimated payout return
+    // Calculate estimated payout return (LMSR: shares × 100)
     const calculateEstimatedReturn = () => {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
         
-        let probability;
-        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-            const option = market.options?.find((o: any) => o.id === selectedOptionId);
-            if (option) {
-                probability = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
-            } else {
-                probability = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-            }
-        } else {
-            probability = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-        }
-        
-        // Polymarket model: multiply by (100 / probability) if you win
-        if (probability > 0) {
-            const multiplier = 100 / probability;
-            return amount * multiplier;
-        }
-        return 0;
+        // In LMSR, if you buy shares at a cost, and the market resolves in your favor,
+        // you get 100 KES per share (regardless of entry price)
+        // So the return is simply: shares * 100
+        // (number of shares is determined by the cost function & current market state)
+        // For now, we show potential payout as shares × 100, which is what you'd win
+        const shares = amount / market.yes_probability; // Rough approximation
+        return shares * 100;
     };
 
     const estimatedReturn = calculateEstimatedReturn();
@@ -803,7 +792,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-green-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
-                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • {(100 / market.yes_probability).toFixed(2)}x</span>
+                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • KES {market.yes_probability}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -821,7 +810,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">No</span>
-                                                <span className="text-xs text-muted-foreground">{noProbability}% • {(100 / noProbability).toFixed(2)}x</span>
+                                                <span className="text-xs text-muted-foreground">{noProbability}% • KES {noProbability}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1083,7 +1072,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                     }`}
                                                 >
-                                                    Yes ({(100 / option.yes_probability).toFixed(2)}x) {option.yes_probability}%
+                                                    Yes ({option.yes_probability}%) KES {option.yes_probability}
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -1096,7 +1085,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                     }`}
                                                 >
-                                                    No ({(100 / (100 - option.yes_probability)).toFixed(2)}x) {100 - option.yes_probability}%
+                                                    No ({100 - option.yes_probability}%) KES {100 - option.yes_probability}
                                                 </button>
                                             </div>
                                         </div>
@@ -1142,8 +1131,8 @@ export default function MarketDetail() {
                                     <div className="space-y-2">
                                         {(() => {
                                             const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                                            const yesOdds = option?.yes_probability ? (100 / option.yes_probability).toFixed(2) : '0';
-                                            const noOdds = option?.yes_probability ? (100 / (100 - option.yes_probability)).toFixed(2) : '0';
+                                            const yesPriceKes = option?.yes_probability ? option.yes_probability : 0;
+                                            const noPriceKes = option?.yes_probability ? (100 - option.yes_probability) : 0;
                                             return (
                                                 <>
                                                     <button
@@ -1154,7 +1143,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                         }`}
                                                     >
-                                                        Yes ({yesOdds}x) <span className="font-bold">{option?.yes_probability}%</span>
+                                                        Yes ({option?.yes_probability}%) KES {yesPriceKes.toFixed(2)}
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOutcome("No")}
@@ -1164,7 +1153,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                         }`}
                                                     >
-                                                        No ({noOdds}x) <span className="font-bold">{100 - (option?.yes_probability || 0)}%</span>
+                                                        No ({100 - (option?.yes_probability || 0)}%) KES {noPriceKes.toFixed(2)}
                                                     </button>
                                                 </>
                                             );
@@ -1183,7 +1172,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes <span className="text-xs font-bold ml-1">({(100 / market.yes_probability).toFixed(2)}x)</span>
+                                        Yes <span className="text-xs font-bold ml-1">({market.yes_probability}%) KES {market.yes_probability}</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
@@ -1193,7 +1182,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                         }`}
                                     >
-                                        No <span className="text-xs font-bold ml-1">({(100 / noProbability).toFixed(2)}x)</span>
+                                        No <span className="text-xs font-bold ml-1">({noProbability}%) KES {noProbability}</span>
                                     </button>
                                 </div>
                             )}

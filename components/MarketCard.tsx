@@ -82,8 +82,8 @@ export default function MarketCard({ market }: MarketCardProps) {
 
   const yesProbability = market.yes_probability;
   const noProbability = 100 - yesProbability;
-  const yesOdds = yesProbability > 0 ? (100 / yesProbability).toFixed(2) : "∞";
-  const noOdds = noProbability > 0 ? (100 / noProbability).toFixed(2) : "∞";
+  const yesPriceKes = yesProbability;  // Price in KES (derived from probability)
+  const noPriceKes = noProbability;    // Price in KES
 
   const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
 
@@ -94,7 +94,7 @@ export default function MarketCard({ market }: MarketCardProps) {
           <div className="flex gap-2 min-w-min pb-1">
             {market.options?.map((option) => {
               const optionYesProb = option.yes_probability;
-              const optionOdds = optionYesProb > 0 ? (100 / optionYesProb).toFixed(2) : "∞";
+              const optionPriceKes = optionYesProb;  // Price in KES per share
               return (
                 <div
                   key={option.id}
@@ -107,7 +107,7 @@ export default function MarketCard({ market }: MarketCardProps) {
                     {optionYesProb}%
                   </div>
                   <div className="text-xs font-medium text-blue-600 dark:text-blue-300 mt-1">
-                    {optionOdds}x
+                    KES {optionPriceKes.toFixed(2)}
                   </div>
                 </div>
               );
@@ -123,7 +123,7 @@ export default function MarketCard({ market }: MarketCardProps) {
         <div className="rounded-2xl border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-3 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">{yesOdds}x</span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">KES {yesPriceKes.toFixed(2)}</span>
           </div>
           <div className="mt-2 text-2xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
             {yesProbability}%
@@ -133,7 +133,7 @@ export default function MarketCard({ market }: MarketCardProps) {
         <div className="rounded-2xl border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-3 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-rose-700 dark:text-rose-300">No</span>
-            <span className="text-xs font-medium text-rose-600 dark:text-rose-300">{noOdds}x</span>
+            <span className="text-xs font-medium text-rose-600 dark:text-rose-300">KES {noPriceKes.toFixed(2)}</span>
           </div>
           <div className="mt-2 text-2xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
             {noProbability}%

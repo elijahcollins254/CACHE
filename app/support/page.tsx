@@ -80,7 +80,7 @@ export default function Support() {
                             <Mail className="h-5 w-5 text-apple-blue" />
                             <h3 className="font-bold text-foreground">Email Us</h3>
                         </div>
-                        <p className="text-sm text-muted-foreground">support@cache.app</p>
+                        <p className="text-sm text-muted-foreground">support@cache.co.ke</p>
                         <p className="text-xs text-muted-foreground mt-1">We respond within 24 hours</p>
                     </a>
                     <a href="tel:+254718693484" className="bg-muted rounded-2xl p-6 hover:bg-muted/80 transition-colors border border-border">
@@ -91,81 +91,7 @@ export default function Support() {
                         <p className="text-sm text-muted-foreground">+254718693484</p>
                         <p className="text-xs text-muted-foreground mt-1">Mon-Fri, 9AM-5PM EAT</p>
                     </a>
-                </div>
-
-                {/* Contact Form */}
-                <div className="bg-muted rounded-2xl p-6 md:p-8 border border-border">
-                    <h2 className="text-xl font-bold text-foreground mb-6">Send us a Message</h2>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Name</label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Your name"
-                                    className="w-full h-11 rounded-lg bg-background pl-4 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email</label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="your@email.com"
-                                    className="w-full h-11 rounded-lg bg-background pl-4 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Subject</label>
-                            <input
-                                type="text"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                placeholder="How can we help?"
-                                className="w-full h-11 rounded-lg bg-background pl-4 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Message</label>
-                            <textarea
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                placeholder="Describe your issue or question..."
-                                rows={5}
-                                className="w-full rounded-lg bg-background pl-4 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all resize-none"
-                                required
-                            />
-                        </div>
-
-                        {submitStatus && (
-                            <div className={`p-3 rounded-lg text-sm font-semibold text-center ${
-                                submitStatus.includes("Thank") 
-                                    ? "bg-green-950/40 text-green-400" 
-                                    : "bg-red-950/40 text-red-400"
-                            }`}>
-                                {submitStatus}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-apple-blue hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            <Send className="h-4 w-4" />
-                            {loading ? "Sending..." : "Send Message"}
-                        </button>
-                    </form>
-                </div>
+                </div>        
 
                 {/* FAQ Section */}
                 <div className="mt-12">
