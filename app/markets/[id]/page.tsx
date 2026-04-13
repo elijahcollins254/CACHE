@@ -1214,7 +1214,13 @@ export default function MarketDetail() {
                             </div>
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Status</span>
-                                <div className="text-sm font-bold text-green-600 mt-1">Open</div>
+                                <div className={`text-sm font-bold mt-1 ${
+                                    market.status === 'CLOSED' ? 'text-red-600' : 
+                                    market.status === 'RESOLVED' ? 'text-blue-600' : 
+                                    'text-green-600'
+                                }`}>
+                                    {market.status.charAt(0).toUpperCase() + market.status.slice(1).toLowerCase()}
+                                </div>
                             </div>
                         </div>
                     </div>
