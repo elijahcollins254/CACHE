@@ -555,12 +555,19 @@ export default function MarketDetail() {
                 order_type: orderType,
             };
 
-            // Build payload based on order type
+            // Build payload based on order type and action
             if (orderType === "market") {
-                payload.amount = betAmount;
+                if (activeTab === "sell") {
+                    // For SELL market orders, amount is shares
+                    payload.amount = shares;
+                } else {
+                    // For BUY market orders, amount is KES
+                    payload.amount = betAmount;
+                }
             } else {
-                payload.amount = shares; // For limit orders, amount is the shares
-                payload.limit_price = limitPrice; // limitPrice is already in KES (1-100 scale)
+                // For limit orders, amount is always shares, not KES
+                payload.amount = shares;
+                payload.limit_price = limitPrice;
             }
 
             // Add option_id for option-list markets
