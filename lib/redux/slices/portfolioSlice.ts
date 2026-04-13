@@ -11,6 +11,10 @@ export interface Bet {
     result: string;
     payout?: string;
     timestamp: string;
+    quantity: string;
+    order_type?: string;
+    limit_price?: string;
+    order_status?: string;
 }
 
 export interface Statistics {
