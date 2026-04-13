@@ -13,6 +13,10 @@ export interface Market {
     is_live?: boolean;
     saved?: boolean;
     closing_soon?: boolean; // Flag for markets marked as closing soon
+    // LMSR state
+    q_yes?: number;
+    q_no?: number;
+    b?: number;
 }
 
 interface MarketsState {

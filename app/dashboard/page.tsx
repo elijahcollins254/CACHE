@@ -233,13 +233,18 @@ export default function Dashboard() {
                                     <div className="space-y-4">
                                         {bets.filter(b => b.result === 'PENDING').map((bet: any) => {
                                             // Calculate current position value using LMSR pricing
-                                            // In LMSR: current_value = shares × current_market_price
+                                            // In LMSR: current_value = shares × current_market_probability
                                             // If quantity is not available, estimate from amount/entry_probability
                                             const shares = Number(bet.quantity || (Number(bet.amount) / (bet.entry_probability || 50) * 100));
+                                            
+                                            // Use current market probability for position value
+                                            const currentMarketYesProb = bet.current_yes_probability || bet.entry_probability || 50;
                                             const currentPrice = bet.outcome === 'Yes' 
-                                                ? (bet.yes_probability || bet.entry_probability || 50) 
-                                                : (100 - (bet.yes_probability || (100 - bet.entry_probability) || 50));
-                                            const currentValue = shares * currentPrice;
+                                                ? currentMarketYesProb
+                                                : (100 - currentMarketYesProb);
+                                            
+                                            // Position value = shares × (probability/100) × 100 KES payout
+                                            const currentValue = shares * (currentPrice / 100) * 100;
                                             const profit = currentValue - Number(bet.amount);
                                             
                                             return (
