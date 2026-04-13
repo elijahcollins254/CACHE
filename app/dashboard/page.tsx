@@ -237,8 +237,8 @@ export default function Dashboard() {
                                             // If quantity is not available, estimate from amount/entry_probability
                                             const shares = Number(bet.quantity || (Number(bet.amount) / (bet.entry_probability || 50) * 100));
                                             const currentPrice = bet.outcome === 'Yes' 
-                                                ? (market?.yes_probability || bet.entry_probability || 50) 
-                                                : (100 - (market?.yes_probability || (100 - bet.entry_probability) || 50));
+                                                ? (bet.yes_probability || bet.entry_probability || 50) 
+                                                : (100 - (bet.yes_probability || (100 - bet.entry_probability) || 50));
                                             const currentValue = shares * currentPrice;
                                             const profit = currentValue - Number(bet.amount);
                                             
