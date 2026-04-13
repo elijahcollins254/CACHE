@@ -231,11 +231,14 @@ export default function Dashboard() {
                             <div>
                                 {bets.filter(b => b.result === 'PENDING').length > 0 ? (
                                     <div className="space-y-4">
-                                        {bets.filter(b => b.result === 'PENDING').map((bet) => {
-                                            // Calculate current position value using entry probability
-                                            // current_value = shares × current_price × 100
-                                            const shares = Number(bet.quantity);
-                                            const currentPrice = bet.entry_probability;
+                                        {bets.filter(b => b.result === 'PENDING').map((bet: any) => {
+                                            // Calculate current position value using LMSR pricing
+                                            // In LMSR: current_value = shares × current_market_price
+                                            // If quantity is not available, estimate from amount/entry_probability
+                                            const shares = Number(bet.quantity || (Number(bet.amount) / (bet.entry_probability || 50) * 100));
+                                            const currentPrice = bet.outcome === 'Yes' 
+                                                ? (market?.yes_probability || bet.entry_probability || 50) 
+                                                : (100 - (market?.yes_probability || (100 - bet.entry_probability) || 50));
                                             const currentValue = shares * currentPrice;
                                             const profit = currentValue - Number(bet.amount);
                                             

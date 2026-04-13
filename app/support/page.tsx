@@ -91,7 +91,7 @@ export default function Support() {
                         <p className="text-sm text-muted-foreground">+254718693484</p>
                         <p className="text-xs text-muted-foreground mt-1">Mon-Fri, 9AM-5PM EAT</p>
                     </a>
-                </div>        
+                </div>
 
                 {/* FAQ Section */}
                 <div className="mt-12">
