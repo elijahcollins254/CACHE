@@ -98,16 +98,18 @@ export default function MarketCard({ market }: MarketCardProps) {
               return (
                 <div
                   key={option.id}
-                  className="shrink-0 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 p-2 transition-all duration-300 group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 min-w-[110px]"
+                  className="shrink-0 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 p-2 transition-all duration-300 group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 min-w-[110px] h-[80px] flex flex-col justify-between"
                 >
-                  <div className="mb-1 text-[10px] font-semibold text-blue-700 dark:text-blue-300 line-clamp-1">
+                  <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 line-clamp-1">
                     {option.label}
                   </div>
-                  <div className="text-lg font-semibold tracking-tight text-blue-900 dark:text-blue-100">
-                    {optionYesProb}%
-                  </div>
-                  <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
-                    KES {optionPriceKes.toFixed(2)}
+                  <div>
+                    <div className="text-lg font-semibold tracking-tight text-blue-900 dark:text-blue-100">
+                      {optionYesProb}%
+                    </div>
+                    <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
+                      KES {optionPriceKes.toFixed(2)}
+                    </div>
                   </div>
                 </div>
               );
@@ -120,23 +122,23 @@ export default function MarketCard({ market }: MarketCardProps) {
     // Binary market - show Yes/No
     return (
       <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
-        <div className="rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 flex flex-col justify-center">
-          <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
+        <div className="rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 h-[80px] flex flex-col">
+          <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 mb-auto">Yes</span>
+          <div>
+            <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
+              {yesProbability}%
+            </div>
             <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">KES {yesPriceKes.toFixed(2)}</span>
-          </div>
-          <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
-            {yesProbability}%
           </div>
         </div>
 
-        <div className="rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-2 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 flex flex-col justify-center">
-          <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[11px] font-medium text-rose-700 dark:text-rose-300">No</span>
+        <div className="rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-2 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 h-[80px] flex flex-col">
+          <span className="text-[11px] font-medium text-rose-700 dark:text-rose-300 mb-auto">No</span>
+          <div>
+            <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
+              {noProbability}%
+            </div>
             <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">KES {noPriceKes.toFixed(2)}</span>
-          </div>
-          <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
-            {noProbability}%
           </div>
         </div>
       </div>
