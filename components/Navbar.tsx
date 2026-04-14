@@ -512,19 +512,19 @@ export default function Navbar() {
                 {/* Bottom Sheet */}
                 <div 
                     ref={searchSheetRef}
-                    className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background rounded-t-2xl flex flex-col max-h-[100vh] animate-in slide-in-from-bottom-10 duration-300"
+                    className="fixed left-0 right-0 top-0 z-50 sm:hidden bg-background rounded-b-2xl flex flex-col max-h-[90vh] animate-in slide-in-from-top-10 duration-300 pt-3"
                     onTouchStart={(e) => setDragStart(e.touches[0].clientY)}
                     onTouchEnd={(e) => {
                         const dragEnd = e.changedTouches[0].clientY;
                         const dragDistance = dragEnd - dragStart;
-                        // Auto-close if dragged down 100px OR if dragged to around halfway (100vh = ~720px, halfway = ~360px)
-                        if (dragDistance > 100 || dragDistance > 80) {
+                        // Auto-close if dragged up 100px
+                        if (dragDistance < -100) {
                             setIsMobileSearchOpen(false);
                         }
                     }}
                 >
                     {/* Drag Handle */}
-                    <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
+                    <div className="flex justify-center pb-2 pt-1 cursor-grab active:cursor-grabbing">
                         <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
                     </div>
 
