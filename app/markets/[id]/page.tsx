@@ -627,6 +627,16 @@ export default function MarketDetail() {
                 setBetAmount("");
                 setMessage("");
                 
+                // Update market state immediately from response if available
+                if (data.market) {
+                    setMarket((prev: any) => ({
+                        ...prev,
+                        q_yes: data.market.q_yes,
+                        q_no: data.market.q_no,
+                        yes_probability: data.market.yes_probability,
+                    }));
+                }
+                
                 // Refresh market detail data and balance
                 dispatch(fetchMarkets());
                 window.dispatchEvent(new Event("poly_balance_updated"));
