@@ -90,23 +90,23 @@ export default function MarketCard({ market }: MarketCardProps) {
   const renderProbabilities = () => {
     if (isOptionMarket) {
       return (
-        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 flex-1 flex items-center">
-          <div className="flex gap-2 min-w-min pb-1">
+        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:-mx-4 md:px-4 flex-1 flex items-center min-h-0">
+          <div className="flex gap-1.5 min-w-min pb-0.5">
             {market.options?.map((option) => {
               const optionYesProb = option.yes_probability;
               const optionPriceKes = optionYesProb;  // Price in KES per share
               return (
                 <div
                   key={option.id}
-                  className="shrink-0 rounded-2xl border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 p-3 transition-all duration-300 group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 min-w-[140px]"
+                  className="shrink-0 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 p-2 transition-all duration-300 group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 min-w-[110px]"
                 >
-                  <div className="mb-2 text-xs font-semibold text-blue-700 dark:text-blue-300 line-clamp-2">
+                  <div className="mb-1 text-[10px] font-semibold text-blue-700 dark:text-blue-300 line-clamp-1">
                     {option.label}
                   </div>
-                  <div className="text-xl font-semibold tracking-tight text-blue-900 dark:text-blue-100">
+                  <div className="text-lg font-semibold tracking-tight text-blue-900 dark:text-blue-100">
                     {optionYesProb}%
                   </div>
-                  <div className="text-xs font-medium text-blue-600 dark:text-blue-300 mt-1">
+                  <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
                     KES {optionPriceKes.toFixed(2)}
                   </div>
                 </div>
@@ -119,23 +119,23 @@ export default function MarketCard({ market }: MarketCardProps) {
 
     // Binary market - show Yes/No
     return (
-      <div className="grid grid-cols-2 gap-3 flex-1" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div className="rounded-2xl border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-3 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">KES {yesPriceKes.toFixed(2)}</span>
+      <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
+        <div className="rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
+            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">KES {yesPriceKes.toFixed(2)}</span>
           </div>
-          <div className="mt-2 text-2xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
+          <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
             {yesProbability}%
           </div>
         </div>
 
-        <div className="rounded-2xl border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-3 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-rose-700 dark:text-rose-300">No</span>
-            <span className="text-xs font-medium text-rose-600 dark:text-rose-300">KES {noPriceKes.toFixed(2)}</span>
+        <div className="rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-2 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[11px] font-medium text-rose-700 dark:text-rose-300">No</span>
+            <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">KES {noPriceKes.toFixed(2)}</span>
           </div>
-          <div className="mt-2 text-2xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
+          <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
             {noProbability}%
           </div>
         </div>
@@ -146,9 +146,9 @@ export default function MarketCard({ market }: MarketCardProps) {
   return (
     <Link
       href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
-      className="group block overflow-hidden rounded-3xl border border-border bg-muted p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] md:p-5 h-[300px]"
+      className="group block overflow-hidden rounded-3xl border border-border bg-muted p-3 md:p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] h-[300px]"
     >
-      <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2">
@@ -163,7 +163,7 @@ export default function MarketCard({ market }: MarketCardProps) {
               )}
             </div>
 
-            <h3 className="text-[15px] font-semibold leading-snug text-foreground line-clamp-3 transition-colors duration-300 md:text-[16px]">
+            <h3 className="text-[13px] md:text-[14px] font-semibold leading-snug text-foreground line-clamp-2 transition-colors duration-300">
               {market.question}
             </h3>
           </div>
@@ -186,15 +186,15 @@ export default function MarketCard({ market }: MarketCardProps) {
 
         {renderProbabilities()}
 
-        <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium text-foreground">
+        <div className="mt-auto flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <TrendingUp className="h-3 w-3 text-muted-foreground" />
+            <span className="font-medium text-foreground text-[11px]">
               {market.volume || "KES 0"}
             </span>
           </div>
 
-          <span className="font-medium text-muted-foreground">{formatDate(market.end_date)}</span>
+          <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
         </div>
       </div>
     </Link>
