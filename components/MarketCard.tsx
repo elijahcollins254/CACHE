@@ -151,7 +151,7 @@ export default function MarketCard({ market }: MarketCardProps) {
       className="group block overflow-hidden rounded-3xl border border-border bg-muted p-3 md:p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] h-[230px]"
     >
       <div className="flex h-full flex-col gap-2">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 flex-1">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2">
               <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium tracking-wide text-muted-foreground">
