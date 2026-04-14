@@ -1123,8 +1123,6 @@ export default function AdminPanel() {
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
 
             {/* Resolution Modal */}
             {selectedMarket && !showBootstrapModal && (
@@ -1246,6 +1244,7 @@ export default function AdminPanel() {
                     </div>
                 </div>
             )}
+        </div>
         </div>
     );
 }

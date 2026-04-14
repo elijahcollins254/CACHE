@@ -90,7 +90,7 @@ export default function MarketCard({ market }: MarketCardProps) {
   const renderProbabilities = () => {
     if (isOptionMarket) {
       return (
-        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 flex-1 flex items-center">
           <div className="flex gap-2 min-w-min pb-1">
             {market.options?.map((option) => {
               const optionYesProb = option.yes_probability;
@@ -119,7 +119,7 @@ export default function MarketCard({ market }: MarketCardProps) {
 
     // Binary market - show Yes/No
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 flex-1" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div className="rounded-2xl border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-3 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
@@ -146,7 +146,7 @@ export default function MarketCard({ market }: MarketCardProps) {
   return (
     <Link
       href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
-      className="group block overflow-hidden rounded-3xl border border-border bg-muted p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] md:p-5"
+      className="group block overflow-hidden rounded-3xl border border-border bg-muted p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] md:p-5 h-[440px]"
     >
       <div className="flex h-full flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
