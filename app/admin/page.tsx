@@ -1064,7 +1064,7 @@ export default function AdminPanel() {
                     )}
 
                     {/* Resolution Modal */}
-                    {selectedMarket && !showBootstrapModal && (
+                    {selectedMarket && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                             <div className="apple-card w-full max-w-[400px] p-6">
                                 <h2 className="text-xl font-bold text-black mb-2">Resolve Market</h2>
