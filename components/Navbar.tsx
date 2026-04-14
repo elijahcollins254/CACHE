@@ -564,16 +564,28 @@ export default function Navbar() {
                     <div className="flex-1 overflow-y-auto px-4 py-4">
                         {(() => {
                             // Filter markets by search query if provided
-                            let filtered = mobileSearchQuery.trim()
-                                ? allMarkets.filter(m => 
-                                    m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase()) &&
-                                    m.status !== "RESOLVED" &&
-                                    m.category === mobileActiveCategory
-                                )
-                                : allMarkets.filter(m => 
-                                    m.status !== "RESOLVED" &&
-                                    m.category === mobileActiveCategory
+                            let filtered = allMarkets.filter(m => m.status !== "RESOLVED");
+                            
+                            // Apply category filter only if not "Trending"
+                            if (mobileActiveCategory !== "Trending") {
+                                filtered = filtered.filter(m => m.category === mobileActiveCategory);
+                            }
+                            
+                            // Apply search filter if provided
+                            if (mobileSearchQuery.trim()) {
+                                filtered = filtered.filter(m => 
+                                    m.question.toLowerCase().includes(mobileSearchQuery.toLowerCase())
                                 );
+                            }
+                            
+                            // Sort by volume for Trending
+                            if (mobileActiveCategory === "Trending") {
+                                filtered = filtered.sort((a, b) => {
+                                    const aVol = parseInt(a.volume.replace(/\D/g, '')) || 0;
+                                    const bVol = parseInt(b.volume.replace(/\D/g, '')) || 0;
+                                    return bVol - aVol;
+                                });
+                            }
 
                             return (
                                 <>
