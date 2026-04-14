@@ -36,10 +36,6 @@ export default function AdminPanel() {
     const [settlements, setSettlements] = useState<any[]>([]);
     const [deletingMarketId, setDeletingMarketId] = useState<string | null>(null);
     
-    // Bootstrap management
-    const [showBootstrapModal, setShowBootstrapModal] = useState(false);
-    const [bootstrappingMarketId, setBootstrappingMarketId] = useState<string | null>(null);
-    const [bootstrapAmount, setBootstrapAmount] = useState<number>(100000);
     
     // Users management
     const [users, setUsers] = useState<any[]>([]);
@@ -420,49 +416,7 @@ export default function AdminPanel() {
         }
     };
 
-    const handleBootstrapMarket = async (marketId: string) => {
-        setBootstrappingMarketId(marketId);
-        try {
-            const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bootstrap/`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        market_id: marketId,
-                        liquidity_amount: bootstrapAmount,
-                    }),
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                setMarkets(
-                    markets.map((m) =>
-                        m.id === marketId
-                            ? {
-                                  ...m,
-                                  is_bootstrapped: true,
-                                  yes_reserve: parseFloat(data.yes_reserve),
-                                  no_reserve: parseFloat(data.no_reserve),
-                                  yes_probability: 50,
-                              }
-                            : m
-                    )
-                );
-                setShowBootstrapModal(false);
-                setBootstrapAmount(100000);
-            } else {
-                const data = await response.json();
-                setError(data.error || "Failed to bootstrap market");
-            }
-        } catch (err) {
-            setError("Connection error");
-            console.error(err);
-        } finally {
-            setBootstrappingMarketId(null);
-        }
-    };
+;
 
     if (loading) {
         return (
@@ -580,27 +534,9 @@ export default function AdminPanel() {
                                                             }`}>
                                                                 {market.status}
                                                             </span>
-                                                            {market.is_bootstrapped && (
-                                                                <span className="px-3 py-1 bg-blue/10 text-blue rounded-full text-sm font-semibold flex items-center gap-1">
-                                                                    <Zap className="h-3 w-3" />
-                                                                    AMM Active
-                                                                </span>
-                                                            )}
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-2 ml-4">
-                                                        {market.status === "OPEN" && !market.is_bootstrapped && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    setSelectedMarket(market);
-                                                                    setShowBootstrapModal(true);
-                                                                }}
-                                                                className="px-4 py-2 bg-blue text-white rounded-lg font-bold transition-all hover:opacity-90 flex items-center gap-2"
-                                                            >
-                                                                <Zap className="h-4 w-4" />
-                                                                Bootstrap
-                                                            </button>
-                                                        )}
                                                         {market.status === "OPEN" && (
                                                             <button
                                                                 onClick={() => setSelectedMarket(market)}
@@ -1174,75 +1110,6 @@ export default function AdminPanel() {
                                     className="w-full px-4 py-3 border border-border rounded-lg text-black font-bold hover:bg-muted transition-all disabled:opacity-50"
                                 >
                                     Cancel
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Bootstrap Modal */}
-                    {showBootstrapModal && selectedMarket && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                            <div className="apple-card w-full max-w-[500px] p-6">
-                                <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
-                                    <Zap className="h-5 w-5 text-blue" />
-                                    Bootstrap AMM Liquidity
-                                </h2>
-                                <p className="text-muted-foreground text-sm mb-6">{selectedMarket.question}</p>
-
-                                {selectedMarket.is_bootstrapped ? (
-                                    <div className="bg-apple-green/10 border border-apple-green/30 rounded-lg p-4 mb-6">
-                                        <p className="text-sm font-bold text-apple-green mb-2">✓ Already Bootstrapped</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            YES Reserve: {selectedMarket.yes_reserve} KES
-                                            <br />
-                                            NO Reserve: {selectedMarket.no_reserve} KES
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <div className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-lg">
-                                            <label className="block text-sm font-bold text-black mb-3">
-                                                Total Liquidity (KES)
-                                            </label>
-                                            <input
-                                                type="number"
-                                                min={1000}
-                                                step={1000}
-                                                value={bootstrapAmount}
-                                                onChange={(e) => setBootstrapAmount(Number(e.target.value))}
-                                                className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue"
-                                            />
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                                This will be split 50/50 between YES ({bootstrapAmount / 2} KES) and NO ({bootstrapAmount / 2} KES) reserves.
-                                            </p>
-                                        </div>
-
-                                        <div className="space-y-3 mb-6">
-                                            <button
-                                                onClick={() => handleBootstrapMarket(selectedMarket.id)}
-                                                disabled={bootstrappingMarketId !== null}
-                                                className="w-full px-4 py-3 bg-blue text-white rounded-lg font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                                            >
-                                                {bootstrappingMarketId === selectedMarket.id && (
-                                                    <Loader className="h-4 w-4 animate-spin" />
-                                                )}
-                                                <Zap className="h-4 w-4" />
-                                                Bootstrap Market
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <button
-                                    onClick={() => {
-                                        setShowBootstrapModal(false);
-                                        setSelectedMarket(null);
-                                        setBootstrapAmount(100000);
-                                    }}
-                                    disabled={bootstrappingMarketId !== null}
-                                    className="w-full px-4 py-3 border border-border rounded-lg text-black font-bold hover:bg-muted transition-all disabled:opacity-50"
-                                >
-                                    Close
                                 </button>
                             </div>
                         </div>
