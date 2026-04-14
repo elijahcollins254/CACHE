@@ -718,7 +718,7 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* Users Tab */}
+                        {/* Users Tab - Fixed nesting */}
                         {activeTab === "users" && (
                             <div className="p-6">
                                 {selectedUserDetails ? (
@@ -874,66 +874,70 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
                                 ) : (
-                                    // Users List View
+                                    // Users List View - fixed (removed extra </div>)
                                     <div>
                                         <h2 className="text-lg font-bold text-black mb-6">User Management</h2>
-                                {loadingUsers ? (
-                                    <div className="text-center py-12">
-                                        <div className="h-8 w-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                        <p className="text-muted-foreground">Loading users...</p>
-                                    </div>
-                                ) : users.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <p className="text-muted-foreground">No users found</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        <div className="text-sm text-muted-foreground mb-4">
-                                            {users.length} total users • {users.filter(u => u.is_support_staff).length} support staff
-                                        </div>
-                                        {users.map((user) => (
-                                            <div key={user.id} className="border border-border rounded-lg p-4 hover:border-black transition-all flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <p className="font-bold text-black">{user.full_name}</p>
-                                                    <p className="text-sm text-muted-foreground">{user.phone_number}</p>
-                                                    <div className="flex gap-2 mt-2 text-xs">
-                                                        <span className="px-2 py-1 bg-muted rounded">
-                                                            {user.kyc_verified ? '✓ KYC Verified' : 'KYC Pending'}
-                                                        </span>
-                                                        <span className="px-2 py-1 bg-muted rounded">
-                                                            Balance: KES {parseFloat(user.balance).toLocaleString()}
-                                                        </span>
-                                                        {!user.is_active && (
-                                                            <span className="px-2 py-1 bg-apple-red/10 text-apple-red rounded">Inactive</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2 ml-4">
-                                                    <button
-                                                        onClick={() => showUserDetails(user)}
-                                                        className="px-3 py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
-                                                    >
-                                                        View Details
-                                                    </button>
-                                                    <button
-                                                        onClick={() => toggleSupportStaff(user.id, user.is_support_staff)}
-                                                        disabled={togglingUserId === user.id}
-                                                        className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${
-                                                            user.is_support_staff
-                                                                ? 'bg-apple-green/10 text-apple-green hover:bg-apple-green/20 border border-apple-green/30'
-                                                                : 'bg-muted text-muted-foreground hover:bg-muted/80 border border-border'
-                                                        } disabled:opacity-50`}
-                                                    >
-                                                        {togglingUserId === user.id ? '...' : user.is_support_staff ? 'Support Staff' : 'Make Support'}
-                                                    </button>
-                                                </div>
+                                        {loadingUsers ? (
+                                            <div className="text-center py-12">
+                                                <div className="h-8 w-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                                <p className="text-muted-foreground">Loading users...</p>
                                             </div>
-                                        ))}
+                                        ) : users.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <p className="text-muted-foreground">No users found</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                <div className="text-sm text-muted-foreground mb-4">
+                                                    {users.length} total users • {users.filter(u => u.is_support_staff).length} support staff
+                                                </div>
+                                                {users.map((user) => (
+                                                    <div key={user.id} className="border border-border rounded-lg p-4 hover:border-black transition-all flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-black">{user.full_name}</p>
+                                                            <p className="text-sm text-muted-foreground">{user.phone_number}</p>
+                                                            <div className="flex gap-2 mt-2 text-xs">
+                                                                <span className="px-2 py-1 bg-muted rounded">
+                                                                    {user.kyc_verified ? '✓ KYC Verified' : 'KYC Pending'}
+                                                                </span>
+                                                                <span className="px-2 py-1 bg-muted rounded">
+                                                                    Balance: KES {parseFloat(user.balance).toLocaleString()}
+                                                                </span>
+                                                                {!user.is_active && (
+                                                                    <span className="px-2 py-1 bg-apple-red/10 text-apple-red rounded">Inactive</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2 ml-4">
+                                                            <button
+                                                                onClick={() => showUserDetails(user)}
+                                                                className="px-3 py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
+                                                            >
+                                                                View Details
+                                                            </button>
+                                                            <button
+                                                                onClick={() => toggleSupportStaff(user.id, user.is_support_staff)}
+                                                                disabled={togglingUserId === user.id}
+                                                                className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${
+                                                                    user.is_support_staff
+                                                                        ? 'bg-apple-green/10 text-apple-green hover:bg-apple-green/20 border border-apple-green/30'
+                                                                        : 'bg-muted text-muted-foreground hover:bg-muted/80 border border-border'
+                                                                } disabled:opacity-50`}
+                                                            >
+                                                                {togglingUserId === user.id ? '...' : user.is_support_staff ? 'Support Staff' : 'Make Support'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
-                        </div>
                         )}
+                    </div>
+
+                    {/* Create Market Modal */}
                     {showCreateModal && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                             <div className="apple-card w-full max-w-[500px] p-6 max-h-[90vh] overflow-y-auto">
@@ -1123,126 +1127,128 @@ export default function AdminPanel() {
                         </div>
                     )}
 
-            {/* Resolution Modal */}
-            {selectedMarket && !showBootstrapModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="apple-card w-full max-w-[400px] p-6">
-                        <h2 className="text-xl font-bold text-black mb-2">Resolve Market</h2>
-                        <p className="text-muted-foreground text-sm mb-6">{selectedMarket.question}</p>
-
-                        <div className="space-y-3 mb-6">
-                            <button
-                                onClick={() => {
-                                    setOutcome("Yes");
-                                    handleResolveMarket(selectedMarket.id, "Yes");
-                                }}
-                                disabled={resolvingMarket !== null}
-                                className="w-full px-4 py-3 border-2 border-apple-green rounded-lg text-black font-bold hover:bg-apple-green/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {resolvingMarket === selectedMarket.id && outcome === "Yes" && (
-                                    <Loader className="h-4 w-4 animate-spin" />
-                                )}
-                                <CheckCircle className="h-5 w-5 text-apple-green" />
-                                Outcome: Yes
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setOutcome("No");
-                                    handleResolveMarket(selectedMarket.id, "No");
-                                }}
-                                disabled={resolvingMarket !== null}
-                                className="w-full px-4 py-3 border-2 border-apple-red rounded-lg text-black font-bold hover:bg-apple-red/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {resolvingMarket === selectedMarket.id && outcome === "No" && (
-                                    <Loader className="h-4 w-4 animate-spin" />
-                                )}
-                                <XCircle className="h-5 w-5 text-apple-red" />
-                                Outcome: No
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={() => {
-                                setSelectedMarket(null);
-                                setOutcome("");
-                            }}
-                            disabled={resolvingMarket !== null}
-                            className="w-full px-4 py-3 border border-border rounded-lg text-black font-bold hover:bg-muted transition-all disabled:opacity-50"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Bootstrap Modal */}
-            {showBootstrapModal && selectedMarket && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="apple-card w-full max-w-[500px] p-6">
-                        <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
-                            <Zap className="h-5 w-5 text-blue" />
-                            Bootstrap AMM Liquidity
-                        </h2>
-                        <p className="text-muted-foreground text-sm mb-6">{selectedMarket.question}</p>
-
-                        {selectedMarket.is_bootstrapped ? (
-                            <div className="bg-apple-green/10 border border-apple-green/30 rounded-lg p-4 mb-6">
-                                <p className="text-sm font-bold text-apple-green mb-2">✓ Already Bootstrapped</p>
-                                <p className="text-xs text-muted-foreground">
-                                    YES Reserve: {selectedMarket.yes_reserve} KES
-                                    <br />
-                                    NO Reserve: {selectedMarket.no_reserve} KES
-                                </p>
-                            </div>
-                        ) : (
-                            <div>
-                                <div className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-lg">
-                                    <label className="block text-sm font-bold text-black mb-3">
-                                        Total Liquidity (KES)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min={1000}
-                                        step={1000}
-                                        value={bootstrapAmount}
-                                        onChange={(e) => setBootstrapAmount(Number(e.target.value))}
-                                        className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue"
-                                    />
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        This will be split 50/50 between YES ({bootstrapAmount / 2} KES) and NO ({bootstrapAmount / 2} KES) reserves.
-                                    </p>
-                                </div>
+                    {/* Resolution Modal */}
+                    {selectedMarket && !showBootstrapModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                            <div className="apple-card w-full max-w-[400px] p-6">
+                                <h2 className="text-xl font-bold text-black mb-2">Resolve Market</h2>
+                                <p className="text-muted-foreground text-sm mb-6">{selectedMarket.question}</p>
 
                                 <div className="space-y-3 mb-6">
                                     <button
-                                        onClick={() => handleBootstrapMarket(selectedMarket.id)}
-                                        disabled={bootstrappingMarketId !== null}
-                                        className="w-full px-4 py-3 bg-blue text-white rounded-lg font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        onClick={() => {
+                                            setOutcome("Yes");
+                                            handleResolveMarket(selectedMarket.id, "Yes");
+                                        }}
+                                        disabled={resolvingMarket !== null}
+                                        className="w-full px-4 py-3 border-2 border-apple-green rounded-lg text-black font-bold hover:bg-apple-green/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
-                                        {bootstrappingMarketId === selectedMarket.id && (
+                                        {resolvingMarket === selectedMarket.id && outcome === "Yes" && (
                                             <Loader className="h-4 w-4 animate-spin" />
                                         )}
-                                        <Zap className="h-4 w-4" />
-                                        Bootstrap Market
+                                        <CheckCircle className="h-5 w-5 text-apple-green" />
+                                        Outcome: Yes
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setOutcome("No");
+                                            handleResolveMarket(selectedMarket.id, "No");
+                                        }}
+                                        disabled={resolvingMarket !== null}
+                                        className="w-full px-4 py-3 border-2 border-apple-red rounded-lg text-black font-bold hover:bg-apple-red/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {resolvingMarket === selectedMarket.id && outcome === "No" && (
+                                            <Loader className="h-4 w-4 animate-spin" />
+                                        )}
+                                        <XCircle className="h-5 w-5 text-apple-red" />
+                                        Outcome: No
                                     </button>
                                 </div>
-                            </div>
-                        )}
 
-                        <button
-                            onClick={() => {
-                                setShowBootstrapModal(false);
-                                setSelectedMarket(null);
-                                setBootstrapAmount(100000);
-                            }}
-                            disabled={bootstrappingMarketId !== null}
-                            className="w-full px-4 py-3 border border-border rounded-lg text-black font-bold hover:bg-muted transition-all disabled:opacity-50"
-                        >
-                            Close
-                        </button>
-                    </div>
+                                <button
+                                    onClick={() => {
+                                        setSelectedMarket(null);
+                                        setOutcome("");
+                                    }}
+                                    disabled={resolvingMarket !== null}
+                                    className="w-full px-4 py-3 border border-border rounded-lg text-black font-bold hover:bg-muted transition-all disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bootstrap Modal */}
+                    {showBootstrapModal && selectedMarket && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                            <div className="apple-card w-full max-w-[500px] p-6">
+                                <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
+                                    <Zap className="h-5 w-5 text-blue" />
+                                    Bootstrap AMM Liquidity
+                                </h2>
+                                <p className="text-muted-foreground text-sm mb-6">{selectedMarket.question}</p>
+
+                                {selectedMarket.is_bootstrapped ? (
+                                    <div className="bg-apple-green/10 border border-apple-green/30 rounded-lg p-4 mb-6">
+                                        <p className="text-sm font-bold text-apple-green mb-2">✓ Already Bootstrapped</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            YES Reserve: {selectedMarket.yes_reserve} KES
+                                            <br />
+                                            NO Reserve: {selectedMarket.no_reserve} KES
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-lg">
+                                            <label className="block text-sm font-bold text-black mb-3">
+                                                Total Liquidity (KES)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min={1000}
+                                                step={1000}
+                                                value={bootstrapAmount}
+                                                onChange={(e) => setBootstrapAmount(Number(e.target.value))}
+                                                className="w-full px-4 py-3 border border-border rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue"
+                                            />
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                This will be split 50/50 between YES ({bootstrapAmount / 2} KES) and NO ({bootstrapAmount / 2} KES) reserves.
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-3 mb-6">
+                                            <button
+                                                onClick={() => handleBootstrapMarket(selectedMarket.id)}
+                                                disabled={bootstrappingMarketId !== null}
+                                                className="w-full px-4 py-3 bg-blue text-white rounded-lg font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                            >
+                                                {bootstrappingMarketId === selectedMarket.id && (
+                                                    <Loader className="h-4 w-4 animate-spin" />
+                                                )}
+                                                <Zap className="h-4 w-4" />
+                                                Bootstrap Market
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => {
+                                        setShowBootstrapModal(false);
+                                        setSelectedMarket(null);
+                                        setBootstrapAmount(100000);
+                                    }}
+                                    disabled={bootstrappingMarketId !== null}
+                                    className="w-full px-4 py-3 border border-border rounded-lg text-black font-bold hover:bg-muted transition-all disabled:opacity-50"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
     );
 }
