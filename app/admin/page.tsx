@@ -45,6 +45,13 @@ export default function AdminPanel() {
     const [users, setUsers] = useState<any[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
+    
+    // Portfolio and activity
+    const [selectedUserDetails, setSelectedUserDetails] = useState<any>(null);
+    const [userPortfolio, setUserPortfolio] = useState<any>(null);
+    const [userActivity, setUserActivity] = useState<any[]>([]);
+    const [loadingPortfolio, setLoadingPortfolio] = useState(false);
+    const [loadingActivity, setLoadingActivity] = useState(false);
 
     // Create market form
     const [createForm, setCreateForm] = useState({
@@ -132,6 +139,58 @@ export default function AdminPanel() {
         } finally {
             setTogglingUserId(null);
         }
+    };
+
+    const loadUserPortfolio = async (userId: number) => {
+        setLoadingPortfolio(true);
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/admin/users/${userId}/portfolio/`,
+                { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                setUserPortfolio(data);
+            } else {
+                setError("Failed to load portfolio");
+            }
+        } catch (err) {
+            setError("Connection error");
+            console.error(err);
+        } finally {
+            setLoadingPortfolio(false);
+        }
+    };
+
+    const loadUserActivity = async (userId: number) => {
+        setLoadingActivity(true);
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/admin/users/${userId}/activity/`,
+                { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                setUserActivity(data.activity || []);
+            } else {
+                setError("Failed to load activity");
+            }
+        } catch (err) {
+            setError("Connection error");
+            console.error(err);
+        } finally {
+            setLoadingActivity(false);
+        }
+    };
+
+    const showUserDetails = (user: any) => {
+        setSelectedUserDetails(user);
+        setUserPortfolio(null);
+        setUserActivity([]);
+        loadUserPortfolio(user.id);
+        loadUserActivity(user.id);
     };
 
     useEffect(() => {
@@ -662,7 +721,162 @@ export default function AdminPanel() {
                         {/* Users Tab */}
                         {activeTab === "users" && (
                             <div className="p-6">
-                                <h2 className="text-lg font-bold text-black mb-6">User Management</h2>
+                                {selectedUserDetails ? (
+                                    // User Details View
+                                    <div>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedUserDetails(null);
+                                                setUserPortfolio(null);
+                                                setUserActivity([]);
+                                            }}
+                                            className="flex items-center gap-2 text-muted-foreground hover:text-black mb-6 transition-colors"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+                                            Back to Users
+                                        </button>
+
+                                        <div className="space-y-6">
+                                            {/* User Info */}
+                                            <div className="border border-border rounded-lg p-6">
+                                                <h3 className="text-lg font-bold text-black mb-4">{selectedUserDetails.full_name}</h3>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Phone</p>
+                                                        <p className="font-bold text-black">{selectedUserDetails.phone_number}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Balance</p>
+                                                        <p className="font-bold text-black">KES {parseFloat(selectedUserDetails.balance).toLocaleString()}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">KYC Status</p>
+                                                        <p className="font-bold text-black">{selectedUserDetails.kyc_verified ? '✓ Verified' : 'Pending'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Account Status</p>
+                                                        <p className="font-bold text-black">{selectedUserDetails.is_active ? 'Active' : 'Inactive'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Portfolio */}
+                                            <div className="border border-border rounded-lg p-6">
+                                                <h3 className="text-lg font-bold text-black mb-4">Portfolio</h3>
+                                                {loadingPortfolio ? (
+                                                    <div className="text-center py-8">
+                                                        <div className="h-8 w-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                                        <p className="text-muted-foreground">Loading portfolio...</p>
+                                                    </div>
+                                                ) : userPortfolio ? (
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-muted rounded-lg">
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground">Total Value</p>
+                                                                <p className="font-bold text-xl text-black">
+                                                                    KES {userPortfolio.total_portfolio_value_kes?.toLocaleString() || '0'}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground">Active Positions</p>
+                                                                <p className="font-bold text-xl text-black">{userPortfolio.num_positions}</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {userPortfolio.positions && userPortfolio.positions.length > 0 ? (
+                                                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                                                {userPortfolio.positions.map((pos: any, idx: number) => (
+                                                                    <div key={idx} className="bg-muted p-3 rounded-lg">
+                                                                        <div className="flex justify-between items-start mb-2">
+                                                                            <div className="flex-1">
+                                                                                <p className="font-bold text-black text-sm">{pos.market_question}</p>
+                                                                                <p className="text-xs text-muted-foreground">{pos.outcome}</p>
+                                                                            </div>
+                                                                            <span className={`text-sm font-bold ${pos.pnl_kes >= 0 ? 'text-apple-green' : 'text-apple-red'}`}>
+                                                                                {pos.pnl_kes >= 0 ? '+' : ''}{pos.pnl_kes.toLocaleString()} KES
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                                                            <div>
+                                                                                <p className="text-muted-foreground">Shares</p>
+                                                                                <p className="font-bold text-black">{pos.net_shares}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-muted-foreground">Current Value</p>
+                                                                                <p className="font-bold text-black">{pos.current_value_kes.toLocaleString()}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-muted-foreground">Probability</p>
+                                                                                <p className="font-bold text-black">{pos.current_probability}%</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-muted-foreground text-sm">No active positions</p>
+                                                        )}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+
+                                            {/* Activity Log */}
+                                            <div className="border border-border rounded-lg p-6">
+                                                <h3 className="text-lg font-bold text-black mb-4">Activity Log</h3>
+                                                {loadingActivity ? (
+                                                    <div className="text-center py-8">
+                                                        <div className="h-8 w-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                                        <p className="text-muted-foreground">Loading activity...</p>
+                                                    </div>
+                                                ) : userActivity.length > 0 ? (
+                                                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                                                        {userActivity.map((activity: any, idx: number) => (
+                                                            <div key={idx} className="bg-muted p-3 rounded-lg text-sm">
+                                                                {activity.type === 'BET' ? (
+                                                                    <div>
+                                                                        <div className="flex justify-between items-start mb-1">
+                                                                            <p className="font-bold text-black">
+                                                                                {activity.action === 'BUY' ? '🟢' : '🔴'} {activity.action} {activity.outcome}
+                                                                            </p>
+                                                                            <span className={activity.result === 'WON' ? 'text-apple-green font-bold' : 'text-apple-red font-bold'}>
+                                                                                {activity.result}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground mb-1">{activity.market}</p>
+                                                                        <div className="flex justify-between text-xs">
+                                                                            <span>Amount: KES {activity.amount.toLocaleString()}</span>
+                                                                            <span>Qty: {activity.quantity.toFixed(4)}</span>
+                                                                            {activity.payout > 0 && <span>Payout: KES {activity.payout.toLocaleString()}</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div>
+                                                                        <div className="flex justify-between items-start mb-1">
+                                                                            <p className="font-bold text-black">{activity.transaction_type}</p>
+                                                                            <span className={activity.status === 'COMPLETED' ? 'text-apple-green font-bold' : 'text-yellow-600 font-bold'}>
+                                                                                {activity.status}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground mb-1">{activity.description}</p>
+                                                                        <p className="text-xs font-bold">KES {activity.amount.toLocaleString()}</p>
+                                                                    </div>
+                                                                )}
+                                                                <p className="text-xs text-muted-foreground mt-1">
+                                                                    {new Date(activity.timestamp).toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-muted-foreground text-sm">No activity yet</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    // Users List View
+                                    <div>
+                                        <h2 className="text-lg font-bold text-black mb-6">User Management</h2>
                                 {loadingUsers ? (
                                     <div className="text-center py-12">
                                         <div className="h-8 w-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -694,26 +908,33 @@ export default function AdminPanel() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => toggleSupportStaff(user.id, user.is_support_staff)}
-                                                    disabled={togglingUserId === user.id}
-                                                    className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ml-4 ${
-                                                        user.is_support_staff
-                                                            ? 'bg-apple-green/10 text-apple-green hover:bg-apple-green/20 border border-apple-green/30'
-                                                            : 'bg-muted text-muted-foreground hover:bg-muted/80 border border-border'
-                                                    } disabled:opacity-50`}
-                                                >
-                                                    {togglingUserId === user.id ? '...' : user.is_support_staff ? 'Support Staff' : 'Make Support'}
-                                                </button>
+                                                <div className="flex gap-2 ml-4">
+                                                    <button
+                                                        onClick={() => showUserDetails(user)}
+                                                        className="px-3 py-2 border border-border rounded-lg text-sm font-bold hover:bg-muted transition-all"
+                                                    >
+                                                        View Details
+                                                    </button>
+                                                    <button
+                                                        onClick={() => toggleSupportStaff(user.id, user.is_support_staff)}
+                                                        disabled={togglingUserId === user.id}
+                                                        className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${
+                                                            user.is_support_staff
+                                                                ? 'bg-apple-green/10 text-apple-green hover:bg-apple-green/20 border border-apple-green/30'
+                                                                : 'bg-muted text-muted-foreground hover:bg-muted/80 border border-border'
+                                                        } disabled:opacity-50`}
+                                                    >
+                                                        {togglingUserId === user.id ? '...' : user.is_support_staff ? 'Support Staff' : 'Make Support'}
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
-
-                    {/* Create Market Modal */}
                     {showCreateModal && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                             <div className="apple-card w-full max-w-[500px] p-6 max-h-[90vh] overflow-y-auto">
