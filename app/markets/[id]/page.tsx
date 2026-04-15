@@ -756,6 +756,16 @@ export default function MarketDetail() {
         }
     };
 
+    /**
+     * Format shares for display (hide long decimals)
+     * Shows max 2 decimal places but keeps full precision in state
+     */
+    const formatSharesForDisplay = (value: number): string => {
+        if (!value) return "0";
+        // Round to 2 decimal places for display only
+        return (Math.round(value * 100) / 100).toString();
+    };
+
     const topLevelChatMessages = chatMessages.filter((msg) => !msg.parent_id);
 
     const handleSaveToggle = () => {
@@ -1376,7 +1386,7 @@ export default function MarketDetail() {
                                             type="number"
                                             placeholder="0"
                                             step="0.01"
-                                            value={shares}
+                                            value={formatSharesForDisplay(shares)}
                                             onChange={(e) => setShares(Math.max(0.01, parseFloat(e.target.value) || 0.01))}
                                             className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
                                         />
