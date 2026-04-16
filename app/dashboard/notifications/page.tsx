@@ -61,8 +61,8 @@ export default function NotificationsPage() {
     }
 
     const filteredNotifications = notifications.filter((notif) => {
-        if (filter === "unread") return !notif.read;
-        if (filter === "read") return notif.read;
+        if (filter === "unread") return !notif.is_read;
+        if (filter === "read") return notif.is_read;
         return true;
     });
 
@@ -140,14 +140,9 @@ export default function NotificationsPage() {
                                             <div className="flex-1">
                                                 <h3 className="font-bold text-foreground">{notif.title}</h3>
                                                 <p className="text-sm text-muted-foreground mt-1">{notif.message}</p>
-                                                {notif.market_question && (
-                                                    <p className="text-xs text-apple-blue font-semibold mt-2 truncate">
-                                                        Market: {notif.market_question}
-                                                    </p>
-                                                )}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                {!notif.read && (
+                                                {!notif.is_read && (
                                                     <div className="h-3 w-3 rounded-full bg-apple-blue" />
                                                 )}
                                                 <button className="p-2 hover:bg-muted rounded-lg transition">
@@ -159,13 +154,7 @@ export default function NotificationsPage() {
                                 </div>
 
                                 <div className="mt-3 text-xs text-muted-foreground">
-                                    {new Date(notif.created_at).toLocaleDateString("en-US", {
-                                        year: "numeric",
-                                        month: "short",
-                                        day: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
+                                    {notif.time}
                                 </div>
                             </div>
                         ))
