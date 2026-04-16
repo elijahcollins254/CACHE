@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 // Import the old AdminPanel component logic
 // We'll create admin-specific components
 import { useState, useEffect } from "react";
-import { fetchWithAuth } from "@/lib/fetch-utils";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export default function AdminMarketsPage() {
     const router = useRouter();
