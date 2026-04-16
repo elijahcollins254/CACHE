@@ -103,6 +103,38 @@ function estimateSharesFromKES(
     return result;
 }
 
+/**
+ * Derive q_yes and q_no from market's initial yes_probability
+ * Uses the market object's yes_probability as the starting price
+ */
+function deriveQValuesFromMarket(
+    market: any,
+    b: number = LMSR_B
+): { q_yes: number; q_no: number } {
+    // Try to use backend q values first
+    let q_yes = market?.q_yes;
+    let q_no = market?.q_no;
+    
+    // If not available, derive from yes_probability (initial market price)
+    if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
+        const yes_prob = (market?.yes_probability || 50) / 100;
+        
+        if (yes_prob > 0 && yes_prob < 1) {
+            const p_ratio = yes_prob / (1 - yes_prob);
+            q_yes = b * Math.log(p_ratio);
+            q_no = 0;
+        } else {
+            q_yes = 0;
+            q_no = 0;
+        }
+    } else {
+        q_yes = q_yes || 0;
+        q_no = q_no || 0;
+    }
+    
+    return { q_yes, q_no };
+}
+
 export default function MarketDetail() {
     const { id: paramId } = useParams();
     const marketId = extractMarketId(paramId);
@@ -587,27 +619,8 @@ export default function MarketDetail() {
                     const amountValue = Number(betAmount);
                     
                     // Use LMSR to calculate actual shares bought and potential winnings
-                    let q_yes = market.q_yes;
-                    let q_no = market.q_no;
                     const b = market.b || LMSR_B;
-                    
-                    // If q values not available, derive them from yes_probability
-                    if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
-                        const yes_prob = (market?.yes_probability || 50) / 100;
-                        const no_prob = 1 - yes_prob;
-                        
-                        if (yes_prob > 0 && yes_prob < 1) {
-                            const p_ratio = yes_prob / (1 - yes_prob);
-                            q_yes = b * Math.log(p_ratio);
-                            q_no = 0;
-                        } else {
-                            q_yes = 0;
-                            q_no = 0;
-                        }
-                    } else {
-                        q_yes = q_yes || 0;
-                        q_no = q_no || 0;
-                    }
+                    const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
                     
                     const actualShares = estimateSharesFromKES(amountValue, q_yes, q_no, selectedOutcome, b);
                     
@@ -718,35 +731,8 @@ export default function MarketDetail() {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
         
-        // Estimate shares that will be bought for this KES amount
-        // Use real market q values from backend, or derive from yes_probability
-        let q_yes = market?.q_yes;
-        let q_no = market?.q_no;
         const b = market?.b || LMSR_B;
-        
-        // If q values not available, derive them from yes_probability
-        if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
-            const yes_prob = (market?.yes_probability || 50) / 100;
-            const no_prob = 1 - yes_prob;
-            
-            // Derive q values from prices using inverse of LMSR price formula:
-            // P_yes = exp(q_yes/b) / (exp(q_yes/b) + exp(q_no/b)) = yes_prob
-            // For symmetric starting point, scale probabilities to q values
-            if (yes_prob > 0 && yes_prob < 1) {
-                const p_ratio = yes_prob / (1 - yes_prob);
-                // When prices are skewed, q_yes and q_no are also skewed
-                // At 50/50: q_yes = q_no = some value
-                // At 25/75: q_yes < q_no proportional to price ratio
-                q_yes = b * Math.log(p_ratio);
-                q_no = 0;
-            } else {
-                q_yes = 0;
-                q_no = 0;
-            }
-        } else {
-            q_yes = q_yes || 0;
-            q_no = q_no || 0;
-        }
+        const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
         
         const estimatedShares = estimateSharesFromKES(amount, q_yes, q_no, selectedOutcome, b);
         
@@ -767,28 +753,8 @@ export default function MarketDetail() {
             };
         }
         
-        // Use LMSR formula to calculate actual cost for buying 'shares' at current market state
-        let q_yes = market.q_yes;
-        let q_no = market.q_no;
         const b = market.b || LMSR_B;
-        
-        // If q values not available, derive them from yes_probability
-        if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
-            const yes_prob = (market?.yes_probability || 50) / 100;
-            const no_prob = 1 - yes_prob;
-            
-            if (yes_prob > 0 && yes_prob < 1) {
-                const p_ratio = yes_prob / (1 - yes_prob);
-                q_yes = b * Math.log(p_ratio);
-                q_no = 0;
-            } else {
-                q_yes = 0;
-                q_no = 0;
-            }
-        } else {
-            q_yes = q_yes || 0;
-            q_no = q_no || 0;
-        }
+        const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
         
         // Calculate cost using LMSR: what does it cost to buy 'shares' RIGHT NOW?
         const totalCost = calculateLMSRBuyCost(q_yes, q_no, shares, selectedOutcome, b);
@@ -1535,10 +1501,10 @@ export default function MarketDetail() {
                                                     if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
                                                         const option = market.options?.find((o: any) => o.id === selectedOptionId);
                                                         const prob = selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
-                                                        return `${prob}% (${(100 / prob).toFixed(2)}x)`;
+                                                        return `${prob}%`;
                                                     } else {
                                                         const prob = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-                                                        return `${prob}% (${(100 / prob).toFixed(2)}x)`;
+                                                        return `${prob}%`;
                                                     }
                                                 })()}
                                             </span>
