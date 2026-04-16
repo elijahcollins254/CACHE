@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading, selectAllMarkets } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
-import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
+import { fetchNotifications, markAllNotificationsRead } from "@/lib/redux/slices/notificationsSlice";
 import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle } from "lucide-react";
 import { generateMarketSlug } from "@/lib/slugify";
 import DepositModal from "./DepositModal";
@@ -236,7 +236,7 @@ export default function Navbar() {
                                 >
                                     <Bell className="h-5 w-5 transition-transform duration-300 hover:scale-110" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full notif-badge-pulse"></span>
+                                        <span className="absolute top-1 right-1 h-3 w-3 bg-purple-500 rounded-full notif-badge-pulse animate-pulse"></span>
                                     )}
                                 </button>
 
@@ -276,8 +276,12 @@ export default function Navbar() {
                                             )}
                                         </div>
                                         <Link 
-                                            href="/notifications"
-                                            onClick={() => setIsNotificationOpen(false)}
+                                            href="/dashboard/notifications"
+                                            onClick={() => {
+                                                setIsNotificationOpen(false);
+                                                // Mark all as read when opening the full notifications page
+                                                dispatch(markAllNotificationsAsRead());
+                                            }}
                                             className="w-full mt-4 pt-3 border-t border-border text-xs font-semibold text-center text-foreground hover:text-muted-foreground transition-colors block"
                                         >
                                             View all notifications

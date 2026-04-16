@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/useAuth";
 import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
+import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
+import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
 
 export default function DashboardHub() {
     const { user: authUser, loading: authLoading } = useAuth("/dashboard");
+    const dispatch = useAppDispatch();
+    const fetchAttemptedRef = useRef(false);
+    
+    const balance = useAppSelector(selectBalance);
+    const portfolioValue = useAppSelector(selectPortfolioValue);
+    const bets = useAppSelector(selectBets);
+    const unreadCount = useAppSelector(selectUnreadCount);
+    
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -16,10 +26,39 @@ export default function DashboardHub() {
         }
     }, [authUser, authLoading]);
 
+    useEffect(() => {
+        if (authLoading || !authUser) return;
+        if (fetchAttemptedRef.current) return;
+        fetchAttemptedRef.current = true;
+        dispatch(fetchDashboardData());
+    }, [authUser?.phone_number, authLoading, dispatch]);
+
     const handleLogout = () => {
         localStorage.removeItem("poly_user");
         window.location.href = "/login";
     };
+
+    // Calculate portfolio stats
+    const netPositions: { [key: string]: any } = {};
+    bets
+        .filter(b => b.result === 'PENDING')
+        .forEach((bet: any) => {
+            const positionKey = `${bet.market_id}-${bet.outcome}`;
+            if (!netPositions[positionKey]) {
+                netPositions[positionKey] = { total_bought: 0, total_sold: 0 };
+            }
+            if (bet.action === 'BUY') netPositions[positionKey].total_bought += Number(bet.quantity || 1);
+            else if (bet.action === 'SELL') netPositions[positionKey].total_sold += Number(bet.quantity || 1);
+        });
+    const activePositions = Object.values(netPositions).filter((pos: any) => pos.total_bought > pos.total_sold).length;
+
+    // Calculate P&L
+    const completedBets = bets.filter(b => b.result !== 'PENDING');
+    const wins = completedBets.filter(b => b.result === 'WON');
+    const losses = completedBets.filter(b => b.result === 'LOST');
+    const totalWinnings = wins.reduce((sum, b) => sum + (parseFloat(b.payout || "0") - parseFloat(b.amount)), 0);
+    const totalLosses = losses.reduce((sum, b) => sum + parseFloat(b.amount), 0);
+    const netPnL = totalWinnings - totalLosses;
 
     if (authLoading) {
         return (
@@ -56,6 +95,8 @@ export default function DashboardHub() {
             href: "/dashboard/portfolio",
             color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40",
             iconColor: "text-blue-600 dark:text-blue-400",
+            stat: activePositions,
+            statLabel: "active positions",
         },
         {
             title: "Deposits & Withdrawals",
@@ -64,6 +105,8 @@ export default function DashboardHub() {
             href: "/dashboard/deposits-withdrawals",
             color: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/40",
             iconColor: "text-green-600 dark:text-green-400",
+            stat: `KES ${parseFloat(balance).toLocaleString()}`,
+            statLabel: "available",
         },
         {
             title: "Profits & Losses",
@@ -72,6 +115,9 @@ export default function DashboardHub() {
             href: "/dashboard/profits-losses",
             color: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/40",
             iconColor: "text-purple-600 dark:text-purple-400",
+            stat: `${netPnL >= 0 ? '+' : ''}KES ${netPnL.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+            statLabel: "net P&L",
+            statColor: netPnL >= 0 ? "text-green-600" : "text-red-600",
         },
         {
             title: "Notifications",
@@ -80,6 +126,8 @@ export default function DashboardHub() {
             href: "/dashboard/notifications",
             color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/40",
             iconColor: "text-orange-600 dark:text-orange-400",
+            stat: unreadCount,
+            statLabel: "unread",
         },
     ];
 
@@ -126,6 +174,15 @@ export default function DashboardHub() {
                                     </div>
                                     <h3 className="font-bold text-foreground text-lg mb-1">{section.title}</h3>
                                     <p className="text-sm text-muted-foreground flex-1">{section.description}</p>
+                                    
+                                    {/* Preview Stat */}
+                                    <div className="mt-4 pt-4 border-t border-current/10">
+                                        <p className="text-xs text-muted-foreground font-medium mb-1">{section.statLabel}</p>
+                                        <p className={`text-lg font-bold ${section.statColor || 'text-foreground'}`}>
+                                            {section.stat ?? '—'}
+                                        </p>
+                                    </div>
+                                    
                                     <div className="mt-4 text-apple-blue font-semibold text-sm group-hover:translate-x-2 transition-transform">
                                         →
                                     </div>
