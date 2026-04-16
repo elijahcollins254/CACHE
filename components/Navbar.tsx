@@ -190,11 +190,11 @@ export default function Navbar() {
                             </div>
                         </div>
 
-                        {/* Portfolio Balance */}
+                        {/* Dashboard Balance */}
                         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg bg-gradient-to-r from-apple-blue/10 to-purple-400/10 border border-apple-blue/20">
                             <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-apple-blue flex-shrink-0" />
                             <div className="flex flex-col gap-0">
-                                <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Portfolio</span>
+                                <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Dashboard</span>
                                 <span className="text-[10px] sm:text-xs font-bold text-foreground">
                                     <span className="text-apple-blue font-black">{portfolioBalance}</span>
                                 </span>
@@ -482,13 +482,13 @@ export default function Navbar() {
                     <span className="text-[10px] font-semibold">Deposit</span>
                 </button>
 
-                {/* Portfolio */}
+                {/* Dashboard */}
                 <Link
                     href="/dashboard"
                     className={`flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg transition-colors ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
                 >
                     <BarChart3 className={`h-6 w-6 ${pathname === "/dashboard" ? "font-bold" : ""}`} />
-                    <span className="text-[10px] font-semibold">Portfolio</span>
+                    <span className="text-[10px] font-semibold">Dashboard</span>
                 </Link>
             </div>
         </div>
