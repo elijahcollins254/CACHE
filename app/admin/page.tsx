@@ -493,6 +493,10 @@ export default function AdminPanel() {
                         </div>
 
                         {/* Markets Tab */}
+
+                        {/* Add aws s3 image upload during creation and post link to database. */}
+
+
                         {activeTab === "markets" && (
                             <div className="p-6">
                                 <div className="flex items-center justify-between mb-6">

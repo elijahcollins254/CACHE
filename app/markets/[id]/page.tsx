@@ -12,6 +12,9 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Send, BarChart3, Percent } from "lucide-react";
 import Link from "next/link";
 
+
+// Break this into components for more complex markets
+
 // ============================================================================
 // LMSR (Logarithmic Market Scoring Rule) Utilities
 // ============================================================================
