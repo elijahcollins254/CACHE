@@ -280,7 +280,7 @@ export default function Navbar() {
                                             onClick={() => {
                                                 setIsNotificationOpen(false);
                                                 // Mark all as read when opening the full notifications page
-                                                dispatch(markAllNotificationsAsRead());
+                                                dispatch(markAllNotificationsRead());
                                             }}
                                             className="w-full mt-4 pt-3 border-t border-border text-xs font-semibold text-center text-foreground hover:text-muted-foreground transition-colors block"
                                         >
