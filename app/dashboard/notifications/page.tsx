@@ -127,7 +127,7 @@ export default function NotificationsPage() {
                             <div
                                 key={notif.id}
                                 className={`bg-background rounded-xl border p-4 transition-all hover:shadow-md ${
-                                    notif.read
+                                    notif.is_read
                                         ? "border-border opacity-75"
                                         : "border-apple-blue/30 bg-apple-blue/5"
                                 }`}
