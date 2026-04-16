@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Lock, BarChart3, DollarSign, TrendingUp, Users, Layout } from "lucide-react";
 import { useState } from "react";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/Navbar";
 import { ArrowLeft } from "lucide-react";
 
 export default function AdminHub() {

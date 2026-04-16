@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, CreditCard } from "lucide-react";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/Navbar";
 import { useState, useEffect } from "react";
-import { fetchWithAuth } from "@/lib/fetch-utils";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export default function FinancialsPage() {
     const router = useRouter();

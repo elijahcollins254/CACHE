@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/Navbar";
 
 // Import the old AdminPanel component logic
 // We'll create admin-specific components
