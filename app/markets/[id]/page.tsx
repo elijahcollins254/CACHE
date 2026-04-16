@@ -587,9 +587,28 @@ export default function MarketDetail() {
                     const amountValue = Number(betAmount);
                     
                     // Use LMSR to calculate actual shares bought and potential winnings
-                    const q_yes = market.q_yes || 0;
-                    const q_no = market.q_no || 0;
+                    let q_yes = market.q_yes;
+                    let q_no = market.q_no;
                     const b = market.b || LMSR_B;
+                    
+                    // If q values not available, derive them from yes_probability
+                    if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
+                        const yes_prob = (market?.yes_probability || 50) / 100;
+                        const no_prob = 1 - yes_prob;
+                        
+                        if (yes_prob > 0 && yes_prob < 1) {
+                            const p_ratio = yes_prob / (1 - yes_prob);
+                            q_yes = b * Math.log(p_ratio);
+                            q_no = 0;
+                        } else {
+                            q_yes = 0;
+                            q_no = 0;
+                        }
+                    } else {
+                        q_yes = q_yes || 0;
+                        q_no = q_no || 0;
+                    }
+                    
                     const actualShares = estimateSharesFromKES(amountValue, q_yes, q_no, selectedOutcome, b);
                     
                     // Max payout if you win: shares * 100 KES
@@ -700,10 +719,35 @@ export default function MarketDetail() {
         const amount = Number(betAmount);
         
         // Estimate shares that will be bought for this KES amount
-        // Use real market q values from backend
-        const q_yes = market?.q_yes || 0;
-        const q_no = market?.q_no || 0;
+        // Use real market q values from backend, or derive from yes_probability
+        let q_yes = market?.q_yes;
+        let q_no = market?.q_no;
         const b = market?.b || LMSR_B;
+        
+        // If q values not available, derive them from yes_probability
+        if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
+            const yes_prob = (market?.yes_probability || 50) / 100;
+            const no_prob = 1 - yes_prob;
+            
+            // Derive q values from prices using inverse of LMSR price formula:
+            // P_yes = exp(q_yes/b) / (exp(q_yes/b) + exp(q_no/b)) = yes_prob
+            // For symmetric starting point, scale probabilities to q values
+            if (yes_prob > 0 && yes_prob < 1) {
+                const p_ratio = yes_prob / (1 - yes_prob);
+                // When prices are skewed, q_yes and q_no are also skewed
+                // At 50/50: q_yes = q_no = some value
+                // At 25/75: q_yes < q_no proportional to price ratio
+                q_yes = b * Math.log(p_ratio);
+                q_no = 0;
+            } else {
+                q_yes = 0;
+                q_no = 0;
+            }
+        } else {
+            q_yes = q_yes || 0;
+            q_no = q_no || 0;
+        }
+        
         const estimatedShares = estimateSharesFromKES(amount, q_yes, q_no, selectedOutcome, b);
         
         // If you win, you get 100 KES per share
@@ -724,9 +768,27 @@ export default function MarketDetail() {
         }
         
         // Use LMSR formula to calculate actual cost for buying 'shares' at current market state
-        const q_yes = market.q_yes || 0;
-        const q_no = market.q_no || 0;
+        let q_yes = market.q_yes;
+        let q_no = market.q_no;
         const b = market.b || LMSR_B;
+        
+        // If q values not available, derive them from yes_probability
+        if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
+            const yes_prob = (market?.yes_probability || 50) / 100;
+            const no_prob = 1 - yes_prob;
+            
+            if (yes_prob > 0 && yes_prob < 1) {
+                const p_ratio = yes_prob / (1 - yes_prob);
+                q_yes = b * Math.log(p_ratio);
+                q_no = 0;
+            } else {
+                q_yes = 0;
+                q_no = 0;
+            }
+        } else {
+            q_yes = q_yes || 0;
+            q_no = q_no || 0;
+        }
         
         // Calculate cost using LMSR: what does it cost to buy 'shares' RIGHT NOW?
         const totalCost = calculateLMSRBuyCost(q_yes, q_no, shares, selectedOutcome, b);
