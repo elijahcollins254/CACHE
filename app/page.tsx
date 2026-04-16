@@ -46,6 +46,7 @@ export default function Home() {
       <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-32 sm:pt-28 md:pt-40 pb-24 sm:pb-8 page-enter-slide-up">
 
         {/* Markets Grid */}
+        <div className="mt-6">
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[1, 2, 3, 4, 5, 6].map(i => (
@@ -67,6 +68,7 @@ export default function Home() {
             )}
           </div>
         )}
+        </div>
       </main>
     </div>
   );
