@@ -104,35 +104,52 @@ function estimateSharesFromKES(
 }
 
 /**
- * Derive q_yes and q_no from market's initial yes_probability
- * Uses the market object's yes_probability as the starting price
+ * Derive q_yes and q_no from market's LMSR state
+ * ALWAYS use backend q_yes/q_no if available (they are the source of truth)
+ * Only derive from yes_probability as a last resort fallback
+ * 
+ * IMPORTANT: Backend must return q_yes and q_no to ensure price consistency!
  */
 function deriveQValuesFromMarket(
     market: any,
     b: number = LMSR_B
 ): { q_yes: number; q_no: number } {
-    // Try to use backend q values first
-    let q_yes = market?.q_yes;
-    let q_no = market?.q_no;
-    
-    // If not available, derive from yes_probability (initial market price)
-    if ((q_yes === null || q_yes === undefined) && (q_no === null || q_no === undefined)) {
-        const yes_prob = (market?.yes_probability || 50) / 100;
-        
-        if (yes_prob > 0 && yes_prob < 1) {
-            const p_ratio = yes_prob / (1 - yes_prob);
-            q_yes = b * Math.log(p_ratio);
-            q_no = 0;
-        } else {
-            q_yes = 0;
-            q_no = 0;
-        }
-    } else {
-        q_yes = q_yes || 0;
-        q_no = q_no || 0;
+    // ✅ PRIMARY: Use backend q values if both are provided (source of truth)
+    if (market?.q_yes !== null && market?.q_yes !== undefined && 
+        market?.q_no !== null && market?.q_no !== undefined) {
+        return {
+            q_yes: market.q_yes,
+            q_no: market.q_no
+        };
     }
     
-    return { q_yes, q_no };
+    // ⚠️ FALLBACK: Only if backend doesn't provide q values
+    // Derive from yes_probability with strict validation
+    if (market?.yes_probability !== null && market?.yes_probability !== undefined) {
+        const yes_prob = market.yes_probability / 100;
+        
+        // Clamp probability to valid range to avoid log(0) errors
+        const clampedProb = Math.max(0.01, Math.min(0.99, yes_prob));
+        
+        const p_ratio = clampedProb / (1 - clampedProb);
+        const q_yes = b * Math.log(p_ratio);
+        const q_no = 0;
+        
+        console.warn(
+            `⚠️ LMSR: Backend didn't provide q_yes/q_no. Deriving from yes_probability=${market.yes_probability}%. ` +
+            `q_yes=${q_yes.toFixed(2)}, q_no=${q_no}. ` +
+            `Backend should return q_yes and q_no for price consistency!`
+        );
+        
+        return { q_yes, q_no };
+    }
+    
+    // 🔴 LAST RESORT: Default to 50/50
+    console.error(
+        `❌ LMSR: Backend didn't provide q_yes/q_no or yes_probability. Defaulting to 50/50. ` +
+        `This indicates a backend data issue!`
+    );
+    return { q_yes: 0, q_no: 0 }; // 50/50 (symmetric around 0)
 }
 
 export default function MarketDetail() {
