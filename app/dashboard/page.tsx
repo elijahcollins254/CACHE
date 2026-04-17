@@ -4,9 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/useAuth";
-import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut, X } from "lucide-react";
+import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
+import DepositModal from "@/components/DepositModal";
+import WithdrawModal from "@/components/WithdrawModal";
 
 export default function DashboardHub() {
     const { user: authUser, loading: authLoading } = useAuth("/dashboard");
@@ -21,9 +23,6 @@ export default function DashboardHub() {
     const [error, setError] = useState("");
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
-    const [depositAmount, setDepositAmount] = useState("");
-    const [withdrawalAmount, setWithdrawalAmount] = useState("");
-    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !authUser) {
@@ -212,122 +211,19 @@ export default function DashboardHub() {
                 </div>
 
                 {/* Deposit Modal */}
-                {depositModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-background rounded-lg border border-border max-w-md w-full p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-foreground">Deposit Funds</h2>
-                                <button onClick={() => setDepositModalOpen(false)} className="p-1 hover:bg-muted rounded">
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Amount
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={depositAmount}
-                                        onChange={(e) => setDepositAmount(e.target.value)}
-                                        placeholder="Enter amount in KES"
-                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-foreground"
-                                        disabled={submitting}
-                                    />
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setDepositModalOpen(false)}
-                                        className="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 font-semibold transition"
-                                        disabled={submitting}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setSubmitting(true);
-                                            // TODO: Handle deposit submission
-                                            setTimeout(() => {
-                                                setSubmitting(false);
-                                                setDepositModalOpen(false);
-                                                setDepositAmount("");
-                                            }, 1000);
-                                        }}
-                                        className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
-                                        disabled={submitting || !depositAmount}
-                                    >
-                                        {submitting ? "Processing..." : "Deposit"}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <DepositModal 
+                    isOpen={depositModalOpen} 
+                    onClose={() => setDepositModalOpen(false)}
+                    balance={balance}
+                />
 
                 {/* Withdrawal Modal */}
-                {withdrawalModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-background rounded-lg border border-border max-w-md w-full p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-foreground">Withdraw Funds</h2>
-                                <button onClick={() => setWithdrawalModalOpen(false)} className="p-1 hover:bg-muted rounded">
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Available Balance
-                                    </label>
-                                    <div className="px-4 py-2 bg-muted border border-border rounded-lg text-foreground font-semibold">
-                                        KES {parseFloat(balance).toLocaleString()}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Withdrawal Amount
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={withdrawalAmount}
-                                        onChange={(e) => setWithdrawalAmount(e.target.value)}
-                                        placeholder="Enter amount in KES"
-                                        max={balance}
-                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-foreground"
-                                        disabled={submitting}
-                                    />
-                                    {parseFloat(withdrawalAmount) > parseFloat(balance) && withdrawalAmount && (
-                                        <p className="text-red-500 text-sm mt-1">Insufficient balance</p>
-                                    )}
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setWithdrawalModalOpen(false)}
-                                        className="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 font-semibold transition"
-                                        disabled={submitting}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setSubmitting(true);
-                                            // TODO: Handle withdrawal submission
-                                            setTimeout(() => {
-                                                setSubmitting(false);
-                                                setWithdrawalModalOpen(false);
-                                                setWithdrawalAmount("");
-                                            }, 1000);
-                                        }}
-                                        className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
-                                        disabled={submitting || !withdrawalAmount || parseFloat(withdrawalAmount) > parseFloat(balance)}
-                                    >
-                                        {submitting ? "Processing..." : "Withdraw"}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <WithdrawModal 
+                    isOpen={withdrawalModalOpen} 
+                    onClose={() => setWithdrawalModalOpen(false)}
+                    balance={balance}
+                    phoneNumber={authUser?.phone_number || ""}
+                />
             </main>
         </div>
     );
