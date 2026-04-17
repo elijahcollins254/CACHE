@@ -61,9 +61,7 @@ export default function Support() {
         try {
             setLoading(true);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/my-tickets/`, {
-                headers: {
-                    Authorization: `Bearer ${session?.user?.id}`,
-                },
+                credentials: 'include',
             });
 
             if (response.ok) {
@@ -84,9 +82,7 @@ export default function Support() {
         try {
             setLoading(true);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/tickets/${ticketId}/`, {
-                headers: {
-                    Authorization: `Bearer ${session?.user?.id}`,
-                },
+                credentials: 'include',
             });
 
             if (response.ok) {
@@ -113,9 +109,9 @@ export default function Support() {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/create/`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${session?.user?.id}`,
                 },
                 body: JSON.stringify({
                     subject: newTicketSubject,
@@ -155,9 +151,9 @@ export default function Support() {
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/tickets/${selectedTicket.ticket_id}/reply/`,
                 {
                     method: "POST",
+                    credentials: 'include',
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${session?.user?.id}`,
                     },
                     body: JSON.stringify({
                         message: newMessage,
