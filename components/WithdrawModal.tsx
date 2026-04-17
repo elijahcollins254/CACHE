@@ -80,8 +80,43 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
             const data = await response.json();
 
             if (response.ok) {
-                // Show success state after brief processing animation
-                setTimeout(() => setStep("success"), 1500);
+                // Store transaction ID to poll status
+                const transactionId = data.transaction_id;
+                
+                // Poll for transaction completion (M-Pesa callback may take 10-30 seconds)
+                let checkCount = 0;
+                const pollInterval = setInterval(async () => {
+                    checkCount++;
+                    
+                    // Timeout after 3 minutes (180 checks at 1-second intervals)
+                    if (checkCount > 180) {
+                        clearInterval(pollInterval);
+                        setStep("input");
+                        setError("Withdrawal processing timeout. Please check your M-Pesa account. If not received, contact support.");
+                        return;
+                    }
+
+                    try {
+                        const statusResponse = await fetchWithAuth(
+                            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/transaction/${transactionId}/status/`,
+                            { method: "GET" }
+                        );
+
+                        const statusData = await statusResponse.json();
+
+                        if (statusData.status === "COMPLETED") {
+                            clearInterval(pollInterval);
+                            setStep("success");
+                        } else if (statusData.status === "FAILED") {
+                            clearInterval(pollInterval);
+                            setStep("input");
+                            setError(statusData.error_message || "Payment failed. Please try again.");
+                        }
+                    } catch (err) {
+                        // Continue polling on error
+                        console.error("Status check error:", err);
+                    }
+                }, 1000); // Poll every 1 second
             } else {
                 setStep("input");
                 setError(data.error || data.customer_message || "Failed to process withdrawal");
@@ -115,7 +150,8 @@ export default function WithdrawModal({ isOpen, onClose, balance, phoneNumber }:
                     <div className="bg-muted rounded-xl shadow-2xl max-w-sm w-full pointer-events-auto flex flex-col items-center justify-center py-8 px-4">
                         <Wallet className="h-10 w-10 text-foreground animate-bounce mb-3" />
                         <p className="font-bold text-foreground text-base">Processing...</p>
-                        <p className="text-muted-foreground text-xs mt-1">Your withdrawal is being processed</p>
+                        <p className="text-muted-foreground text-xs mt-1">Waiting for M-Pesa confirmation</p>
+                        <p className="text-muted-foreground text-xs mt-2 text-center">This may take up to 30 seconds</p>
                     </div>
                 </div>
             </>
