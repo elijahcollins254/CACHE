@@ -137,7 +137,7 @@ export default function DashboardHub() {
 
             <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
                 {/* Header */}
-                <div className="mb-12">
+                <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <Link href="/" className="p-2 hover:bg-muted rounded-lg transition">
@@ -156,36 +156,50 @@ export default function DashboardHub() {
                             Logout
                         </button>
                     </div>
+
+                    {/* Deposit and Withdraw Buttons */}
+                    <div className="flex gap-3">
+                        <Link 
+                            href="/dashboard/deposits-withdrawals"
+                            className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition text-center"
+                        >
+                            + Deposit
+                        </Link>
+                        <Link 
+                            href="/dashboard/deposits-withdrawals"
+                            className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition text-center"
+                        >
+                            Withdraw
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Navigation Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {sections.map((section) => {
                         const Icon = section.icon;
                         return (
                             <Link
                                 key={section.href}
                                 href={section.href}
-                                className={`group rounded-2xl border p-6 transition-all hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${section.color}`}
+                                className={`group rounded-xl border p-4 transition-all hover:shadow-lg active:scale-95 cursor-pointer ${section.color}`}
                             >
                                 <div className="flex flex-col h-full">
-                                    <div className={`mb-4 p-3 rounded-lg w-fit group-hover:scale-110 transition-transform`}>
-                                        <Icon className={`h-6 w-6 ${section.iconColor}`} />
+                                    <div className={`mb-3 p-2 rounded-lg w-fit group-hover:scale-110 transition-transform`}>
+                                        <Icon className={`h-5 w-5 ${section.iconColor}`} />
                                     </div>
-                                    <h3 className="font-bold text-foreground text-lg mb-1">{section.title}</h3>
-                                    <p className="text-sm text-muted-foreground flex-1">{section.description}</p>
+                                    <h3 className="font-bold text-foreground text-sm md:text-base mb-3">{section.title}</h3>
                                     
-                                    {/* Preview Stat */}
-                                    <div className="mt-4 pt-4 border-t border-current/10">
-                                        <p className="text-xs text-muted-foreground font-medium mb-1">{section.statLabel}</p>
-                                        <p className={`text-lg font-bold ${section.statColor || 'text-foreground'}`}>
+                                    {/* Summary Stat */}
+                                    <div className="mb-3">
+                                        <p className={`text-sm md:text-base font-bold ${section.statColor || 'text-foreground'} truncate`}>
                                             {section.stat ?? '—'}
                                         </p>
                                     </div>
                                     
-                                    <div className="mt-4 text-apple-blue font-semibold text-sm group-hover:translate-x-2 transition-transform">
-                                        →
-                                    </div>
+                                    <button className="mt-auto text-apple-blue font-semibold text-xs md:text-sm hover:underline text-left">
+                                        See more →
+                                    </button>
                                 </div>
                             </Link>
                         );
