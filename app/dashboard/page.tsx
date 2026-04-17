@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/useAuth";
-import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
+import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut, X } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
 
@@ -19,6 +19,11 @@ export default function DashboardHub() {
     const unreadCount = useAppSelector(selectUnreadCount);
     
     const [error, setError] = useState("");
+    const [depositModalOpen, setDepositModalOpen] = useState(false);
+    const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+    const [depositAmount, setDepositAmount] = useState("");
+    const [withdrawalAmount, setWithdrawalAmount] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !authUser) {
@@ -93,8 +98,8 @@ export default function DashboardHub() {
             description: "View your active positions and market holdings",
             icon: TrendingUp,
             href: "/dashboard/portfolio",
-            color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40",
-            iconColor: "text-blue-600 dark:text-blue-400",
+            color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
+            iconColor: "text-amber-700 dark:text-amber-400",
             stat: activePositions,
             statLabel: "active positions",
         },
@@ -103,8 +108,8 @@ export default function DashboardHub() {
             description: "Manage your account balance and transaction history",
             icon: Wallet,
             href: "/dashboard/deposits-withdrawals",
-            color: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/40",
-            iconColor: "text-green-600 dark:text-green-400",
+            color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
+            iconColor: "text-emerald-700 dark:text-emerald-400",
             stat: `KES ${parseFloat(balance).toLocaleString()}`,
             statLabel: "available",
         },
@@ -113,19 +118,19 @@ export default function DashboardHub() {
             description: "Track your earnings and performance over time",
             icon: History,
             href: "/dashboard/profits-losses",
-            color: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/40",
-            iconColor: "text-purple-600 dark:text-purple-400",
+            color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/40",
+            iconColor: "text-orange-700 dark:text-orange-400",
             stat: `${netPnL >= 0 ? '+' : ''}KES ${netPnL.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
             statLabel: "net P&L",
-            statColor: netPnL >= 0 ? "text-green-600" : "text-red-600",
+            statColor: netPnL >= 0 ? "text-emerald-600" : "text-red-600",
         },
         {
             title: "Notifications",
             description: "Stay updated with market alerts and updates",
             icon: Bell,
             href: "/dashboard/notifications",
-            color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/40",
-            iconColor: "text-orange-600 dark:text-orange-400",
+            color: "bg-stone-50 dark:bg-stone-950/20 border-stone-200 dark:border-stone-900/40",
+            iconColor: "text-stone-700 dark:text-stone-400",
             stat: unreadCount,
             statLabel: "unread",
         },
@@ -159,18 +164,18 @@ export default function DashboardHub() {
 
                     {/* Deposit and Withdraw Buttons */}
                     <div className="flex gap-3">
-                        <Link 
-                            href="/dashboard/deposits-withdrawals"
-                            className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition text-center"
+                        <button 
+                            onClick={() => setDepositModalOpen(true)}
+                            className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition text-center"
                         >
                             + Deposit
-                        </Link>
-                        <Link 
-                            href="/dashboard/deposits-withdrawals"
-                            className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition text-center"
+                        </button>
+                        <button 
+                            onClick={() => setWithdrawalModalOpen(true)}
+                            className="flex-1 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition text-center"
                         >
                             Withdraw
-                        </Link>
+                        </button>
                     </div>
                 </div>
 
@@ -205,6 +210,124 @@ export default function DashboardHub() {
                         );
                     })}
                 </div>
+
+                {/* Deposit Modal */}
+                {depositModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-background rounded-lg border border-border max-w-md w-full p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold text-foreground">Deposit Funds</h2>
+                                <button onClick={() => setDepositModalOpen(false)} className="p-1 hover:bg-muted rounded">
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
+                                        Amount
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={depositAmount}
+                                        onChange={(e) => setDepositAmount(e.target.value)}
+                                        placeholder="Enter amount in KES"
+                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-foreground"
+                                        disabled={submitting}
+                                    />
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setDepositModalOpen(false)}
+                                        className="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 font-semibold transition"
+                                        disabled={submitting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSubmitting(true);
+                                            // TODO: Handle deposit submission
+                                            setTimeout(() => {
+                                                setSubmitting(false);
+                                                setDepositModalOpen(false);
+                                                setDepositAmount("");
+                                            }, 1000);
+                                        }}
+                                        className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+                                        disabled={submitting || !depositAmount}
+                                    >
+                                        {submitting ? "Processing..." : "Deposit"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Withdrawal Modal */}
+                {withdrawalModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-background rounded-lg border border-border max-w-md w-full p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold text-foreground">Withdraw Funds</h2>
+                                <button onClick={() => setWithdrawalModalOpen(false)} className="p-1 hover:bg-muted rounded">
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
+                                        Available Balance
+                                    </label>
+                                    <div className="px-4 py-2 bg-muted border border-border rounded-lg text-foreground font-semibold">
+                                        KES {parseFloat(balance).toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
+                                        Withdrawal Amount
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={withdrawalAmount}
+                                        onChange={(e) => setWithdrawalAmount(e.target.value)}
+                                        placeholder="Enter amount in KES"
+                                        max={balance}
+                                        className="w-full px-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-foreground"
+                                        disabled={submitting}
+                                    />
+                                    {parseFloat(withdrawalAmount) > parseFloat(balance) && withdrawalAmount && (
+                                        <p className="text-red-500 text-sm mt-1">Insufficient balance</p>
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setWithdrawalModalOpen(false)}
+                                        className="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 font-semibold transition"
+                                        disabled={submitting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSubmitting(true);
+                                            // TODO: Handle withdrawal submission
+                                            setTimeout(() => {
+                                                setSubmitting(false);
+                                                setWithdrawalModalOpen(false);
+                                                setWithdrawalAmount("");
+                                            }, 1000);
+                                        }}
+                                        className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+                                        disabled={submitting || !withdrawalAmount || parseFloat(withdrawalAmount) > parseFloat(balance)}
+                                    >
+                                        {submitting ? "Processing..." : "Withdraw"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
