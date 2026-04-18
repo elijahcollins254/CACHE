@@ -16,11 +16,11 @@ export default function LiquidityPage() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user?.email) {
       fetchLpPositions();
       fetchMarkets();
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.email]);
 
   useEffect(() => {
     if (selectedMarket) {
