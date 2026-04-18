@@ -293,7 +293,7 @@ export default function LiquidityPage() {
                     </p>
                     <p>
                       <span className="font-medium">Total Fees:</span> KES{' '}
-                      {parseFloat(poolStats.total_fees_collected).toFixed(2)}
+                      {poolStats.total_fees_collected.toFixed(2)}
                     </p>
                   </div>
                 </div>
