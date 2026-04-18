@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Navbar from "@/components/Navbar";
-import { ChevronDown, RotateCcw, Play } from "lucide-react";
+import { ChevronDown, RotateCcw, BarChart3, BookOpen } from "lucide-react";
 
 interface SimulationState {
   // Market state
@@ -50,6 +50,8 @@ export default function Simulator() {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(
     new Set([0, 1, 2, 3, 4, 5])
   );
+
+  const [activeTab, setActiveTab] = useState<"details" | "visual">("details");
 
   // ============================================================================
   // LMSR Math Functions
@@ -131,6 +133,54 @@ export default function Simulator() {
 
     return result;
   };
+
+  // ============================================================================
+  // Visual Graph Data Calculations
+  // ============================================================================
+
+  const generatePricePoints = () => {
+    const points = [];
+    for (let i = -5; i <= 5; i++) {
+      const q_yes_adjusted = state.q_yes + i * 10;
+      const price = lmsrPriceYes(q_yes_adjusted, state.q_no, state.b) * 100;
+      points.push({ x: i * 10, price });
+    }
+    return points;
+  };
+
+  const generateCostCurve = () => {
+    const points = [];
+    for (let i = -5; i <= 5; i++) {
+      const q_yes_adjusted = state.q_yes + i * 10;
+      const cost = lmsrCost(q_yes_adjusted, state.q_no, state.b);
+      points.push({ x: i * 10, cost });
+    }
+    return points;
+  };
+
+  const shares = estimateSharesFromKES(
+    state.betAmount,
+    state.q_yes,
+    state.q_no,
+    state.selectedOutcome,
+    state.b,
+    state.payoutPerShare
+  );
+
+  const tradeCost = calculateBuyCost(
+    state.q_yes,
+    state.q_no,
+    shares,
+    state.selectedOutcome,
+    state.b,
+    state.payoutPerShare
+  );
+
+  const feeAmount = tradeCost * (state.tradingFeePercent / 100);
+  const totalCost = tradeCost + feeAmount;
+  const maxPayout = shares * state.payoutPerShare;
+  const profit = maxPayout - totalCost;
+  const roi = (profit / totalCost) * 100;
 
   // ============================================================================
   // Simulation Steps
