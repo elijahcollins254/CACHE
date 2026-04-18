@@ -81,7 +81,7 @@ export default function LiquidityPage() {
         const data = await res.json();
         // Filter to active markets with volume
         const activeMarkets = data.filter(
-          (m: any) => m.status === 'OPEN' && m.volume && m.volume !== 'KES 0'
+          (m: { status: string; volume: string }) => m.status === 'OPEN' && m.volume && m.volume !== 'KES 0'
         );
         setMarkets(activeMarkets);
         if (activeMarkets.length > 0 && !selectedMarket) {
@@ -251,7 +251,7 @@ export default function LiquidityPage() {
                   onChange={(e) => setSelectedMarket(parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {markets.map((market: any) => (
+                  {markets.map((market) => (
                     <option key={market.id} value={market.id}>
                       {market.question.substring(0, 40)}...
                     </option>
@@ -380,7 +380,7 @@ function PositionCard({
   onClaimFees,
   loading,
 }: {
-  position: any;
+  position: LPPosition;
   onWithdraw: () => void;
   onClaimFees: () => void;
   loading: boolean;
