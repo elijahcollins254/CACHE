@@ -4,23 +4,57 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
+interface LPPosition {
+  id: number;
+  market_id: number;
+  market_question: string;
+  capital_provided: number;
+  yes_shares: number;
+  no_shares: number;
+  total_fees_earned: number;
+  unclaimed_fees: number;
+  fees_claimed: number;
+  lp_share_percent: number;
+  estimated_apy: number;
+  days_invested: number;
+  entry_date: string;
+}
+
+interface Market {
+  id: number;
+  question: string;
+  status: string;
+  volume: string;
+}
+
+interface PoolStats {
+  market_id: number;
+  market_question: string;
+  num_providers: number;
+  total_unclaimed_fees: number;
+  total_fees_collected: number;
+  fee_percent: number;
+  total_liquidity_yes_shares: number;
+  total_liquidity_no_shares: number;
+}
+
 export default function LiquidityPage() {
   const { data: session } = useSession();
-  const [lpPositions, setLpPositions] = useState([]);
-  const [markets, setMarkets] = useState([]);
+  const [lpPositions, setLpPositions] = useState<LPPosition[]>([]);
+  const [markets, setMarkets] = useState<Market[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<number | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
-  const [poolStats, setPoolStats] = useState(null);
+  const [poolStats, setPoolStats] = useState<PoolStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (session?.user?.email) {
+    if (session) {
       fetchLpPositions();
       fetchMarkets();
     }
-  }, [session?.user?.email]);
+  }, [session]);
 
   useEffect(() => {
     if (selectedMarket) {
