@@ -839,16 +839,36 @@ export default function MarketDetail() {
         const shareText = `Check out this market: ${market.question}`;
 
         try {
-            // Try native Web Share API first
+            // Try native Web Share API first (supports image on native shares)
             if (navigator.share) {
-                await navigator.share({
+                const shareData: any = {
                     title: shareTitle,
                     text: shareText,
                     url: shareUrl,
-                });
+                };
+                
+                // If image is available and Web Share API supports files, add it
+                if (market.image_url) {
+                    try {
+                        const response = await fetch(market.image_url);
+                        const blob = await response.blob();
+                        const file = new File([blob], "market-image.jpg", { type: blob.type });
+                        shareData.files = [file];
+                    } catch (err) {
+                        // Image fetch failed, continue without it
+                        console.error("Could not fetch image for sharing:", err);
+                    }
+                }
+                
+                await navigator.share(shareData);
             } else {
-                // Fallback: Copy to clipboard
-                await navigator.clipboard.writeText(shareUrl);
+                // Fallback: Copy URL with image mention to clipboard
+                let clipboardText = `${shareTitle}\n\n${shareText}\n\n${shareUrl}`;
+                if (market.image_url) {
+                    clipboardText += `\n\nImage: ${market.image_url}`;
+                }
+                
+                await navigator.clipboard.writeText(clipboardText);
                 setShareMessage("Link copied to clipboard!");
                 setTimeout(() => setShareMessage(""), 2000);
             }

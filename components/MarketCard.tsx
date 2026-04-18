@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, Bookmark } from "lucide-react";
+import { TrendingUp, Bookmark, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
@@ -58,6 +58,7 @@ export default function MarketCard({ market }: MarketCardProps) {
   const dispatch = useAppDispatch();
   const savedMarketIds = useAppSelector(selectSavedMarketIds);
   const [isSaved, setIsSaved] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
     setIsSaved(savedMarketIds.includes(market.id));
@@ -78,6 +79,36 @@ export default function MarketCard({ market }: MarketCardProps) {
     }
 
     localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const marketUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${typeof window !== 'undefined' ? window.location.pathname.split('/markets')[0] : ''}/markets/${market.id}-${generateMarketSlug(market.question)}`;
+    const shareTitle = market.question;
+    const shareText = `Check out this market: ${market.question}`;
+
+    try {
+      // Try native Web Share API first
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: marketUrl,
+        });
+      } else {
+        // Fallback: Copy to clipboard
+        await navigator.clipboard.writeText(marketUrl);
+        setShareMessage("Link copied to clipboard!");
+        setTimeout(() => setShareMessage(""), 2000);
+      }
+    } catch (err) {
+      // User cancelled or error occurred
+      if ((err as any).name !== "AbortError") {
+        console.error("Share error:", err);
+      }
+    }
   };
 
   const yesProbability = market.yes_probability;
@@ -148,9 +179,25 @@ export default function MarketCard({ market }: MarketCardProps) {
   return (
     <Link
       href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
-      className="group block overflow-hidden rounded-3xl border border-border bg-muted p-3 md:p-4 shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] h-[230px]"
+      className="group block overflow-hidden rounded-3xl border border-border bg-muted shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] h-[280px] flex flex-col"
     >
-      <div className="flex h-full flex-col gap-2">
+      {/* Image Section */}
+      <div className="relative h-24 w-full overflow-hidden bg-muted/50">
+        {market.image_url ? (
+          <img 
+            src={market.image_url} 
+            alt={market.question}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+            <div className="text-muted-foreground text-sm opacity-50">No image</div>
+          </div>
+        )}
+      </div>
+
+      {/* Content Section */}
+      <div className="flex h-full flex-col gap-2 p-3 md:p-4">
         <div className="flex items-start justify-between gap-3 flex-1">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2">
@@ -170,20 +217,35 @@ export default function MarketCard({ market }: MarketCardProps) {
             </h3>
           </div>
 
-          <button
-            onClick={handleSaveToggle}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
-              isSaved
-                ? "border-amber-400/40 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shadow-sm dark:shadow-md"
-                : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
-            }`}
-            aria-label="Save market"
-          >
-            <Bookmark
-              className="h-4 w-4 transition-transform duration-300 group-hover:scale-105"
-              fill={isSaved ? "currentColor" : "none"}
-            />
-          </button>
+          <div className="flex gap-1 shrink-0">
+            <button
+              onClick={handleShare}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300 ${
+                shareMessage
+                  ? "border-blue-400/40 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm dark:shadow-md"
+                  : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
+              }`}
+              aria-label="Share market"
+              title="Share this market"
+            >
+              <Share2 className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />
+            </button>
+            
+            <button
+              onClick={handleSaveToggle}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                isSaved
+                  ? "border-amber-400/40 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shadow-sm dark:shadow-md"
+                  : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
+              }`}
+              aria-label="Save market"
+            >
+              <Bookmark
+                className="h-4 w-4 transition-transform duration-300 group-hover:scale-105"
+                fill={isSaved ? "currentColor" : "none"}
+              />
+            </button>
+          </div>
         </div>
 
         {renderProbabilities()}
@@ -198,6 +260,12 @@ export default function MarketCard({ market }: MarketCardProps) {
 
           <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
         </div>
+
+        {shareMessage && (
+          <div className="mt-2 text-center text-xs text-blue-600 dark:text-blue-400 font-medium">
+            {shareMessage}
+          </div>
+        )}
       </div>
     </Link>
   );

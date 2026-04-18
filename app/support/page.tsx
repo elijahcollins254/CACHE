@@ -7,6 +7,48 @@ import { MessageCircle, Send, Mail, Phone, Plus, X, ChevronLeft, Loader2 } from 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
+// Helper function to extract CSRF token from cookies
+const getCsrfTokenFromCookie = (): string | null => {
+    if (typeof document === 'undefined') return null;
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+};
+
+// Helper function to get CSRF token (from cookie first, then API endpoint)
+const getCsrfToken = async (): Promise<string | null> => {
+    // First try to get from cookie
+    const cookieToken = getCsrfTokenFromCookie();
+    if (cookieToken) {
+        return cookieToken;
+    }
+    
+    // If not in cookie, try to fetch from API endpoint
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/csrf-token/`, {
+            credentials: 'include',
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data.csrfToken;
+        }
+    } catch (err) {
+        console.error('Failed to fetch CSRF token:', err);
+    }
+    
+    return null;
+};
+
 interface SupportMessage {
     id: number;
     sender_name: string;
@@ -107,12 +149,18 @@ export default function Support() {
         setSuccess("");
 
         try {
+            const csrfToken = await getCsrfToken();
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+            };
+            if (csrfToken) {
+                headers["X-CSRFToken"] = csrfToken;
+            }
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/create/`, {
                 method: "POST",
                 credentials: 'include',
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers,
                 body: JSON.stringify({
                     subject: newTicketSubject,
                     message: newTicketMessage,
@@ -130,7 +178,8 @@ export default function Support() {
                     setSuccess("");
                 }, 1500);
             } else {
-                setError("Failed to create ticket. Please try again.");
+                const errorData = await response.json().catch(() => null);
+                setError(errorData?.detail || "Failed to create ticket. Please try again.");
             }
         } catch (err) {
             setError("Connection error. Please try again.");
@@ -147,14 +196,20 @@ export default function Support() {
         setError("");
 
         try {
+            const csrfToken = await getCsrfToken();
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+            };
+            if (csrfToken) {
+                headers["X-CSRFToken"] = csrfToken;
+            }
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/tickets/${selectedTicket.ticket_id}/reply/`,
                 {
                     method: "POST",
                     credentials: 'include',
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
+                    headers,
                     body: JSON.stringify({
                         message: newMessage,
                     }),
@@ -172,7 +227,8 @@ export default function Support() {
                 }
                 setNewMessage("");
             } else {
-                setError("Failed to send message. Please try again.");
+                const errorData = await response.json().catch(() => null);
+                setError(errorData?.detail || "Failed to send message. Please try again.");
             }
         } catch (err) {
             setError("Connection error. Please try again.");
