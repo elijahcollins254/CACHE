@@ -27,11 +27,20 @@ const PAYOUT_PER_SHARE = 100; // KES per share
  */
 function lmsrCost(q_yes: number, q_no: number, b: number = LMSR_B): number {
     try {
+        // Validate inputs
+        if (!Number.isFinite(q_yes) || !Number.isFinite(q_no) || !Number.isFinite(b)) {
+            console.warn('Invalid LMSR inputs:', { q_yes, q_no, b });
+            return 0;
+        }
         const exp_yes = Math.exp(q_yes / b);
         const exp_no = Math.exp(q_no / b);
-        return b * Math.log(exp_yes + exp_no);
+        const result = b * Math.log(exp_yes + exp_no);
+        
+        // Return 0 if result is NaN
+        return Number.isFinite(result) ? result : 0;
     } catch {
-        return Math.max(q_yes, q_no) / b + b;
+        console.warn('LMSR cost calculation error');
+        return 0;
     }
 }
 
@@ -45,13 +54,22 @@ function calculateLMSRBuyCost(
     outcome: string,
     b: number = LMSR_B
 ): number {
+    // Validate inputs
+    if (!Number.isFinite(q_yes_before) || !Number.isFinite(q_no_before) || !Number.isFinite(shares) || shares <= 0) {
+        console.warn('Invalid LMSR buy cost inputs:', { q_yes_before, q_no_before, shares });
+        return 0;
+    }
+    
     const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before + shares : q_yes_before;
     const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before + shares;
     
     const cost_before = lmsrCost(q_yes_before, q_no_before, b);
     const cost_after = lmsrCost(q_yes_after, q_no_after, b);
     
-    return (cost_after - cost_before) * PAYOUT_PER_SHARE;
+    const result = (cost_after - cost_before) * PAYOUT_PER_SHARE;
+    
+    // Return 0 if result is NaN or invalid
+    return Number.isFinite(result) && result >= 0 ? result : 0;
 }
 
 /**
@@ -64,13 +82,22 @@ function calculateLMSRSellPayout(
     outcome: string,
     b: number = LMSR_B
 ): number {
+    // Validate inputs
+    if (!Number.isFinite(q_yes_before) || !Number.isFinite(q_no_before) || !Number.isFinite(shares) || shares <= 0) {
+        console.warn('Invalid LMSR sell payout inputs:', { q_yes_before, q_no_before, shares });
+        return 0;
+    }
+    
     const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before - shares : q_yes_before;
     const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before - shares;
     
     const cost_before = lmsrCost(q_yes_before, q_no_before, b);
     const cost_after = lmsrCost(q_yes_after, q_no_after, b);
     
-    return (cost_before - cost_after) * PAYOUT_PER_SHARE;
+    const result = (cost_before - cost_after) * PAYOUT_PER_SHARE;
+    
+    // Return 0 if result is NaN or invalid
+    return Number.isFinite(result) && result >= 0 ? result : 0;
 }
 
 /**
@@ -770,22 +797,44 @@ export default function MarketDetail() {
             };
         }
         
+        // Validate shares is a valid positive number
+        const validShares = Number.isFinite(shares) && shares > 0 ? shares : 0;
+        
+        if (validShares === 0) {
+            return {
+                totalCost: 0,
+                toWin: 0,
+                potentialProfit: 0,
+                winPayout: 0,
+            };
+        }
+        
         const b = market.b || LMSR_B;
         const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
         
+        // Validate q values
+        if (!Number.isFinite(q_yes) || !Number.isFinite(q_no)) {
+            return {
+                totalCost: 0,
+                toWin: 0,
+                potentialProfit: 0,
+                winPayout: 0,
+            };
+        }
+        
         // Calculate cost using LMSR: what does it cost to buy 'shares' RIGHT NOW?
-        const totalCost = calculateLMSRBuyCost(q_yes, q_no, shares, selectedOutcome, b);
+        const totalCost = calculateLMSRBuyCost(q_yes, q_no, validShares, selectedOutcome, b);
         
         // In LMSR: max payout is always 100 KES per share if outcome wins
-        const maxPayout = shares * PAYOUT_PER_SHARE;
+        const maxPayout = validShares * PAYOUT_PER_SHARE;
         const winAmount = maxPayout * (1 - TRADING_FEE_PERCENT / 100);
         const potentialProfit = winAmount - totalCost;
         
         return {
-            totalCost: totalCost,
-            toWin: maxPayout - totalCost,
-            potentialProfit: potentialProfit,
-            winPayout: winAmount,
+            totalCost: Number.isFinite(totalCost) ? totalCost : 0,
+            toWin: Number.isFinite(maxPayout - totalCost) ? (maxPayout - totalCost) : 0,
+            potentialProfit: Number.isFinite(potentialProfit) ? potentialProfit : 0,
+            winPayout: Number.isFinite(winAmount) ? winAmount : 0,
         };
     };
 
@@ -887,7 +936,7 @@ export default function MarketDetail() {
               <SearchFilterBar />
             </Suspense>
 
-            <main className="mx-auto pt-48 md:pt-56 max-w-7xl px-4 md:px-6 page-enter-slide-up">
+            <main className="mx-auto pt-20 md:pt-24 max-w-7xl px-4 md:px-6 page-enter-slide-up">
                 {/* Back Button */}
                 <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-3 transition-colors link-animated">
                     <ArrowLeft className="h-4 w-4" />
@@ -1485,12 +1534,12 @@ export default function MarketDetail() {
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs font-bold text-muted-foreground uppercase">{activeTab === "sell" ? "Proceeds" : "Total"}</span>
-                                            <span className="text-2xl font-bold text-green-400">KES {limitStats.totalCost.toFixed(2)}</span>
+                                            <span className="text-2xl font-bold text-green-400">KES {Number.isFinite(limitStats.totalCost) ? limitStats.totalCost.toFixed(2) : "0.00"}</span>
                                         </div>
                                         {activeTab === "buy" && (
                                             <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
                                                 <span className="text-xs text-muted-foreground">Total Return</span>
-                                                <span className="text-lg font-bold text-green-300">KES {(limitStats.totalCost + limitStats.toWin).toFixed(2)} <span className="text-xs text-green-400">({limitStats.totalCost.toFixed(2)} + {limitStats.toWin.toFixed(2)})</span></span>
+                                                <span className="text-lg font-bold text-green-300">KES {Number.isFinite(limitStats.totalCost + limitStats.toWin) ? (limitStats.totalCost + limitStats.toWin).toFixed(2) : "0.00"} <span className="text-xs text-green-400">({Number.isFinite(limitStats.totalCost) ? limitStats.totalCost.toFixed(2) : "0.00"} + {Number.isFinite(limitStats.toWin) ? limitStats.toWin.toFixed(2) : "0.00"})</span></span>
                                             </div>
                                         )}
                                     </div>
@@ -1531,7 +1580,7 @@ export default function MarketDetail() {
                                                 {activeTab === "sell" ? "You'll receive" : "If correct: you get"}
                                             </span>
                                             <div className="text-3xl font-bold text-green-400">
-                                                KES {estimatedReturn.toFixed(2)}
+                                                KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(2) : "0.00"}
                                             </div>
                                             <span className="text-xs text-muted-foreground mt-1 block">
                                                 @ {(() => {
