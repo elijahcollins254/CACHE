@@ -2,7 +2,9 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import { Loader2, ArrowRight, TrendingUp, Users, Zap, DollarSign, Calendar, AlertCircle, ChevronRight } from 'lucide-react';
 
 interface LPPosition {
   id: number;
@@ -42,12 +44,16 @@ export default function LiquidityPage() {
   const { data: session } = useSession();
   const [lpPositions, setLpPositions] = useState<LPPosition[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<number | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [poolStats, setPoolStats] = useState<PoolStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'discover' | 'portfolio'>('discover');
+  const [sortBy, setSortBy] = useState<'volume' | 'providers' | 'fees'>('volume');
 
   useEffect(() => {
     if (session) {
@@ -61,6 +67,24 @@ export default function LiquidityPage() {
       fetchPoolStats(selectedMarket);
     }
   }, [selectedMarket]);
+
+  useEffect(() => {
+    let filtered = markets.filter((m: Market) => 
+      m.question.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sort markets
+    filtered.sort((a: Market, b: Market) => {
+      if (sortBy === 'volume') {
+        const volA = parseFloat(a.volume?.replace(/[^0-9.-]/g, '') || '0');
+        const volB = parseFloat(b.volume?.replace(/[^0-9.-]/g, '') || '0');
+        return volB - volA;
+      }
+      return 0;
+    });
+
+    setFilteredMarkets(filtered);
+  }, [markets, searchTerm, sortBy]);
 
   const fetchLpPositions = async () => {
     try {
@@ -79,7 +103,6 @@ export default function LiquidityPage() {
       const res = await fetch('/api/markets/');
       if (res.ok) {
         const data = await res.json();
-        // Filter to active markets with volume
         const activeMarkets = data.filter(
           (m: { status: string; volume: string }) => m.status === 'OPEN' && m.volume && m.volume !== 'KES 0'
         );
@@ -199,178 +222,349 @@ export default function LiquidityPage() {
 
   const calculateTotalStats = () => {
     if (lpPositions.length === 0) return { total: 0, totalFees: 0, avgApy: 0 };
-    const total = lpPositions.reduce((sum, p) => sum + p.capital_provided, 0);
-    const totalFees = lpPositions.reduce((sum, p) => sum + p.total_fees_earned, 0);
-    const avgApy =
-      lpPositions.reduce((sum, p) => sum + p.estimated_apy, 0) / lpPositions.length;
+    const total = lpPositions.reduce((sum: number, p: LPPosition) => sum + p.capital_provided, 0);
+    const totalFees = lpPositions.reduce((sum: number, p: LPPosition) => sum + p.total_fees_earned, 0);
+    const avgApy = lpPositions.reduce((sum: number, p: LPPosition) => sum + p.estimated_apy, 0) / lpPositions.length;
     return { total, totalFees, avgApy };
   };
 
   const stats = calculateTotalStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Provide Liquidity</h1>
-          <p className="text-gray-600 mt-2">
-            Earn fees by providing liquidity to prediction markets. Your capital is split equally into YES and NO shares
-            at current market prices, earning fees from all trades.
-          </p>
-        </div>
-
-        {/* Alert Messages */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">{error}</div>
-        )}
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">{success}</div>
-        )}
-
-        {/* Summary Cards */}
-        {lpPositions.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <SummaryCard title="Total Liquidity Provided" value={`KES ${stats.total.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} />
-            <SummaryCard title="Total Fees Earned" value={`KES ${stats.totalFees.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} />
-            <SummaryCard title="Average APY" value={`${stats.avgApy.toFixed(2)}%`} />
+    <>
+      <Navbar />
+      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <div className="mb-12">
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Liquidity Provision
+            </h1>
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+              Earn fees by providing liquidity to prediction markets
+            </p>
           </div>
-        )}
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Deposit Section */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Deposit Liquidity</h2>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Market</label>
-                <select
-                  value={selectedMarket || ''}
-                  onChange={(e) => setSelectedMarket(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {markets.map((market) => (
-                    <option key={market.id} value={market.id}>
-                      {market.question.substring(0, 40)}...
-                    </option>
-                  ))}
-                </select>
+          {/* Alert Messages */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/30 rounded-2xl text-red-700 dark:text-red-400 backdrop-blur-xl">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} />
+                {error}
               </div>
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/30 rounded-2xl text-green-700 dark:text-green-400 backdrop-blur-xl">
+              {success}
+            </div>
+          )}
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Amount (KES)</label>
-                <input
-                  type="number"
-                  placeholder="1000"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
+          {/* Portfolio Summary - Only show if has positions */}
+          {lpPositions.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Overview</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <PortfolioCard 
+                  icon={<DollarSign className="text-blue-600 dark:text-blue-400" size={24} />}
+                  label="Total Liquidity"
+                  value={`KES ${stats.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
+                  subtext={`${lpPositions.length} position${lpPositions.length !== 1 ? 's' : ''}`}
                 />
-                <p className="text-xs text-gray-500 mt-1">Minimum: 100 KES</p>
+                <PortfolioCard 
+                  icon={<TrendingUp className="text-green-600 dark:text-green-400" size={24} />}
+                  label="Fees Earned"
+                  value={`KES ${stats.totalFees.toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
+                  subtext="All time earnings"
+                />
+                <PortfolioCard 
+                  icon={<Zap className="text-amber-600 dark:text-amber-400" size={24} />}
+                  label="Average APY"
+                  value={`${stats.avgApy.toFixed(2)}%`}
+                  subtext="Across all positions"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Sidebar - Market Discovery */}
+            <div className="lg:col-span-2">
+              {/* Tab Navigation */}
+              <div className="flex gap-3 mb-8 border-b border-gray-200 dark:border-gray-800">
+                <button
+                  onClick={() => setActiveTab('discover')}
+                  className={`pb-4 px-1 font-medium transition-colors ${
+                    activeTab === 'discover'
+                      ? 'text-gray-900 dark:text-white border-b-2 border-blue-600'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Discover Markets
+                </button>
+                <button
+                  onClick={() => setActiveTab('portfolio')}
+                  className={`pb-4 px-1 font-medium transition-colors ${
+                    activeTab === 'portfolio'
+                      ? 'text-gray-900 dark:text-white border-b-2 border-blue-600'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Your Positions ({lpPositions.length})
+                </button>
               </div>
 
-              <button
-                onClick={handleDeposit}
-                disabled={loading || !selectedMarket || !depositAmount}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading && <Loader2 size={18} className="animate-spin" />}
-                {loading ? 'Processing...' : 'Deposit Liquidity'}
-              </button>
-
-              {selectedMarket && poolStats && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-2">Pool Info</h3>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p>
-                      <span className="font-medium">Providers:</span> {poolStats.num_providers}
-                    </p>
-                    <p>
-                      <span className="font-medium">Fee Rate:</span> {poolStats.fee_percent}%
-                    </p>
-                    <p>
-                      <span className="font-medium">Total Fees:</span> KES{' '}
-                      {poolStats.total_fees_collected.toFixed(2)}
-                    </p>
+              {activeTab === 'discover' ? (
+                <div>
+                  {/* Search and Filters */}
+                  <div className="mb-6 space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Search markets..."
+                      value={searchTerm}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                    />
+                    <select
+                      value={sortBy}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as any)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                    >
+                      <option value="volume">Sort by: Highest Volume</option>
+                      <option value="providers">Sort by: Most Providers</option>
+                      <option value="fees">Sort by: Highest Fees</option>
+                    </select>
                   </div>
+
+                  {/* Markets Grid */}
+                  <div className="space-y-4">
+                    {filteredMarkets.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <p className="text-gray-500 dark:text-gray-400">No markets found</p>
+                      </div>
+                    ) : (
+                      filteredMarkets.map((market) => (
+                        <MarketCard
+                          key={market.id}
+                          market={market}
+                          isSelected={selectedMarket === market.id}
+                          onSelect={() => setSelectedMarket(market.id)}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {lpPositions.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <div className="mb-4 text-4xl">📊</div>
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">No liquidity positions yet</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500">Start by depositing to a market</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {lpPositions.map((position) => (
+                        <PositionCard
+                          key={position.id}
+                          position={position}
+                          onWithdraw={() => handleWithdraw(position.id)}
+                          onClaimFees={() => handleClaimFees(position.id)}
+                          loading={loading}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Existing Positions */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Your Liquidity Positions</h2>
+            {/* Right Sidebar - Deposit Form */}
+            <div>
+              <div className="sticky top-24 bg-gray-50 dark:bg-gray-900 rounded-3xl p-8 border border-gray-200 dark:border-gray-800">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Deposit</h2>
 
-              {lpPositions.length === 0 ? (
-                <div className="py-12 text-center">
-                  <p className="text-gray-500">No liquidity positions yet. Start by depositing to a market above.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {lpPositions.map((position: any) => (
-                    <PositionCard
-                      key={position.id}
-                      position={position}
-                      onWithdraw={() => handleWithdraw(position.id)}
-                      onClaimFees={() => handleClaimFees(position.id)}
-                      loading={loading}
-                    />
-                  ))}
-                </div>
-              )}
+                {selectedMarket && filteredMarkets.length > 0 ? (
+                  <div className="space-y-6">
+                    {/* Selected Market Info */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Market
+                      </label>
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                        <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">
+                          {filteredMarkets.find(m => m.id === selectedMarket)?.question}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Amount (KES)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="1,000"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                        disabled={loading}
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Minimum: 100 KES</p>
+                    </div>
+
+                    {/* Pool Stats */}
+                    {poolStats && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-2xl border border-blue-200 dark:border-blue-900/30">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-3">Pool Info</h3>
+                        <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="flex justify-between">
+                            <span>Providers:</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{poolStats.num_providers}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Fee Rate:</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{poolStats.fee_percent}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Total Fees:</span>
+                            <span className="font-medium text-green-600 dark:text-green-400">
+                              KES {poolStats.total_fees_collected.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Deposit Button */}
+                    <button
+                      onClick={handleDeposit}
+                      disabled={loading || !selectedMarket || !depositAmount}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white disabled:text-gray-500 font-medium py-3 rounded-2xl transition-colors flex items-center justify-center gap-2"
+                    >
+                      {loading && <Loader2 size={18} className="animate-spin" />}
+                      {loading ? 'Processing...' : 'Deposit Liquidity'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No markets available</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Information Section */}
-        <div className="mt-12 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">How Liquidity Provision Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="font-bold text-lg text-gray-900 mb-2">📊 How You Earn</h3>
-              <ul className="text-gray-600 space-y-2 text-sm">
-                <li>• Every trade on the market generates a 0.5% fee</li>
-                <li>• Fees are collected and distributed equally to all LPs</li>
-                <li>• You can claim your fees anytime without withdrawing capital</li>
-                <li>• Fees accrue continuously as trading activity continues</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-gray-900 mb-2">⚡ Fee Schedule</h3>
-              <ul className="text-gray-600 space-y-2 text-sm">
-                <li>• Trading Fee: 0.5% (split to LPs)</li>
-                <li>• Withdrawal Fee: 0.1% of withdrawal amount</li>
-                <li>• Early Withdrawal Penalty: 2% if withdrawn within 7 days</li>
-                <li>• No fees for claiming or checking balance</li>
-              </ul>
+        <div className="mt-16 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-16 px-4">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12">How It Works</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <InfoCard
+                icon="📊"
+                title="Deposit Capital"
+                description="Deposit KES into any active market to become a liquidity provider"
+              />
+              <InfoCard
+                icon="⚡"
+                title="Earn Fees"
+                description="Earn 0.5% of every trade volume as your share of fees"
+              />
+              <InfoCard
+                icon="💰"
+                title="Claim Anytime"
+                description="Claim accumulated fees without withdrawing your capital"
+              />
+              <InfoCard
+                icon="📈"
+                title="Track Performance"
+                description="Monitor APY, fees earned, and your LP share in real-time"
+              />
             </div>
           </div>
+        </div>
 
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h3 className="font-bold text-gray-900 mb-2">⚠️ Impermanent Loss (IL) Risk</h3>
-            <p className="text-sm text-gray-600">
-              When market odds shift significantly, the value of your position may diverge from simply holding the
-              capital. For example, if odds move from 50/50 to 80/20, you may experience IL. This is offset by fee
-              income, but markets with high volatility carry more IL risk.
-            </p>
-          </div>
+        {/* Terms Footer */}
+        <div className="mt-8 mb-8 text-center text-sm text-gray-500 dark:text-gray-400 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p>
+            By providing liquidity, you acknowledge the risks including impermanent loss. 
+            <Link href="/liquidity/terms" className="text-blue-600 dark:text-blue-400 hover:underline ml-1">
+              Read our liquidity terms and conditions
+            </Link>
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PortfolioCard({ 
+  icon, 
+  label, 
+  value, 
+  subtext 
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  value: string;
+  subtext: string;
+}) {
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{subtext}</p>
+        </div>
+        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+          {icon}
         </div>
       </div>
     </div>
   );
 }
 
-function SummaryCard({ title, value }: { title: string; value: string }) {
+function MarketCard({
+  market,
+  isSelected,
+  onSelect,
+}: {
+  market: Market;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const volume = parseFloat(market.volume?.replace(/[^0-9.-]/g, '') || '0');
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <p className="text-sm text-gray-600 mb-1">{title}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-    </div>
+    <button
+      onClick={onSelect}
+      className={`w-full text-left p-6 rounded-2xl border transition-all ${
+        isSelected
+          ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-900/50'
+          : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+      }`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm mb-2">
+            {market.question}
+          </h3>
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-1">
+              <TrendingUp size={14} />
+              {market.volume}
+            </div>
+          </div>
+        </div>
+        <div className={`ml-4 p-2 rounded-lg ${isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400'}`}>
+          <ChevronRight size={18} />
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -385,57 +579,90 @@ function PositionCard({
   onClaimFees: () => void;
   loading: boolean;
 }) {
+  const daysRemaining = Math.max(0, 7 - position.days_invested);
+
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-      <div className="flex justify-between items-start mb-3">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-all">
+      <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{position.market_question.substring(0, 50)}...</h3>
-          <div className="text-xs text-gray-500 mt-1">
+          <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
+            {position.market_question.substring(0, 60)}...
+          </h3>
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <Calendar size={14} />
             Invested {position.days_invested} day{position.days_invested !== 1 ? 's' : ''} ago
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm font-bold text-green-600">{position.estimated_apy.toFixed(2)}% APY</div>
-          <div className="text-xs text-gray-500">
-            {position.lp_share_percent.toFixed(2)}% of pool
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            {position.estimated_apy.toFixed(2)}%
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">APY</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-6 text-sm">
+        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
+          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Capital</div>
+          <div className="font-semibold text-gray-900 dark:text-white">
+            KES {position.capital_provided.toFixed(0)}
+          </div>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
+          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Fees</div>
+          <div className="font-semibold text-green-600 dark:text-green-400">
+            +{position.total_fees_earned.toFixed(2)}
+          </div>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
+          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Unclaimed</div>
+          <div className="font-semibold text-blue-600 dark:text-blue-400">
+            {position.unclaimed_fees.toFixed(2)}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
-        <div className="bg-gray-50 p-2 rounded">
-          <div className="text-xs text-gray-600">Capital</div>
-          <div className="font-semibold text-gray-900">KES {position.capital_provided.toFixed(0)}</div>
-        </div>
-        <div className="bg-gray-50 p-2 rounded">
-          <div className="text-xs text-gray-600">Fees Earned</div>
-          <div className="font-semibold text-green-600">+{position.total_fees_earned.toFixed(2)}</div>
-        </div>
-        <div className="bg-gray-50 p-2 rounded">
-          <div className="text-xs text-gray-600">Unclaimed</div>
-          <div className="font-semibold text-blue-600">{position.unclaimed_fees.toFixed(2)}</div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onClaimFees}
           disabled={loading || position.unclaimed_fees <= 0}
-          className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white disabled:text-gray-500 rounded-xl transition-colors"
         >
           Claim Fees
         </button>
         <button
           onClick={onWithdraw}
           disabled={loading}
-          className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white disabled:text-gray-500 rounded-xl transition-colors"
         >
           Withdraw
         </button>
-        <div className="text-center text-xs text-gray-500 py-1">
-          {position.days_invested < 7 ? `${7 - position.days_invested}d penalty` : 'No penalty'}
-        </div>
       </div>
+
+      {daysRemaining > 0 && (
+        <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/30 rounded-xl text-xs text-yellow-800 dark:text-yellow-400">
+          ⚠️ 2% early withdrawal penalty for {daysRemaining} more day{daysRemaining !== 1 ? 's' : ''}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryCard({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <p className="text-sm text-gray-600 mb-1">{title}</p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function InfoCard({ icon, title, description }: { icon: string; title: string; description: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-4xl mb-3">{icon}</div>
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
     </div>
   );
 }
