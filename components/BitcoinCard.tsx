@@ -1,112 +1,243 @@
 "use client";
 
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, Bookmark, Share2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useAppDispatch, useAppSelector, selectSavedMarketIds } from "@/lib/redux/hooks";
+import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
+import { generateMarketSlug } from "@/lib/slugify";
+import ShareButton from "./ShareButton";
+import { useEffect, useState } from "react";
 
-interface BitcoinMarket {
-  id: number;
-  question: string;
-  yes_probability: number;
-  no_probability: number;
-  current_bitcoin_price: number | null;
-  volume: string;
-  yes_multiplier: number;
-  no_multiplier: number;
-  status: string;
+interface MarketCardProps {
+  market: {
+    id: number;
+    question: string;
+    category: string;
+    image_url?: string;
+    yes_probability: number;
+    volume: string;
+    end_date: string;
+    is_live?: boolean;
+    saved?: boolean;
+    market_type?: string;
+    options?: Array<{
+      id: number;
+      label: string;
+      yes_probability: number;
+      no_probability?: number;
+    }>;
+  };
 }
 
-export default function BitcoinCard() {
-  const [market, setMarket] = useState<BitcoinMarket | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [priceChange, setPriceChange] = useState<number | null>(null);
-  const [priceHistory, setPriceHistory] = useState<number[]>([]);
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const daysUntil = Math.ceil(
+      (date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
-  const fetchBitcoinMarket = useCallback(async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bitcoin/`);
-      if (!response.ok) throw new Error("Failed to fetch");
-      const data = await response.json();
-      
-      setMarket(data);
-      setPriceHistory((prev) => {
-        const newHistory = [...prev, data.current_bitcoin_price].slice(-2);
-        if (newHistory.length === 2) {
-          const change = ((newHistory[1] - newHistory[0]) / newHistory[0]) * 100;
-          setPriceChange(change);
-        }
-        return newHistory;
-      });
-    } catch (err) {
-      console.error("Error fetching Bitcoin market:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: daysUntil > 365 ? "numeric" : undefined,
+    });
+
+    const formatted = formatter.format(date);
+
+    if (daysUntil < 0) return `Ended ${formatted}`;
+    if (daysUntil === 0) return "Today";
+    if (daysUntil === 1) return "Tomorrow";
+    if (daysUntil <= 7) return `${daysUntil}d`;
+    return formatted;
+  } catch {
+    return dateString;
+  }
+};
+
+export default function MarketCard({ market }: MarketCardProps) {
+  const dispatch = useAppDispatch();
+  const savedMarketIds = useAppSelector(selectSavedMarketIds);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    fetchBitcoinMarket();
-    const interval = setInterval(fetchBitcoinMarket, 30000);
-    return () => clearInterval(interval);
-  }, [fetchBitcoinMarket]);
+    setIsSaved(savedMarketIds.includes(market.id));
+  }, [savedMarketIds, market.id]);
 
-  if (loading) {
-    return <div className="h-48 rounded-2xl bg-gray-100 animate-pulse" />;
-  }
+  const handleSaveToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  if (!market) return null;
+    dispatch(toggleSaveMarket(market.id));
 
-  const priceDirection = priceChange ? (priceChange > 0 ? "up" : "down") : null;
+    const savedIds = [...savedMarketIds];
+    if (isSaved) {
+      const index = savedIds.indexOf(market.id);
+      if (index > -1) savedIds.splice(index, 1);
+    } else {
+      savedIds.push(market.id);
+    }
+
+    localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
+  };
+
+  const yesProbability = market.yes_probability;
+  const noProbability = 100 - yesProbability;
+  const yesPriceKes = yesProbability;  // Price in KES (derived from probability)
+  const noPriceKes = noProbability;    // Price in KES
+
+  const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
+
+  const renderProbabilities = () => {
+    if (isOptionMarket) {
+      return (
+        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:-mx-4 md:px-4 flex-1 flex items-center min-h-0">
+          <div className="flex gap-1.5 min-w-min pb-0.5">
+            {market.options?.map((option) => {
+              const optionYesProb = option.yes_probability;
+              const optionPriceKes = optionYesProb;  // Price in KES per share
+              return (
+                <div
+                  key={option.id}
+                  className="shrink-0 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 p-2 transition-all duration-300 group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 min-w-[110px] h-[80px] flex flex-col justify-between"
+                >
+                  <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 line-clamp-1">
+                    {option.label}
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold tracking-tight text-blue-900 dark:text-blue-100">
+                      {optionYesProb}%
+                    </div>
+                    <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
+                      KES {optionPriceKes.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Binary market - show Yes/No or Up/Down for Bitcoin
+    const upLabel = isBitcoin ? "Up" : "Yes";
+    const downLabel = isBitcoin ? "Down" : "No";
+    
+    return (
+      <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
+        <div className="rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 h-[80px] flex flex-col">
+          <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 mb-auto">{upLabel}</span>
+          <div>
+            <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
+              {yesProbability}%
+            </div>
+            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">KES {yesPriceKes.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-2 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 h-[80px] flex flex-col">
+          <span className="text-[11px] font-medium text-rose-700 dark:text-rose-300 mb-auto">{downLabel}</span>
+          <div>
+            <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
+              {noProbability}%
+            </div>
+            <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">KES {noPriceKes.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const isBitcoin = market.question?.toLowerCase().includes('bitcoin');
+  const marketLink = isBitcoin ? '/market/bitcoin' : `/markets/${market.id}-${generateMarketSlug(market.question)}`;
 
   return (
-    <Link href="/market/bitcoin">
-      <div className="group cursor-pointer rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-4 hover:border-orange-400 hover:shadow-lg transition-all duration-300">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-3">
+    <Link
+      href={marketLink}
+      className="group block overflow-hidden rounded-3xl border border-border bg-muted shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] min-h-[225px] flex flex-col"
+    >
+      {/* Content Section */}
+      <div className="flex h-full flex-col gap-2 p-3 md:p-4">
+        {/* Header with Image and Title */}
+        <div className="flex items-start justify-between gap-3 flex-1">
+          {/* Image and Title */}
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {/* Small Square Image */}
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted/50">
+              {market.image_url ? (
+                <img 
+                  src={market.image_url} 
+                  alt={market.question}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                  <div className="text-muted-foreground text-xs opacity-50">No image</div>
+                </div>
+              )}
+            </div>
+
+            {/* Title and Category */}
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground">
+                  {market.category}
+                </span>
+
+                {market.is_live && (
+                  <span className="rounded-full border border-emerald-300 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium tracking-wide text-emerald-700 dark:text-emerald-300">
+                    Live
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-[13px] md:text-[14px] font-semibold leading-snug text-foreground line-clamp-3 transition-colors duration-300">
+                {market.question}
+              </h3>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-1 shrink-0">
+            <button
+              onClick={handleSaveToggle}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                isSaved
+                  ? "border-amber-400/40 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shadow-sm dark:shadow-md"
+                  : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
+              }`}
+              aria-label="Save market"
+            >
+              <Bookmark
+                className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-105"
+                fill={isSaved ? "currentColor" : "none"}
+              />
+            </button>
+          </div>
+        </div>
+
+        {renderProbabilities()}
+
+        <div className="mt-auto flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <TrendingUp className="h-3 w-3 text-muted-foreground" />
+            <span className="font-medium text-foreground text-[11px]">
+              {market.volume || "KES 0"}
+            </span>
+          </div>
+
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold">
-              ₿
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 text-sm">Bitcoin</h3>
-              <p className="text-xs text-gray-500">5 min up/down</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="font-bold text-lg text-gray-900">
-              ${market.current_bitcoin_price?.toLocaleString("en-US", { maximumFractionDigits: 0 }) || "—"}
-            </p>
-            {priceDirection && (
-              <p className={`text-xs font-semibold flex items-center justify-end gap-1 ${
-                priceDirection === "up" ? "text-green-600" : "text-red-600"
-              }`}>
-                {priceDirection === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {Math.abs(priceChange!).toFixed(2)}%
-              </p>
-            )}
-          </div>
-        </div>
 
-        {/* Odds */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className={`rounded p-2 text-center ${
-            market.yes_probability > 50 ? "bg-green-100 border border-green-300" : "bg-gray-100 border border-gray-200"
-          }`}>
-            <div className="text-xs text-gray-600 font-medium">Up</div>
-            <div className="text-lg font-bold text-green-600">{market.yes_probability}%</div>
+            <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
+            <ShareButton 
+              marketTitle={market.question}
+              marketId={market.id}
+              imageUrl={market.image_url}
+              size="sm"
+              variant="compact"
+            />
           </div>
-          <div className={`rounded p-2 text-center ${
-            market.no_probability > 50 ? "bg-red-100 border border-red-300" : "bg-gray-100 border border-gray-200"
-          }`}>
-            <div className="text-xs text-gray-600 font-medium">Down</div>
-            <div className="text-lg font-bold text-red-600">{market.no_probability}%</div>
-          </div>
-        </div>
-
-        {/* Volume & Status */}
-        <div className="flex items-center justify-between text-xs text-gray-600">
-          <span>📊 {market.volume}</span>
-          {market.status === "OPEN" && <span className="text-green-600 font-semibold">🔴 LIVE</span>}
         </div>
       </div>
     </Link>
