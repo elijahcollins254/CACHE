@@ -125,6 +125,10 @@ export default function MarketCard({ market: propMarket }: MarketCardProps) {
   const yesPriceKes = yesProbability;  // Price in KES (derived from probability)
   const noPriceKes = noProbability;    // Price in KES
 
+  const isBitcoin = market.question?.toLowerCase().includes('bitcoin');
+  const bitcoinImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg';
+  const displayImageUrl = isBitcoin ? (market.image_url || bitcoinImageUrl) : market.image_url;
+
   const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
 
   const renderProbabilities = () => {
@@ -188,7 +192,6 @@ export default function MarketCard({ market: propMarket }: MarketCardProps) {
     );
   };
 
-  const isBitcoin = market.question?.toLowerCase().includes('bitcoin');
   const marketLink = isBitcoin ? '/market/bitcoin' : `/markets/${market.id}-${generateMarketSlug(market.question)}`;
 
   return (
@@ -204,9 +207,9 @@ export default function MarketCard({ market: propMarket }: MarketCardProps) {
           <div className="flex items-start gap-3 min-w-0 flex-1">
             {/* Small Square Image */}
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted/50">
-              {market.image_url ? (
+              {displayImageUrl ? (
                 <img 
-                  src={market.image_url} 
+                  src={displayImageUrl} 
                   alt={market.question}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
