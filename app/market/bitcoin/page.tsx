@@ -206,10 +206,12 @@ export default function BitcoinPage() {
                     border: "1px solid #ccc",
                     borderRadius: "8px",
                   }}
-                  formatter={(value: number) =>
-                    `$${value.toLocaleString("en-US", {
-                      maximumFractionDigits: 2,
-                    })}`
+                  formatter={(value: number | undefined) =>
+                    value
+                      ? `$${value.toLocaleString("en-US", {
+                          maximumFractionDigits: 2,
+                        })}`
+                      : "—"
                   }
                 />
                 <Line
