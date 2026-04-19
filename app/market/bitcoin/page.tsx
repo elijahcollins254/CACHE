@@ -206,8 +206,8 @@ export default function BitcoinPage() {
                     border: "1px solid #ccc",
                     borderRadius: "8px",
                   }}
-                  formatter={(value: number | undefined) =>
-                    value
+                  formatter={(value: any) =>
+                    typeof value === "number"
                       ? `$${value.toLocaleString("en-US", {
                           maximumFractionDigits: 2,
                         })}`
