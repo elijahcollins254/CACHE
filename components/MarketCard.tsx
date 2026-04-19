@@ -179,48 +179,54 @@ export default function MarketCard({ market }: MarketCardProps) {
   return (
     <Link
       href={`/markets/${market.id}-${generateMarketSlug(market.question)}`}
-      className="group block overflow-hidden rounded-3xl border border-border bg-muted shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] h-[280px] flex flex-col"
+      className="group block overflow-hidden rounded-3xl border border-border bg-muted shadow-sm dark:shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-border/80 hover:bg-muted/80 hover:shadow-md dark:hover:shadow-xl active:scale-[0.99] h-[230px] flex flex-col"
     >
-      {/* Image Section */}
-      <div className="relative h-24 w-full overflow-hidden bg-muted/50">
-        {market.image_url ? (
-          <img 
-            src={market.image_url} 
-            alt={market.question}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-            <div className="text-muted-foreground text-sm opacity-50">No image</div>
-          </div>
-        )}
-      </div>
-
       {/* Content Section */}
       <div className="flex h-full flex-col gap-2 p-3 md:p-4">
+        {/* Header with Image and Title */}
         <div className="flex items-start justify-between gap-3 flex-1">
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium tracking-wide text-muted-foreground">
-                {market.category}
-              </span>
-
-              {market.is_live && (
-                <span className="rounded-full border border-emerald-300 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 text-[11px] font-medium tracking-wide text-emerald-700 dark:text-emerald-300">
-                  Live
-                </span>
+          {/* Image and Title */}
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {/* Small Square Image */}
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted/50">
+              {market.image_url ? (
+                <img 
+                  src={market.image_url} 
+                  alt={market.question}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                  <div className="text-muted-foreground text-xs opacity-50">No image</div>
+                </div>
               )}
             </div>
 
-            <h3 className="text-[13px] md:text-[14px] font-semibold leading-snug text-foreground line-clamp-2 transition-colors duration-300">
-              {market.question}
-            </h3>
+            {/* Title and Category */}
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground">
+                  {market.category}
+                </span>
+
+                {market.is_live && (
+                  <span className="rounded-full border border-emerald-300 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium tracking-wide text-emerald-700 dark:text-emerald-300">
+                    Live
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-[13px] md:text-[14px] font-semibold leading-snug text-foreground line-clamp-2 transition-colors duration-300">
+                {market.question}
+              </h3>
+            </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex gap-1 shrink-0">
             <button
               onClick={handleShare}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-300 ${
                 shareMessage
                   ? "border-blue-400/40 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm dark:shadow-md"
                   : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
@@ -228,12 +234,12 @@ export default function MarketCard({ market }: MarketCardProps) {
               aria-label="Share market"
               title="Share this market"
             >
-              <Share2 className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" />
+              <Share2 className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-105" />
             </button>
             
             <button
               onClick={handleSaveToggle}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                 isSaved
                   ? "border-amber-400/40 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shadow-sm dark:shadow-md"
                   : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
@@ -241,7 +247,7 @@ export default function MarketCard({ market }: MarketCardProps) {
               aria-label="Save market"
             >
               <Bookmark
-                className="h-4 w-4 transition-transform duration-300 group-hover:scale-105"
+                className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-105"
                 fill={isSaved ? "currentColor" : "none"}
               />
             </button>
