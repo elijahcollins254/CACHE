@@ -3,7 +3,6 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
-import { generateMarketSlug } from "@/lib/slugify";
 
 interface BitcoinMarket {
   id: number;
@@ -11,184 +10,103 @@ interface BitcoinMarket {
   yes_probability: number;
   no_probability: number;
   current_bitcoin_price: number | null;
-  current_bitcoin_price_formatted: string;
   volume: string;
   yes_multiplier: number;
   no_multiplier: number;
   status: string;
-  trading_end_time: string | null;
-  market_type: string;
 }
 
 export default function BitcoinCard() {
   const [market, setMarket] = useState<BitcoinMarket | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [priceChange, setPriceChange] = useState<number | null>(null);
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
-  const [priceChange, setPriceChange] = useState<number>(0);
 
   const fetchBitcoinMarket = useCallback(async () => {
     try {
-      const response = await fetch("/api/markets/bitcoin/");
-      if (!response.ok) throw new Error("Failed to fetch Bitcoin market");
-      const data: BitcoinMarket = await response.json();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bitcoin/`);
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data = await response.json();
       
-      // Track price movement
-      if (data.current_bitcoin_price) {
-        setPriceHistory((prev) => {
-          const newHistory = [...prev, data.current_bitcoin_price!];
-          // Keep only last 2 prices for comparison
-          return newHistory.slice(-2);
-        });
-
-        // Calculate price change percentage
-        if (priceHistory.length > 0) {
-          const change =
-            ((data.current_bitcoin_price - priceHistory[0]) /
-              priceHistory[0]) *
-            100;
+      setMarket(data);
+      setPriceHistory((prev) => {
+        const newHistory = [...prev, data.current_bitcoin_price].slice(-2);
+        if (newHistory.length === 2) {
+          const change = ((newHistory[1] - newHistory[0]) / newHistory[0]) * 100;
           setPriceChange(change);
         }
-      }
-
-      setMarket(data);
-      setError(null);
+        return newHistory;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error loading Bitcoin market");
-      console.error("Bitcoin market error:", err);
+      console.error("Error fetching Bitcoin market:", err);
     } finally {
       setLoading(false);
     }
-  }, [priceHistory]);
-
-  // Initial fetch
-  useEffect(() => {
-    fetchBitcoinMarket();
   }, []);
 
-  // Refresh every 30 seconds
   useEffect(() => {
+    fetchBitcoinMarket();
     const interval = setInterval(fetchBitcoinMarket, 30000);
     return () => clearInterval(interval);
   }, [fetchBitcoinMarket]);
 
   if (loading) {
-    return (
-      <div className="h-48 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 animate-pulse" />
-    );
+    return <div className="h-48 rounded-2xl bg-gray-100 animate-pulse" />;
   }
 
-  if (error || !market) {
-    return null;
-  }
+  if (!market) return null;
 
-  const priceDirection = priceChange > 0 ? "up" : priceChange < 0 ? "down" : null;
-  const slug = generateMarketSlug(market.question);
-  const marketLink = `/market/${market.id}/${slug}`;
+  const priceDirection = priceChange ? (priceChange > 0 ? "up" : "down") : null;
 
   return (
-    <Link href={marketLink}>
-      <div className="group cursor-pointer rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-100/50 transition-all duration-300 transform hover:scale-105">
-        {/* Header with Icon & Title */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg">
-              <span className="text-2xl font-bold text-white">₿</span>
+    <Link href="/market/bitcoin">
+      <div className="group cursor-pointer rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-4 hover:border-orange-400 hover:shadow-lg transition-all duration-300">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold">
+              ₿
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-lg group-hover:text-orange-600 transition-colors">
-                Bitcoin
-              </h3>
-              <p className="text-sm text-gray-500">Live 5-minute market</p>
+              <h3 className="font-bold text-gray-900 text-sm">Bitcoin</h3>
+              <p className="text-xs text-gray-500">5 min up/down</p>
             </div>
           </div>
-
-          {/* Current Price */}
           <div className="text-right">
-            {market.current_bitcoin_price && (
-              <div>
-                <p className="font-bold text-xl text-gray-900">
-                  {market.current_bitcoin_price_formatted}
-                </p>
-                {priceDirection && (
-                  <div
-                    className={`flex items-center justify-end gap-1 mt-1 px-2 py-1 rounded-lg font-semibold text-sm ${
-                      priceDirection === "up"
-                        ? "text-green-600 bg-green-50"
-                        : "text-red-600 bg-red-50"
-                    }`}
-                  >
-                    {priceDirection === "up" ? (
-                      <>
-                        <TrendingUp className="w-4 h-4" />
-                        <span>Up {Math.abs(priceChange).toFixed(2)}%</span>
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown className="w-4 h-4" />
-                        <span>Down {Math.abs(priceChange).toFixed(2)}%</span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+            <p className="font-bold text-lg text-gray-900">
+              ${market.current_bitcoin_price?.toLocaleString("en-US", { maximumFractionDigits: 0 }) || "—"}
+            </p>
+            {priceDirection && (
+              <p className={`text-xs font-semibold flex items-center justify-end gap-1 ${
+                priceDirection === "up" ? "text-green-600" : "text-red-600"
+              }`}>
+                {priceDirection === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {Math.abs(priceChange!).toFixed(2)}%
+              </p>
             )}
           </div>
         </div>
 
-        {/* Odds Display */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* YES Odds */}
-          <div
-            className={`rounded-xl p-3 transition-all duration-300 ${
-              market.yes_probability > 50
-                ? "bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 shadow-md"
-                : "bg-gray-50 border border-gray-200"
-            }`}
-          >
-            <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Up / Yes
-            </div>
-            <div className="text-3xl font-bold text-green-600 mt-1">
-              {market.yes_probability}%
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              @{market.yes_multiplier.toFixed(2)}x
-            </div>
+        {/* Odds */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className={`rounded p-2 text-center ${
+            market.yes_probability > 50 ? "bg-green-100 border border-green-300" : "bg-gray-100 border border-gray-200"
+          }`}>
+            <div className="text-xs text-gray-600 font-medium">Up</div>
+            <div className="text-lg font-bold text-green-600">{market.yes_probability}%</div>
           </div>
-
-          {/* NO Odds */}
-          <div
-            className={`rounded-xl p-3 transition-all duration-300 ${
-              market.no_probability > 50
-                ? "bg-gradient-to-br from-red-100 to-red-50 border-2 border-red-400 shadow-md"
-                : "bg-gray-50 border border-gray-200"
-            }`}
-          >
-            <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Down / No
-            </div>
-            <div className="text-3xl font-bold text-red-600 mt-1">
-              {market.no_probability}%
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              @{market.no_multiplier.toFixed(2)}x
-            </div>
+          <div className={`rounded p-2 text-center ${
+            market.no_probability > 50 ? "bg-red-100 border border-red-300" : "bg-gray-100 border border-gray-200"
+          }`}>
+            <div className="text-xs text-gray-600 font-medium">Down</div>
+            <div className="text-lg font-bold text-red-600">{market.no_probability}%</div>
           </div>
         </div>
 
-        {/* Volume Footer */}
-        <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-          <span className="text-gray-600 font-medium">Total Volume</span>
-          <span className="font-bold text-gray-900">{market.volume}</span>
-        </div>
-
-        {/* Status Badge */}
-        <div className="mt-3 flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-semibold text-gray-600">
-            {market.status === "OPEN" ? "Live & Active" : market.status}
-          </span>
+        {/* Volume & Status */}
+        <div className="flex items-center justify-between text-xs text-gray-600">
+          <span>📊 {market.volume}</span>
+          {market.status === "OPEN" && <span className="text-green-600 font-semibold">🔴 LIVE</span>}
         </div>
       </div>
     </Link>
