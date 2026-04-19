@@ -9,7 +9,7 @@ import ShareButton from "./ShareButton";
 import { useEffect, useState } from "react";
 
 interface MarketCardProps {
-  market: {
+  market?: {
     id: number;
     question: string;
     category: string;
@@ -55,14 +55,53 @@ const formatDate = (dateString: string): string => {
   }
 };
 
-export default function MarketCard({ market }: MarketCardProps) {
+export default function MarketCard({ market: propMarket }: MarketCardProps) {
   const dispatch = useAppDispatch();
   const savedMarketIds = useAppSelector(selectSavedMarketIds);
   const [isSaved, setIsSaved] = useState(false);
+  const [market, setMarket] = useState(propMarket);
+  const [loading, setLoading] = useState(!propMarket);
 
+  // Fetch Bitcoin market data if not provided
   useEffect(() => {
-    setIsSaved(savedMarketIds.includes(market.id));
-  }, [savedMarketIds, market.id]);
+    if (propMarket) {
+      setMarket(propMarket);
+      setLoading(false);
+      return;
+    }
+
+    const fetchBitcoinMarket = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bitcoin/`);
+        if (response.ok) {
+          const data = await response.json();
+          setMarket(data);
+        }
+      } catch (err) {
+        console.error("Error fetching Bitcoin market:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBitcoinMarket();
+  }, [propMarket]);
+
+  // Update saved state when market loads
+  useEffect(() => {
+    if (market) {
+      setIsSaved(savedMarketIds.includes(market.id));
+    }
+  }, [savedMarketIds, market?.id]);
+
+  // Show loading state
+  if (loading) {
+    return <div className="h-52 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 animate-pulse" />;
+  }
+
+  if (!market) {
+    return null;
+  }
 
   const handleSaveToggle = (e: React.MouseEvent) => {
     e.preventDefault();
