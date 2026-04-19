@@ -7,6 +7,7 @@ import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/ma
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
+import BitcoinCard from "@/components/BitcoinCard";
 
 const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Mentions", "Saved", "Resolved"];
 
@@ -44,6 +45,22 @@ export default function Home() {
       </Suspense>
 
       <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-32 sm:pt-28 md:pt-40 pb-24 sm:pb-8 page-enter-slide-up">
+
+        {/* Bitcoin Live Market - Featured Section */}
+        <div className="mb-8 lg:mb-12">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">₿</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Live Markets</h2>
+          </div>
+          <Suspense fallback={<div className="h-52 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 animate-pulse" />}>
+            <BitcoinCard />
+          </Suspense>
+        </div>
+
+        {/* All Markets Section */}
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">All Markets</h2>
+        </div>
 
         {/* Markets Grid */}
         <div className="mt-6">
