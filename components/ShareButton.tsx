@@ -2,6 +2,7 @@
 
 import { Share2 } from "lucide-react";
 import { useState } from "react";
+import { generateMarketSlug } from "@/lib/slugify";
 
 interface ShareButtonProps {
   marketTitle: string;
@@ -24,9 +25,10 @@ export default function ShareButton({
     e.preventDefault();
     e.stopPropagation();
 
-    const marketUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/markets/${marketId}`;
-    const shareTitle = marketTitle;
-    const shareText = `Check out this market: ${marketTitle}`;
+    const marketSlug = generateMarketSlug(marketTitle);
+    const marketUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/markets/${marketId}-${marketSlug}`;
+    const shareTitle = `Check out this Market: ${marketTitle}`;
+    const shareText = `${shareTitle}\n\n${marketUrl}`;
 
     try {
       // Try native Web Share API first (supports image on native shares)
@@ -53,7 +55,7 @@ export default function ShareButton({
         await navigator.share(shareData);
       } else {
         // Fallback: Copy URL with image mention to clipboard
-        let clipboardText = `${shareTitle}\n\n${shareText}\n\n${marketUrl}`;
+        let clipboardText = shareText;
         if (imageUrl) {
           clipboardText += `\n\nImage: ${imageUrl}`;
         }

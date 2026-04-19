@@ -48,7 +48,7 @@ export default function Home() {
         {/* Markets Grid */}
         <div className="mt-6">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="h-40 rounded-2xl bg-gray-100 animate-pulse" />
             ))}

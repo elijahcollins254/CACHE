@@ -222,6 +222,8 @@ export default function MarketCard({ market }: MarketCardProps) {
           </div>
 
           <div className="flex items-center gap-2">
+
+            <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
             <ShareButton 
               marketTitle={market.question}
               marketId={market.id}
@@ -229,7 +231,6 @@ export default function MarketCard({ market }: MarketCardProps) {
               size="sm"
               variant="compact"
             />
-            <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
           </div>
         </div>
       </div>
