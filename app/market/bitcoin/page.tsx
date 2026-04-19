@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Navbar from "@/components/Navbar";
 
-interface PriceData {
+interface ChartDataPoint {
   time: string;
-  price: number;
+  price?: number;
+  yes_probability?: number;
+  no_probability?: number;
 }
 
 interface BitcoinMarket {
@@ -25,10 +27,11 @@ interface BitcoinMarket {
 
 export default function BitcoinPage() {
   const [market, setMarket] = useState<BitcoinMarket | null>(null);
-  const [priceData, setPriceData] = useState<PriceData[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"price" | "odds">("price"); // Toggle between price and odds
 
   useEffect(() => {
     const fetchBitcoinData = async () => {
@@ -41,8 +44,8 @@ export default function BitcoinPage() {
         setMarket(data);
         setCurrentPrice(data.current_bitcoin_price);
 
-        // Add to price history
-        setPriceData((prev) => {
+        // Add to chart data (both price and odds)
+        setChartData((prev) => {
           const newData = [
             ...prev,
             {
@@ -51,6 +54,8 @@ export default function BitcoinPage() {
                 minute: "2-digit",
               }),
               price: data.current_bitcoin_price,
+              yes_probability: data.yes_probability,
+              no_probability: data.no_probability,
             },
           ].slice(-20); // Keep last 20 data points
 
@@ -120,7 +125,7 @@ export default function BitcoinPage() {
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-gray-600 font-medium">Current Price</span>
-              <Activity className="w-5 h-5 text-orange-600" />
+              <Activity className="w-5 h-5 text-orange-600 animate-pulse" />
             </div>
             <div className="text-4xl font-bold text-gray-900">
               ${currentPrice?.toLocaleString("en-US", { maximumFractionDigits: 2 }) || "—"}
@@ -136,11 +141,11 @@ export default function BitcoinPage() {
                 ) : (
                   <TrendingDown className="w-5 h-5" />
                 )}
-                {Math.abs(priceChange!).toFixed(2)}% in last {priceData.length > 1 ? priceData.length * 5 : 5}s
+                {Math.abs(priceChange!).toFixed(2)}% in last {chartData.length > 1 ? chartData.length * 5 : 5}s
               </div>
             )}
             <p className="text-xs text-gray-500 mt-2">
-              Last updated: {new Date().toLocaleTimeString()}
+              Updated: {new Date().toLocaleTimeString()}
             </p>
           </div>
 
@@ -157,7 +162,7 @@ export default function BitcoinPage() {
               {market.yes_probability}%
             </div>
             <div className="text-sm text-gray-600">
-              Multiplier: <span className="font-bold text-green-600">{market.yes_multiplier}x</span>
+              @<span className="font-bold text-green-600">{market.yes_multiplier}x</span>
             </div>
           </div>
 
@@ -174,21 +179,52 @@ export default function BitcoinPage() {
               {market.no_probability}%
             </div>
             <div className="text-sm text-gray-600">
-              Multiplier: <span className="font-bold text-red-600">{market.no_multiplier}x</span>
+              @<span className="font-bold text-red-600">{market.no_multiplier}x</span>
             </div>
           </div>
         </div>
 
-        {/* Price Chart */}
+        {/* Chart Section with Toggle */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Price Chart (Last 20 Updates)</h2>
-            <p className="text-sm text-gray-500">Updates every 5 seconds</p>
+          {/* Header with Toggle */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                {viewMode === "price" ? "Bitcoin Price Chart" : "Prediction Odds Chart"}
+              </h2>
+              <p className="text-sm text-gray-500">Updates every 5 seconds (Last 20 updates)</p>
+            </div>
+            
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("price")}
+                className={`px-4 py-2 rounded transition font-medium text-sm flex items-center gap-2 ${
+                  viewMode === "price"
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Price
+              </button>
+              <button
+                onClick={() => setViewMode("odds")}
+                className={`px-4 py-2 rounded transition font-medium text-sm ${
+                  viewMode === "odds"
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Odds %
+              </button>
+            </div>
           </div>
 
-          {priceData.length > 1 ? (
+          {/* Chart */}
+          {chartData.length > 1 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={priceData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="time"
@@ -198,7 +234,11 @@ export default function BitcoinPage() {
                 <YAxis
                   stroke="#999"
                   style={{ fontSize: "12px" }}
-                  domain={["dataMin - 100", "dataMax + 100"]}
+                  domain={
+                    viewMode === "price"
+                      ? ["dataMin - 100", "dataMax + 100"]
+                      : [0, 100]
+                  }
                 />
                 <Tooltip
                   contentStyle={{
@@ -206,22 +246,53 @@ export default function BitcoinPage() {
                     border: "1px solid #ccc",
                     borderRadius: "8px",
                   }}
-                  formatter={(value: any) =>
-                    typeof value === "number"
-                      ? `$${value.toLocaleString("en-US", {
-                          maximumFractionDigits: 2,
-                        })}`
-                      : "—"
-                  }
+                  formatter={(value: any) => {
+                    if (typeof value === "number") {
+                      return viewMode === "price"
+                        ? `$${value.toLocaleString("en-US", {
+                            maximumFractionDigits: 2,
+                          })}`
+                        : `${value}%`;
+                    }
+                    return "—";
+                  }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="price"
-                  stroke="#f97316"
-                  strokeWidth={3}
-                  dot={{ fill: "#f97316", r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
+
+                {/* Price Chart */}
+                {viewMode === "price" ? (
+                  <Line
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#f97316"
+                    strokeWidth={3}
+                    dot={{ fill: "#f97316", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Bitcoin Price"
+                  />
+                ) : (
+                  <>
+                    {/* YES Odds Line */}
+                    <Line
+                      type="monotone"
+                      dataKey="yes_probability"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      dot={{ fill: "#22c55e", r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name="YES %"
+                    />
+                    {/* NO Odds Line */}
+                    <Line
+                      type="monotone"
+                      dataKey="no_probability"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={{ fill: "#ef4444", r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name="NO %"
+                    />
+                  </>
+                )}
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -232,9 +303,9 @@ export default function BitcoinPage() {
         </div>
 
         {/* Market Info */}
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Market Details</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-600">Volume</p>
               <p className="text-lg font-bold text-gray-900">{market.volume}</p>
@@ -249,13 +320,17 @@ export default function BitcoinPage() {
               <p className="text-sm text-gray-600">Market ID</p>
               <p className="text-lg font-bold text-gray-900">#{market.id}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-600">Type</p>
+              <p className="text-lg font-bold text-gray-900">Binary</p>
+            </div>
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-8 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 text-center">
+        {/* CTA to Trading Page */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 text-center">
           <h3 className="text-xl font-bold mb-2">Ready to trade?</h3>
-          <p className="mb-4">Place your prediction on Bitcoin price movement now</p>
+          <p className="mb-4">Predict Bitcoin price movement and earn rewards</p>
           <Link href={`/markets/${market.id}`}>
             <button className="bg-white text-orange-600 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition">
               Start Trading
