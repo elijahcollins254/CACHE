@@ -51,9 +51,11 @@ export default function Home() {
           <div className="flex items-center gap-2 mb-4">
             <h4 className="text-xl sm:text-xl font-bold text-gray-900">Live</h4>
           </div>
-          <Suspense fallback={<div className="h-52 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 animate-pulse" />}>
-            <BitcoinCard />
-          </Suspense>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <Suspense fallback={<div className="h-52 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 animate-pulse" />}>
+              <BitcoinCard />
+            </Suspense>
+          </div>
         </div>
 
         {/* All Markets Section */}
