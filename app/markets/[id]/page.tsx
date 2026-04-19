@@ -9,8 +9,9 @@ import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Share2, Bookmark, Send, BarChart3, Percent } from "lucide-react";
+import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send, BarChart3, Percent } from "lucide-react";
 import Link from "next/link";
+import ShareButton from "@/components/ShareButton";
 
 
 // Break this into components for more complex markets
@@ -197,7 +198,6 @@ export default function MarketDetail() {
     const [message, setMessage] = useState("");
     const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
     const [isSaved, setIsSaved] = useState(false);
-    const [shareMessage, setShareMessage] = useState("");
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastBet, setLastBet] = useState<any>(null);
     const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -208,6 +208,7 @@ export default function MarketDetail() {
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
     const [replyingToName, setReplyingToName] = useState("");
     const [newChatMessage, setNewChatMessage] = useState("");
+    const [shareLoadMessage, setShareLoadMessage] = useState("");
     const [chatLoading, setChatLoading] = useState(false);
     const [sendingChat, setSendingChat] = useState(false);
     const [chatError, setChatError] = useState("");
@@ -312,16 +313,16 @@ export default function MarketDetail() {
                 // Auto-populate shares field if user has shares to sell
                 if (available > 0) {
                     setShares(available);
-                    setShareMessage(`You own ${available} shares. We've auto-loaded this amount!`);
+                    setShareLoadMessage(`You own ${available} shares. We've auto-loaded this amount!`);
                 } else {
                     setShares(1);
-                    setShareMessage("You don't own any shares of this outcome to sell.");
+                    setShareLoadMessage("You don't own any shares of this outcome to sell.");
                 }
             })
             .catch((err) => {
                 console.error("Error fetching available shares:", err);
                 setAvailableShares(0);
-                setShareMessage("Could not load available shares");
+                setShareLoadMessage("Could not load available shares");
             })
             .finally(() => {
                 setLoadingAvailableShares(false);
@@ -882,53 +883,6 @@ export default function MarketDetail() {
         localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
     };
 
-    const handleShare = async () => {
-        const shareUrl = window.location.href;
-        const shareTitle = market.question;
-        const shareText = `Check out this market: ${market.question}`;
-
-        try {
-            // Try native Web Share API first (supports image on native shares)
-            if (navigator.share) {
-                const shareData: any = {
-                    title: shareTitle,
-                    text: shareText,
-                    url: shareUrl,
-                };
-                
-                // If image is available and Web Share API supports files, add it
-                if (market.image_url) {
-                    try {
-                        const response = await fetch(market.image_url);
-                        const blob = await response.blob();
-                        const file = new File([blob], "market-image.jpg", { type: blob.type });
-                        shareData.files = [file];
-                    } catch (err) {
-                        // Image fetch failed, continue without it
-                        console.error("Could not fetch image for sharing:", err);
-                    }
-                }
-                
-                await navigator.share(shareData);
-            } else {
-                // Fallback: Copy URL with image mention to clipboard
-                let clipboardText = `${shareTitle}\n\n${shareText}\n\n${shareUrl}`;
-                if (market.image_url) {
-                    clipboardText += `\n\nImage: ${market.image_url}`;
-                }
-                
-                await navigator.clipboard.writeText(clipboardText);
-                setShareMessage("Link copied to clipboard!");
-                setTimeout(() => setShareMessage(""), 2000);
-            }
-        } catch (err) {
-            // User cancelled or error occurred
-            if ((err as any).name !== "AbortError") {
-                console.error("Share error:", err);
-            }
-        }
-    };
-
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
             <Navbar />
@@ -959,13 +913,13 @@ export default function MarketDetail() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <button 
-                                    onClick={handleShare}
-                                    className="flex items-center gap-2 hover:text-foreground transition"
-                                >
-                                    <Share2 className="h-4 w-4" />
-                                    {shareMessage || "Share"}
-                                </button>
+                                <ShareButton 
+                                    marketTitle={market.question}
+                                    marketId={market.id}
+                                    imageUrl={market.image_url}
+                                    size="md"
+                                    variant="full"
+                                />
                                 <button
                                     onClick={handleSaveToggle}
                                     className={`flex items-center gap-2 transition ${
@@ -1518,13 +1472,13 @@ export default function MarketDetail() {
                                     </div>
 
                                     {/* Auto-Load Share Message (for Sell tab) */}
-                                    {activeTab === "sell" && shareMessage && (
+                                    {activeTab === "sell" && shareLoadMessage && (
                                         <div className={`mt-2 p-2 rounded-md text-xs font-medium ${
                                             availableShares && availableShares > 0
                                                 ? "bg-blue-950/40 text-blue-300 border border-blue-900/40"
                                                 : "bg-yellow-950/40 text-yellow-300 border border-yellow-900/40"
                                         }`}>
-                                            {loadingAvailableShares ? "Loading your shares..." : shareMessage}
+                                            {loadingAvailableShares ? "Loading your shares..." : shareLoadMessage}
                                         </div>
                                     )}
                                 </div>
@@ -1946,7 +1900,7 @@ export default function MarketDetail() {
                                             <button
                                                 onClick={handleSendChat}
                                                 disabled={sendingChat}
-                                                className="bg-apple-blue hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
+                                                className="bg-red-500 hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
                                             >
                                                 <Send className="h-4 w-4" />
                                             </button>

@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, ChevronRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 
 interface LPPosition {
   id: number;
@@ -57,6 +57,9 @@ export default function LiquidityPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'discover' | 'portfolio'>('discover');
   const [sortBy, setSortBy] = useState<'volume' | 'providers' | 'fees'>('volume');
+  const [positionSortBy, setPositionSortBy] = useState<'apy' | 'fees' | 'capital'>('apy');
+  const [copiedMarketId, setCopiedMarketId] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
 
   useEffect(() => {
     if (session) {
@@ -77,6 +80,11 @@ export default function LiquidityPage() {
       m.question.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter((m: Market) => getCategoryFromQuestion(m.question) === selectedCategory);
+    }
+
     filtered.sort((a: Market, b: Market) => {
       if (sortBy === 'volume') {
         const volA = parseFloat(a.volume?.replace(/[^0-9.-]/g, '') || '0');
@@ -87,7 +95,7 @@ export default function LiquidityPage() {
     });
 
     setFilteredMarkets(filtered);
-  }, [markets, searchTerm, sortBy]);
+  }, [markets, searchTerm, sortBy, selectedCategory]);
 
   const fetchLpPositions = async () => {
     try {
@@ -227,13 +235,60 @@ export default function LiquidityPage() {
     }
   };
 
-  const stats = {
-    total: lpPositions.reduce((sum: number, p: LPPosition) => sum + p.capital_provided, 0),
-    totalFees: lpPositions.reduce((sum: number, p: LPPosition) => sum + p.total_fees_earned, 0),
-    avgApy: lpPositions.length > 0
-      ? lpPositions.reduce((sum: number, p: LPPosition) => sum + p.estimated_apy, 0) / lpPositions.length
-      : 0,
+  const handleCopyMarketLink = (marketId: number) => {
+    const marketUrl = `${window.location.origin}/markets?market=${marketId}`;
+    navigator.clipboard.writeText(marketUrl).then(() => {
+      setCopiedMarketId(marketId);
+      setTimeout(() => setCopiedMarketId(null), 2000);
+      setSuccess('✓ Market link copied to clipboard!');
+      setTimeout(() => setSuccess(''), 2000);
+    });
   };
+
+  const getCategoryFromQuestion = (question: string): string => {
+    const q = question.toLowerCase();
+    if (q.includes('crypto') || q.includes('bitcoin') || q.includes('ethereum')) return 'Crypto';
+    if (q.includes('election') || q.includes('political') || q.includes('vote')) return 'Politics';
+    if (q.includes('sports') || q.includes('game') || q.includes('win')) return 'Sports';
+    if (q.includes('weather') || q.includes('rain') || q.includes('temperature')) return 'Weather';
+    if (q.includes('stock') || q.includes('market') || q.includes('price')) return 'Finance';
+    if (q.includes('tech') || q.includes('product') || q.includes('launch')) return 'Tech';
+    return 'General';
+  };
+
+  const getUniqueCategories = (): string[] => {
+    const categories = markets.map((m: Market) => getCategoryFromQuestion(m.question));
+    return Array.from(new Set(categories)).sort() as string[];
+  };
+
+  const totalCapital = lpPositions.reduce((sum: number, p: LPPosition) => sum + p.capital_provided, 0);
+  const totalFees = lpPositions.reduce((sum: number, p: LPPosition) => sum + p.total_fees_earned, 0);
+  const avgApy = lpPositions.length > 0
+    ? lpPositions.reduce((sum: number, p: LPPosition) => sum + p.estimated_apy, 0) / lpPositions.length
+    : 0;
+  const gainsPercentage = totalCapital > 0 ? (totalFees / totalCapital) * 100 : 0;
+
+  const stats = {
+    total: totalCapital,
+    totalFees: totalFees,
+    avgApy: avgApy,
+    positionCount: lpPositions.length,
+    gainsPercentage: gainsPercentage,
+  };
+
+  // Compute sorted positions
+  const sortedPositions = [...lpPositions].sort((a, b) => {
+    switch (positionSortBy) {
+      case 'apy':
+        return b.estimated_apy - a.estimated_apy;
+      case 'fees':
+        return b.total_fees_earned - a.total_fees_earned;
+      case 'capital':
+        return b.capital_provided - a.capital_provided;
+      default:
+        return 0;
+    }
+  });
 
   return (
     <>
@@ -267,23 +322,35 @@ export default function LiquidityPage() {
 
           {/* Portfolio Summary */}
           {lpPositions.length > 0 && (
-            <div className="mb-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="mb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
               <div className="bg-blue-50 dark:bg-blue-950/30 rounded-2xl p-6 border border-blue-200 dark:border-blue-900/30">
-                <p className="text-sm text-blue-800 dark:text-blue-300 mb-1">Total Liquidity</p>
-                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                <p className="text-xs lg:text-sm text-blue-800 dark:text-blue-300 mb-2">Total Liquidity</p>
+                <p className="text-2xl lg:text-3xl font-bold text-blue-600 dark:text-blue-400">
                   KES {stats.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </p>
               </div>
               <div className="bg-green-50 dark:bg-green-950/30 rounded-2xl p-6 border border-green-200 dark:border-green-900/30">
-                <p className="text-sm text-green-800 dark:text-green-300 mb-1">Fees Earned</p>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                <p className="text-xs lg:text-sm text-green-800 dark:text-green-300 mb-2">Fees Earned</p>
+                <p className="text-2xl lg:text-3xl font-bold text-green-600 dark:text-green-400">
                   KES {stats.totalFees.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="bg-purple-50 dark:bg-purple-950/30 rounded-2xl p-6 border border-purple-200 dark:border-purple-900/30">
-                <p className="text-sm text-purple-800 dark:text-purple-300 mb-1">Average APY</p>
-                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                <p className="text-xs lg:text-sm text-purple-800 dark:text-purple-300 mb-2">Average APY</p>
+                <p className="text-2xl lg:text-3xl font-bold text-purple-600 dark:text-purple-400">
                   {stats.avgApy.toFixed(2)}%
+                </p>
+              </div>
+              <div className="bg-orange-50 dark:bg-orange-950/30 rounded-2xl p-6 border border-orange-200 dark:border-orange-900/30">
+                <p className="text-xs lg:text-sm text-orange-800 dark:text-orange-300 mb-2">Gain %</p>
+                <p className="text-2xl lg:text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  +{stats.gainsPercentage.toFixed(2)}%
+                </p>
+              </div>
+              <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-900/30">
+                <p className="text-xs lg:text-sm text-indigo-800 dark:text-indigo-300 mb-2">Positions</p>
+                <p className="text-2xl lg:text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                  {stats.positionCount}
                 </p>
               </div>
             </div>
@@ -322,6 +389,34 @@ export default function LiquidityPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 dark:text-white"
                   />
+                  
+                  {/* Category Filter */}
+                  <div className="flex gap-2 flex-wrap pb-4 border-b border-gray-200 dark:border-gray-800">
+                    <button
+                      onClick={() => setSelectedCategory('all')}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedCategory === 'all'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      All
+                    </button>
+                    {getUniqueCategories().map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          selectedCategory === cat
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
                   {filteredMarkets.map((market) => (
                     <button
                       key={market.id}
@@ -332,10 +427,27 @@ export default function LiquidityPage() {
                           : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
                       }`}
                     >
-                      <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
-                        {market.question}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{market.volume}</p>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
+                            {market.question}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{market.volume}</p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyMarketLink(market.id);
+                          }}
+                          className="ml-2 p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                        >
+                          {copiedMarketId === market.id ? (
+                            <Check size={18} className="text-green-600" />
+                          ) : (
+                            <Copy size={18} className="text-gray-600 dark:text-gray-400" />
+                          )}
+                        </button>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -344,10 +456,24 @@ export default function LiquidityPage() {
               {/* Portfolio Tab */}
               {activeTab === 'portfolio' && (
                 <div className="space-y-4">
+                  {lpPositions.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-gray-900 dark:text-white">Your Positions</h3>
+                      <select
+                        value={positionSortBy}
+                        onChange={(e) => setPositionSortBy(e.target.value as 'apy' | 'fees' | 'capital')}
+                        className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 dark:text-white text-sm"
+                      >
+                        <option value="apy">Sort by APY</option>
+                        <option value="fees">Sort by Fees Earned</option>
+                        <option value="capital">Sort by Capital</option>
+                      </select>
+                    </div>
+                  )}
                   {lpPositions.length === 0 ? (
                     <p className="text-center text-gray-500 py-8">No positions yet</p>
                   ) : (
-                    lpPositions.map((pos) => (
+                    sortedPositions.map((pos) => (
                       <div
                         key={pos.id}
                         className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6"

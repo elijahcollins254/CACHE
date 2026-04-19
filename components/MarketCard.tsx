@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
+import ShareButton from "./ShareButton";
 import { useEffect, useState } from "react";
 
 interface MarketCardProps {
@@ -58,7 +59,6 @@ export default function MarketCard({ market }: MarketCardProps) {
   const dispatch = useAppDispatch();
   const savedMarketIds = useAppSelector(selectSavedMarketIds);
   const [isSaved, setIsSaved] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
     setIsSaved(savedMarketIds.includes(market.id));
@@ -79,36 +79,6 @@ export default function MarketCard({ market }: MarketCardProps) {
     }
 
     localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
-  };
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const marketUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${typeof window !== 'undefined' ? window.location.pathname.split('/markets')[0] : ''}/markets/${market.id}-${generateMarketSlug(market.question)}`;
-    const shareTitle = market.question;
-    const shareText = `Check out this market: ${market.question}`;
-
-    try {
-      // Try native Web Share API first
-      if (navigator.share) {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: marketUrl,
-        });
-      } else {
-        // Fallback: Copy to clipboard
-        await navigator.clipboard.writeText(marketUrl);
-        setShareMessage("Link copied to clipboard!");
-        setTimeout(() => setShareMessage(""), 2000);
-      }
-    } catch (err) {
-      // User cancelled or error occurred
-      if ((err as any).name !== "AbortError") {
-        console.error("Share error:", err);
-      }
-    }
   };
 
   const yesProbability = market.yes_probability;
@@ -225,19 +195,6 @@ export default function MarketCard({ market }: MarketCardProps) {
           {/* Action Buttons */}
           <div className="flex gap-1 shrink-0">
             <button
-              onClick={handleShare}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-300 ${
-                shareMessage
-                  ? "border-blue-400/40 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm dark:shadow-md"
-                  : "border-border bg-muted text-muted-foreground hover:border-border/80 hover:bg-muted/80"
-              }`}
-              aria-label="Share market"
-              title="Share this market"
-            >
-              <Share2 className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-105" />
-            </button>
-            
-            <button
               onClick={handleSaveToggle}
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                 isSaved
@@ -264,14 +221,17 @@ export default function MarketCard({ market }: MarketCardProps) {
             </span>
           </div>
 
-          <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
-        </div>
-
-        {shareMessage && (
-          <div className="mt-2 text-center text-xs text-blue-600 dark:text-blue-400 font-medium">
-            {shareMessage}
+          <div className="flex items-center gap-2">
+            <ShareButton 
+              marketTitle={market.question}
+              marketId={market.id}
+              imageUrl={market.image_url}
+              size="sm"
+              variant="compact"
+            />
+            <span className="font-medium text-muted-foreground text-[11px]">{formatDate(market.end_date)}</span>
           </div>
-        )}
+        </div>
       </div>
     </Link>
   );
