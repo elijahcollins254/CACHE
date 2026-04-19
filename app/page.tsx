@@ -49,8 +49,7 @@ export default function Home() {
         {/* Bitcoin Live Market - Featured Section */}
         <div className="mb-8 lg:mb-12">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">₿</span>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Live Markets</h2>
+            <h4 className="text-xl sm:text-xl font-bold text-gray-900">Live</h4>
           </div>
           <Suspense fallback={<div className="h-52 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 animate-pulse" />}>
             <BitcoinCard />
@@ -59,7 +58,7 @@ export default function Home() {
 
         {/* All Markets Section */}
         <div className="mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">All Markets</h2>
+          <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">All Markets</h4>
         </div>
 
         {/* Markets Grid */}

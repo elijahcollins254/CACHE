@@ -182,7 +182,7 @@ function deriveQValuesFromMarket(
 
 export default function MarketDetail() {
     const { id: paramId } = useParams();
-    const marketId = extractMarketId(paramId);
+    const urlMarketId = extractMarketId(paramId);
     const dispatch = useAppDispatch();
     
     // Redux state
@@ -191,6 +191,7 @@ export default function MarketDetail() {
     const savedMarketIds = useAppSelector(selectSavedMarketIds);
     
     const [market, setMarket] = useState<any>(null);
+    const [marketId, setMarketId] = useState<number | null>(urlMarketId);
     const [betAmount, setBetAmount] = useState("");
     const [selectedOutcome, setSelectedOutcome] = useState<"Yes" | "No">("Yes");
     const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
@@ -276,12 +277,35 @@ export default function MarketDetail() {
 
     // Set market from Redux data and update saved status
     useEffect(() => {
-        if (allMarkets.length > 0 && marketId) {
-            const found = allMarkets.find((m: any) => m.id === marketId);
-            setMarket(found);
-            setIsSaved(savedMarketIds.includes(marketId));
+        if (allMarkets.length > 0 && urlMarketId) {
+            const found = allMarkets.find((m: any) => m.id === urlMarketId);
+            if (found) {
+                setMarket(found);
+                setMarketId(found.id);
+                setIsSaved(savedMarketIds.includes(found.id));
+            }
         }
-    }, [allMarkets, marketId, savedMarketIds]);
+    }, [allMarkets, urlMarketId, savedMarketIds]);
+
+    // For Bitcoin page without URL ID, fetch Bitcoin market directly from API
+    useEffect(() => {
+        if (!urlMarketId && !market) {
+            const fetchBitcoinMarket = async () => {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bitcoin/`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMarket(data);
+                        setMarketId(data.id);
+                    }
+                } catch (err) {
+                    console.error("Error fetching Bitcoin market:", err);
+                }
+            };
+            
+            fetchBitcoinMarket();
+        }
+    }, [urlMarketId, market]);
 
 
 
