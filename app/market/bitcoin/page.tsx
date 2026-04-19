@@ -8,6 +8,8 @@ import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice"
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send, BarChart3, Percent } from "lucide-react";
 import Link from "next/link";
@@ -789,8 +791,7 @@ export default function MarketDetail() {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-white"><Navbar /></div>;
-    if (!market) return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Market not found</div>;
+    if (loading) return <LoadingSpinner />;
 
     const noProbability = 100 - market.yes_probability;
 
@@ -1815,7 +1816,7 @@ export default function MarketDetail() {
                                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Market Chat</h3>
                                     <p className="text-sm text-muted-foreground">Talk about this market with others.</p>
                                 </div>
-                                {chatLoading && <span className="text-xs font-semibold text-foreground">Loading...</span>}
+                                {chatLoading && <InlineSpinner />}
                             </div>
 
                                 <div className="mb-6 border-b border-border pb-4">

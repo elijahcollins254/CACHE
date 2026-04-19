@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useAppDispatch, useAppSelector, selectUser } from "@/lib/redux/hooks";
 import { fetchUserData } from "@/lib/redux/slices/authSlice";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -170,14 +171,7 @@ export default function Profile() {
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
     if (!user) {
-        return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto max-w-[900px] px-6 pt-32 pb-20">
-                    <p className="text-muted-foreground">Loading...</p>
-                </main>
-            </div>
-        );
+        return <LoadingSpinner />;
     }
 
     return (
