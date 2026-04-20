@@ -992,7 +992,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-green-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
-                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • KES {market.yes_probability}</span>
+                                                <span className="text-xs text-muted-foreground">{market.yes_probability}%</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1010,7 +1010,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">No</span>
-                                                <span className="text-xs text-muted-foreground">{noProbability}% • KES {noProbability}</span>
+                                                <span className="text-xs text-muted-foreground">{noProbability}%</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
