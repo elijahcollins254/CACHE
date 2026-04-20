@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectNotifications, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
-import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/useAuth";
 import { ArrowLeft, Bell, Trash2, CheckCircle, AlertCircle } from "lucide-react";
 
@@ -36,7 +35,6 @@ export default function NotificationsPage() {
     if (authLoading) {
         return (
             <div className="min-h-screen bg-background">
-                <Navbar />
                 <main className="mx-auto pt-24 max-w-[1200px] px-4">
                     <div className="text-center py-12">
                         <div className="h-8 w-8 border-4 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -49,7 +47,6 @@ export default function NotificationsPage() {
     if (error || !authUser) {
         return (
             <div className="min-h-screen bg-background">
-                <Navbar />
                 <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
                     <p className="text-red-500 mb-4">{error || "Failed to load page"}</p>
                     <Link href="/dashboard" className="text-apple-blue hover:underline">
@@ -79,8 +76,6 @@ export default function NotificationsPage() {
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <Navbar />
-
             <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
                 {/* Header */}
                 <div className="mb-8 flex items-center justify-between">

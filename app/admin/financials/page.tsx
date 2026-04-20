@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, CreditCard, BarChart3, AlertTriangle, Users, Grid } from "lucide-react";
-import Navbar from "@/components/Navbar";
+
 import { useState, useEffect } from "react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
@@ -71,9 +71,7 @@ export default function FinancialsPage() {
 
     if (checkingAuth) {
         return (
-            <div className="min-h-screen bg-background flex flex-col">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center px-4">
+            <div className="min-h-screen bg-background flex flex-col">                <div className="flex-1 flex items-center justify-center px-4">
                     <div className="text-center">
                         <div className="h-12 w-12 border-4 border-foreground border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                         <p className="text-muted-foreground">Verifying admin access...</p>
@@ -85,9 +83,7 @@ export default function FinancialsPage() {
 
     if (!isAdmin) {
         return (
-            <div className="min-h-screen bg-background flex flex-col">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center px-4">
+            <div className="min-h-screen bg-background flex flex-col">                <div className="flex-1 flex items-center justify-center px-4">
                     <div className="w-full max-w-sm">
                         <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
                             <ArrowLeft className="h-4 w-4" />
@@ -115,9 +111,7 @@ export default function FinancialsPage() {
     const financial = analytics?.financial || {};
 
     return (
-        <div className="min-h-screen bg-background pb-12">
-            <Navbar />
-            <div className="pt-24 px-4">
+        <div className="min-h-screen bg-background pb-12">            <div className="pt-24 px-4">
                 <div className="max-w-[1200px] mx-auto">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">

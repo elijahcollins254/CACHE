@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
+
 import { Loader2, ArrowLeft, ArrowUpRight, ArrowDownLeft, TrendingUp, AlertTriangle, DollarSign, BarChart3 } from 'lucide-react';
 
 interface Position {
@@ -84,9 +84,7 @@ export default function LiquidityAnalyticsPage() {
   const fees = analytics?.fee_analytics;
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
+    <>      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <Link href="/liquidity" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline mb-8">

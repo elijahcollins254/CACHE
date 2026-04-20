@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Navbar from "@/components/Navbar";
+
 import { ChevronDown, RotateCcw, BarChart3, BookOpen } from "lucide-react";
 
 interface SimulationState {
@@ -363,10 +363,7 @@ export default function Simulator() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <main className="mx-auto max-w-7xl px-4 md:px-6 pt-32 pb-20">
+    <div className="min-h-screen bg-background">      <main className="mx-auto max-w-7xl px-4 md:px-6 pt-32 pb-20">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">

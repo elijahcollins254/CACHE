@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
-import Navbar from "@/components/Navbar";
+
 import { User, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Signup() {
@@ -51,9 +51,7 @@ export default function Signup() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
-            <Navbar />
-            <div className="flex flex-col items-center justify-center pt-24 pb-12 px-6">
+        <div className="min-h-screen bg-background">            <div className="flex flex-col items-center justify-center pt-24 pb-12 px-6">
                 <Link href="/" className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-80">
                     <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-black text-white overflow-hidden">
                         <Image src="/cache.png" alt="CACHE" width={40} height={40} className="rounded-lg" />

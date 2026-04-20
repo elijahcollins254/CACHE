@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
 import { TrendingUp, User, Clock, ArrowUpRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -40,8 +39,6 @@ const activities = [
 export default function Activity() {
     return (
         <div className="min-h-screen bg-background">
-            <Navbar />
-
             <main className="mx-auto max-w-[800px] px-6 pt-32 pb-20">
                 <h1 className="text-4xl font-extrabold tracking-tight mb-4">Global Activity</h1>
                 <p className="text-muted-foreground mb-12">Live feed of predictions happening across Kenya.</p>

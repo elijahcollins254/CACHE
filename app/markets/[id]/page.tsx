@@ -6,7 +6,6 @@ import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading,
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
-import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
@@ -886,9 +885,7 @@ export default function MarketDetail() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
-            <Navbar />
-            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
               <SearchFilterBar />
             </Suspense>
 

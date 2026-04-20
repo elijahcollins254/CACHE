@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/useAuth";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { ArrowLeft } from "lucide-react";
@@ -16,9 +15,7 @@ export default function Withdraw() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto pt-24 max-w-[600px] px-4">
+            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[600px] px-4">
                     <div className="h-96 bg-muted rounded-lg animate-pulse" />
                 </main>
             </div>
@@ -27,9 +24,7 @@ export default function Withdraw() {
 
     if (!authUser) {
         return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto pt-24 max-w-[600px] px-4 text-center">
+            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[600px] px-4 text-center">
                     <p className="text-red-500 mb-4">Authentication required</p>
                     <Link href="/login" className="text-apple-blue hover:underline">
                         Return to login
@@ -82,9 +77,7 @@ export default function Withdraw() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-12">
-            <Navbar />
-            <div className="pt-24 px-4">
+        <div className="min-h-screen bg-background pb-12">            <div className="pt-24 px-4">
                 <div className="max-w-[400px] mx-auto">
                     {/* Header */}
                     <div className="flex items-center gap-4 mb-8">

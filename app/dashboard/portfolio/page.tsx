@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectUser, selectPortfolioValue, selectStatistics, selectBets } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
 import { generateMarketSlug } from "@/lib/slugify";
-import Navbar from "@/components/Navbar";
+
 import { useAuth } from "@/lib/useAuth";
 import { ArrowLeft, TrendingUp, Filter, Search } from "lucide-react";
 
@@ -39,9 +39,7 @@ export default function PortfolioPage() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto pt-24 max-w-[1200px] px-4">
+            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[1200px] px-4">
                     <div className="text-center py-12">
                         <div className="h-8 w-8 border-4 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
                     </div>
@@ -52,9 +50,7 @@ export default function PortfolioPage() {
 
     if (error || !authUser) {
         return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
+            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
                     <p className="text-red-500 mb-4">{error || "Failed to load portfolio"}</p>
                     <Link href="/dashboard" className="text-apple-blue hover:underline">
                         Back to Dashboard
@@ -65,10 +61,7 @@ export default function PortfolioPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-20">
-            <Navbar />
-
-            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
+        <div className="min-h-screen bg-background pb-20">            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-4">
                     <Link href="/dashboard" className="p-2 hover:bg-muted rounded-lg transition">

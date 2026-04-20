@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useAppDispatch, useAppSelector, selectUser } from "@/lib/redux/hooks";
 import { fetchUserData } from "@/lib/redux/slices/authSlice";
@@ -176,8 +175,6 @@ export default function Profile() {
 
     return (
         <div className="min-h-screen bg-background">
-            <Navbar />
-
             <main className="mx-auto max-w-[900px] px-6 pt-32 pb-20">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">

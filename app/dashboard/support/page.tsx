@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/Navbar";
+
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { MessageSquare, AlertCircle, CheckCircle, Clock, Send, X } from "lucide-react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -244,9 +244,7 @@ export default function SupportDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+    <div className="min-h-screen bg-background">      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
         <SearchFilterBar />
       </Suspense>
 

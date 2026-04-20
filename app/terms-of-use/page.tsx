@@ -1,13 +1,10 @@
-import Navbar from "@/components/Navbar";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default function TermsOfUsePage() {
     return (
-        <div className="min-h-screen bg-white">
-            <Navbar />
-
-            <main className="mx-auto pt-20 md:pt-24 max-w-4xl px-4 md:px-6 pb-16">
+        <div className="min-h-screen bg-white">            <main className="mx-auto pt-20 md:pt-24 max-w-4xl px-4 md:px-6 pb-16">
                 {/* Back Button */}
                 <Link
                     href="/"

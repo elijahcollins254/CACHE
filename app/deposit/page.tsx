@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { fetchUserData } from "@/lib/redux/slices/authSlice";
 import { useAuth } from "@/lib/useAuth";
@@ -22,7 +21,6 @@ export default function DepositPage() {
     if (authLoading) {
         return (
             <div className="min-h-screen bg-background">
-                <Navbar />
                 <main className="mx-auto pt-24 max-w-[600px] px-4">
                     <div className="h-96 bg-muted rounded-lg animate-pulse" />
                 </main>
@@ -33,7 +31,6 @@ export default function DepositPage() {
     if (!authUser) {
         return (
             <div className="min-h-screen bg-background">
-                <Navbar />
                 <main className="mx-auto pt-24 max-w-[600px] px-4 text-center">
                     <p className="text-red-500 mb-4">Authentication required</p>
                     <Link href="/login" className="text-apple-blue hover:underline">
@@ -74,7 +71,6 @@ export default function DepositPage() {
     if (step === "processing") {
         return (
             <div className="min-h-screen bg-background flex flex-col">
-                <Navbar />
                 <div className="flex-1 flex flex-col items-center justify-center">
                     <Wallet className="h-12 w-12 text-foreground animate-bounce mb-4" />
                     <p className="font-bold text-foreground text-lg">Processing...</p>
@@ -87,7 +83,6 @@ export default function DepositPage() {
     if (step === "success") {
         return (
             <div className="min-h-screen bg-background flex flex-col">
-                <Navbar />
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                     <CheckCircle2 className="h-20 w-20 text-green-600 mb-4" />
                     <h1 className="text-3xl font-bold text-foreground mb-2">Deposit Successful!</h1>
@@ -101,9 +96,7 @@ export default function DepositPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-12">
-            <Navbar />
-            <main className="mx-auto pt-24 max-w-[600px] px-4 md:px-6">
+        <div className="min-h-screen bg-background pb-12">            <main className="mx-auto pt-24 max-w-[600px] px-4 md:px-6">
                 <div className="mb-8 flex items-center gap-4">
                     <Link href="/" className="p-2 hover:bg-muted rounded-lg">
                         <ArrowLeft className="h-5 w-5" />

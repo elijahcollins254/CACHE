@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { Trophy, Search } from "lucide-react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -102,9 +101,7 @@ export default function LeaderboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+    <div className="min-h-screen bg-background">      <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
         <SearchFilterBar />
       </Suspense>
 

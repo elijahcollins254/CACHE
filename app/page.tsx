@@ -4,7 +4,6 @@ import { useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
 import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
-import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 import BitcoinCard from "@/components/BitcoinCard";
@@ -39,7 +38,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased text-foreground">
-      <Navbar />
       <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
         <SearchFilterBar />
       </Suspense>

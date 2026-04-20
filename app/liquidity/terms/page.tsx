@@ -1,14 +1,12 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
+
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 export default function LiquidityTermsPage() {
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
+    <>      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <Link href="/liquidity" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline mb-8">

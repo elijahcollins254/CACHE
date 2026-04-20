@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
+
 import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, ChevronRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 
 interface LPPosition {
@@ -291,9 +291,7 @@ export default function LiquidityPage() {
   });
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
+    <>      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-12">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense, useRef, useEffect } from "react";
-import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { ChevronLeft, ChevronRight, DollarSign, Search, Share2, Clock, Gift, Wallet, TrendingUp } from "lucide-react";
 
@@ -117,7 +116,6 @@ export default function HowItWorks() {
 
     return (
         <div className="min-h-screen bg-background pb-8">
-            <Navbar />
             <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
                 <SearchFilterBar />
             </Suspense>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import Navbar from "@/components/Navbar";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import { MessageCircle, Send, Mail, Phone, Plus, X, ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -268,9 +267,7 @@ export default function Support() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-20 md:pb-8">
-            <Navbar />
-            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <div className="min-h-screen bg-background pb-20 md:pb-8">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
                 <SearchFilterBar />
             </Suspense>
 

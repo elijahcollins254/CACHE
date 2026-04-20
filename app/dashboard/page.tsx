@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/useAuth";
 import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
@@ -66,9 +65,7 @@ export default function DashboardHub() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto pt-24 max-w-[1200px] px-4">
+            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[1200px] px-4">
                     <div className="text-center py-12">
                         <div className="h-8 w-8 border-4 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
                     </div>
@@ -79,9 +76,7 @@ export default function DashboardHub() {
 
     if (error || !authUser) {
         return (
-            <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
+            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
                     <p className="text-red-500 mb-4">{error || "Failed to load dashboard"}</p>
                     <Link href="/login" className="text-apple-blue hover:underline">
                         Return to login
@@ -136,10 +131,7 @@ export default function DashboardHub() {
     ];
 
     return (
-        <div className="min-h-screen bg-background pb-12">
-            <Navbar />
-
-            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
+        <div className="min-h-screen bg-background pb-12">            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">

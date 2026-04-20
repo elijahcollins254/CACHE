@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
 import { useAppDispatch, useAppSelector, selectNotifications, selectNotificationsLoading } from "@/lib/redux/hooks";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
 import { ArrowLeft, Bell } from "lucide-react";
@@ -59,7 +58,6 @@ export default function NotificationsPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <Navbar />
             <main className="mx-auto pt-32 sm:pt-24 max-w-2xl px-4 md:px-6 pb-20">
                 {/* Header */}
                 <div className="mb-8">
