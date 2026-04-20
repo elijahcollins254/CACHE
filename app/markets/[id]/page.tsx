@@ -737,7 +737,22 @@ export default function MarketDetail() {
     };
 
     if (loading) return <LoadingSpinner />;
-    if (!market) return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Market not found</div>;
+
+    // Show loading state if market data hasn't loaded yet (moved up before any market access)
+    if (!market) {
+        return (
+            <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
+                <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+                    <SearchFilterBar />
+                </Suspense>
+                <main className="mx-auto pt-32 md:pt-40 max-w-7xl px-4 md:px-6">
+                    <div className="flex items-center justify-center min-h-96">
+                        <LoadingSpinner />
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     const noProbability = 100 - market.yes_probability;
 
@@ -886,22 +901,6 @@ export default function MarketDetail() {
         }
         localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
     };
-
-    // Show loading state if market data hasn't loaded yet
-    if (!market) {
-        return (
-            <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">
-                <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
-                    <SearchFilterBar />
-                </Suspense>
-                <main className="mx-auto pt-32 md:pt-40 max-w-7xl px-4 md:px-6">
-                    <div className="flex items-center justify-center min-h-96">
-                        <LoadingSpinner />
-                    </div>
-                </main>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
