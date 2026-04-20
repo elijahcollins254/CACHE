@@ -14,6 +14,9 @@ import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send, BarC
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
 
+// Ensure this page is rendered dynamically (never prerendered)
+export const dynamic = 'force-dynamic';
+
 
 // Break this into components for more complex markets
 
