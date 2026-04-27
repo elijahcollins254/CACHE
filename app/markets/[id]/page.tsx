@@ -184,6 +184,23 @@ function deriveQValuesFromMarket(
     return { q_yes: 0, q_no: 0 }; // 50/50 (symmetric around 0)
 }
 
+/**
+ * Calculate the current share price (cost to buy 1 share)
+ * Returns the price in KES for a single share
+ */
+function getCurrentSharePrice(
+    market: any,
+    outcome: string,
+    b: number = LMSR_B
+): number {
+    if (!market) return 0;
+    
+    const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
+    const price = calculateLMSRBuyCost(q_yes, q_no, 1, outcome, b);
+    
+    return price;
+}
+
 export default function MarketDetail() {
     const { id: paramId } = useParams();
     const marketId = extractMarketId(paramId);
@@ -992,7 +1009,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-green-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
-                                                <span className="text-xs text-muted-foreground">{market.yes_probability}%</span>
+                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • {getCurrentSharePrice(market, "Yes").toFixed(2)} KES</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1010,7 +1027,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">No</span>
-                                                <span className="text-xs text-muted-foreground">{noProbability}%</span>
+                                                <span className="text-xs text-muted-foreground">{noProbability}% • {getCurrentSharePrice(market, "No").toFixed(2)} KES</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
