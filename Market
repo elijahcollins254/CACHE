@@ -1,0 +1,18 @@
+When you sell shouldn't the market move too?
+
+
+create a b in market model so that i can adjust it
+implement automatic adjusting of b according to price movement
+more volatility ... big price jumps increase b to decrease movements
+
+
+
+come up with an equation that always balances the available liquidity
+so that my losses are minimized and it ends up being profitable 
+
+
+Run simulations with 1000 users, then 10000 then 100000 then 1000000
+
+of how prices will move and how much i will have to bootstrap if this many bet on yes and if this many bet on no
+
+

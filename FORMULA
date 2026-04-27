@@ -1,0 +1,257 @@
+
+1 SHARE_PRICE = KES 100
+TRADING FEE = 5%
+
+TAX?
+
+
+BUYING FORMULA?
+What is the buying formula?
+
+MARKET?
+
+TOTAL_SHARES_BOUGHT = (AMOUNT * SHARE_PRICE) / MARKET_PRICE
+
+ACTUAL FORMULA USED:
+COST = (C_after - C_before) × 100
+Where:
+  C(q) = b × ln(exp(q_yes/b) + exp(q_no/b))  [LMSR Cost Function]
+  q_yes_after = q_yes_before + shares (if buying YES)
+  q_no_after = q_no_before + shares (if buying NO)
+  b = liquidity parameter (default 100)
+
+BACKEND: kibeezy-polyy/markets/services.py:buy_yes_shares() / buy_no_shares()
+FRONTEND: CACHE/app/markets/[id]/page.tsx:calculateLMSRBuyCost()
+
+LIMIT?
+
+TOTAL_SHARES_BOUGHT = (AMOUNT * SHARE_PRICE) / LIMIT_PRICE
+
+ACTUAL FORMULA USED:
+COST = (C_after - C_before) × 100  [Same LMSR formula]
+Binary search finds shares that match user's KES amount at specified limit price.
+
+BACKEND: kibeezy-polyy/markets/views.py:place_bet() with order_type='limit'
+FRONTEND: CACHE/app/markets/[id]/page.tsx:estimateSharesFromKES()
+
+
+
+
+SELLING FORMULAR?
+What is the selling formula?
+
+MARKET? 
+AMOUNT = (SHARES * MARKET_PRICE) - TRADING_FEE
+
+ACTUAL FORMULA USED:
+PAYOUT = (C_before - C_after) × 100
+Where:
+  C(q) = b × ln(exp(q_yes/b) + exp(q_no/b))  [LMSR Cost Function]
+  q_yes_after = q_yes_before - shares (if selling YES)
+  q_no_after = q_no_before - shares (if selling NO)
+  b = liquidity parameter (default 100)
+
+PROVIDE ALL SHARES OPTION 
+LOAD CURRENT SHARE HELD
+SHOW TRADING_FEE SUBTRACTION
+
+BACKEND: kibeezy-polyy/markets/services.py:sell_yes_shares() / sell_no_shares()
+FRONTEND: CACHE/app/markets/[id]/page.tsx:calculateLMSRSellPayout()
+
+LIMIT? 
+AMOUNT = SHARES * LIMIT_PRICE - TRADING_FEE
+
+ACTUAL FORMULA USED:
+PAYOUT = (C_before - C_after) × 100  [Same LMSR formula]
+Binary search finds shares that match user's KES amount at specified limit price.
+
+If a user buys now and sells now he should incur a loss
+of 5% trading fee. To incentize people to wait for market to go above 5%
+
+
+IF YOU SELL AT A LOSS
+
+IF COMPAY BOOTSTRAPPED
+COMPANY BALACE += CUSTOMER_LOSS
+
+IF NOT:
+* BUYER TAKES
+
+
+
+DOES CELERY KEEP TRACK OF PRICES TO EXECUTE THE BUY OR SELL?
+
+
+
+
+
+PORTFOLIO FORMULA?
+What is the portfolio formula?
+
+PORTFOLIO = SHARES * CURRENT_MARKET_PRICE
+
+SHOULD CHANGE AS THE MARKET PRICE CHANGES
+
+ACTUAL FORMULA USED:
+NET_SHARES = Σ(shares_bought - shares_sold) per (market, outcome)
+
+PORTFOLIO_VALUE = Net_Shares × 100 × Probability_of_Winning
+Where:
+  Probability_of_Winning = P_yes if outcome='Yes', else (1 - P_yes)
+  P_yes = exp(q_yes/b) / (exp(q_yes/b) + exp(q_no/b))  [YES Probability]
+  100 = KES payout per share when outcome wins
+
+BACKEND: kibeezy-polyy/markets/dashboard_views.py:user_dashboard()
+FRONTEND: CACHE/app/dashboard/page.tsx (position aggregation with net shares)
+
+
+
+
+PAYOUT FORMULA?
+What is the payout formula?
+
+PAYOUT = (SHARES * FINAL_MARKET_PRICE) 
+
+NET_PAYOUT = PAYOUT - TRADING_FEE
+
+PROFIT/LOSS = (SHARES * FINAL_PRICE ) - (SHARES * INITIAL_PRICE)
+
+
+CASH_AFTER_PAYOUT = CASH_BEFORE_PAYOUT + NET_PAYOUT
+
+PORTFOLIO_AFTER_PAYOUT = PORTFOLIO_BEFORE_PAYOUT - PAYOUT
+
+ACTUAL FORMULA USED:
+WHEN MARKET RESOLVES:
+PAYOUT = SHARES × 100  [if outcome matches bet]
+      = 0               [if outcome doesn't match]
+
+WHEN USER SELLS (before resolution):
+PAYOUT = (C_before - C_after) × 100  [LMSR sell payout]
+
+PROFIT/LOSS = CURRENT_VALUE - TOTAL_COST_TO_BUY
+Where:
+  CURRENT_VALUE = (shares_bought - shares_sold) × 100 × probability
+  TOTAL_COST_TO_BUY = Σ(cost to buy each lot)
+
+CASH_AFTER_PAYOUT = CASH_BEFORE + PAYOUT
+
+PORTFOLIO_AFTER_PAYOUT = PORTFOLIO_BEFORE - NET_SHARES × 100 × PROBABILITY
+
+FOR WINNERS: Balance += PAYOUT
+FOR LOSERS: User loses the KES spent (payout = 0)
+
+BACKEND: kibeezy-polyy/markets/views.py:resolve_market()
+FRONTEND: CACHE/app/dashboard/page.tsx (P&L calculation)
+
+
+
+
+MARKET MOVEMENT FORMULA?
+
+HOW MUCH SHOULD A MARKET MOVE?
+AND HOW MUCH DOES LET'S SAY BUYING 10 SHARES MOVE MARKET???
+
+ACTUAL FORMULA USED:
+NEW_PRICE = exp(q_yes_new/b) / (exp(q_yes_new/b) + exp(q_no_new/b))
+Where q_yes_new = q_yes_before + shares_bought
+
+PRICE_IMPACT = NEW_PRICE - OLD_PRICE
+
+Example: Buy 10 YES shares when (q=0, q=0, b=100):
+  OLD_PRICE = 0.50 (50%)
+  NEW_Q_YES = 0 + 10 = 10
+  NEW_PRICE = exp(0.1) / (exp(0.1) + exp(0)) ≈ 0.622 (62.2%)
+  PRICE_IMPACT = +12.2%
+
+EXECUTION_PRICE = (OLD_PRICE + NEW_PRICE) / 2 = 56.1% (accounts for slippage)
+
+SLIPPAGE = (EXECUTON_PRICE - OLD_PRICE) / OLD_PRICE × 100%
+
+BACKEND: kibeezy-polyy/markets/lmsr.py:price_yes() and calculate_cost_to_buy_shares()
+FRONTEND: CACHE/app/markets/[id]/page.tsx:lmsrCost() and price calculations
+
+
+
+DYNAMIC.
+TO INCENTIVIZE PEOPLE TO BUY AND NOT TO SELL TO FAST OR TOO EARLY
+* MAXIMIZE PROFITS
+* CAP LOSSES
+
+ABILITY TO SWITCH FORMULAS AS MARKET COMES A LIVE
+
+
+JUMPSTARTING?
+
+
+PEAK?
+
+
+CLOSING?
+
+
+SEEDED?
+
+
+BOOTSTRAPPED?
+
+
+
+
+
+
+HOW DO YOU HAND DECIMALS???
+ROUND_DOWN ALL DECIMALS
+* EXTRA CASH THAT ACCUMULATES GOES TO COMPANY BALANCE
+
+
+COMPANY_BALACE 
+COMPANY_PROFITS
+
+IN ADMIN DASHBOARD SHOW COMPANY PROFITS, LOSSES, 
+
+RISK_DASHBOARD
+* FOR EACH MARKET
+
+EASILY CHANGE BETWEEN FORMULAS TO MITIGATE LOSSES
+* FOR NEW BUYS
+
+
+
+
+
+ORDER BOOK???
+
+HOW DO YOU MATCH BUYERS AND SELLERS?
+
+
+FRACTIONAL SHARES???
+* INTRODUCE IT AS FEATURE IN THE FUTURE???
+
+
+REMOVE ODDS FROM SITE
+
+
+
+
+COMPANY REVENUE:
+
+TRADING_FEE = 5%
+... REDUCE AS MARKETS BECOME BIGGER
+
+
+SPREAD???
+BID/ASK DIFFERENCE
+
+
+INTEREST ON DEPOSITS
+EARN INTEREST EVEN IF YOU LOST
+* TO INCENTIVIZE PEOPLE NOT TO SELL EARLY
+
+
+
+
+
+FOR OPTIONS MARKETS???
+
+TOTAL_VOLUME = ?

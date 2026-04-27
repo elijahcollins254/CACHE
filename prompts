@@ -1,0 +1,37 @@
+MANIACAL SENSE OF URGENCY
+* TWITTER
+
+
+Read daraja api docs for B2C callback
+
+mpesa withdrawals status remains pending even after payment is made successfully
+is there's not even an endpoint calling for status after the withdrwal call or am i wrong? 
+
+
+DOES CELERY KEEP TRACK OF PRICES TO EXECUTE THE BUY OR SELL?
+
+
+/admin
+Resolving for option markets in admin page??
+
+show revenue earned from each and every place
+fees
+payout
+for bookeeping and analytics
+
+
+
+is there TRADING FEE BEING APPLIED WHEN BUYING OR SELLING /markets/id :
+
+    // Trading fee constant
+    const TRADING_FEE_PERCENT = 2; // 2% fee
+
+
+improve the market share card
+
+
+
+Improve support
+
+
+is the payout formulla taking into account the market price or it just uses 50% for yes and 50% for no?
