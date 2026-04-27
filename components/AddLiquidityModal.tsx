@@ -24,6 +24,7 @@ export default function AddLiquidityModal({
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [estimatedShares, setEstimatedShares] = useState<number | null>(null);
+    const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
     if (!isOpen) return null;
 
@@ -101,8 +102,14 @@ export default function AddLiquidityModal({
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/40">
-            <div className="bg-background rounded-2xl border border-border p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300">
+        <div 
+            className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            <div 
+                className="bg-background rounded-2xl border border-border p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-foreground">Add Liquidity</h2>
@@ -155,9 +162,12 @@ export default function AddLiquidityModal({
                         {/* Amount Input */}
                         <div>
                             <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">
-                                Amount (KES)
+                                Amount
                             </label>
                             <div className="relative">
+                                <span className="absolute left-4 top-4 text-muted-foreground font-semibold">
+                                    KES
+                                </span>
                                 <input
                                     type="number"
                                     placeholder="0"
@@ -166,11 +176,8 @@ export default function AddLiquidityModal({
                                     value={amount}
                                     onChange={(e) => handleAmountChange(e.target.value)}
                                     disabled={isLoading}
-                                    className="w-full text-3xl font-bold text-right p-4 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground disabled:opacity-50"
+                                    className="w-full text-3xl font-bold text-right pl-14 pr-4 py-4 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground disabled:opacity-50"
                                 />
-                                <span className="absolute right-4 top-4 text-muted-foreground font-semibold">
-                                    KES
-                                </span>
                             </div>
                         </div>
 
@@ -208,33 +215,36 @@ export default function AddLiquidityModal({
                             </div>
                         )}
 
-                        {/* Info Box */}
-                        <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                            <p className="text-xs text-amber-700 font-semibold mb-1">How it works:</p>
-                            <ul className="text-xs text-amber-600 space-y-1">
-                                <li>• Your funds are locked in the market's liquidity pool</li>
-                                <li>• You earn a share of all trading fees</li>
-                                <li>• Fees compound as more trades happen</li>
-                            </ul>
-                        </div>
+                        {/* Info Box - Dropdown */}
+                        <button
+                            onClick={() => setIsHowItWorksOpen(!isHowItWorksOpen)}
+                            className="w-full p-3 bg-amber-500/10 hover:bg-amber-500/15 rounded-lg border border-amber-500/20 transition flex items-center justify-between"
+                        >
+                            <p className="text-xs text-amber-700 font-semibold">How it works</p>
+                            <ChevronDown 
+                                size={16} 
+                                className={`text-amber-700 transition-transform ${isHowItWorksOpen ? 'rotate-180' : ''}`}
+                            />
+                        </button>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                            <button
-                                onClick={onClose}
-                                disabled={isLoading}
-                                className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg transition disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleAddLiquidity}
-                                disabled={isLoading || !amount || Number(amount) <= 0}
-                                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition disabled:opacity-50"
-                            >
-                                {isLoading ? "Processing..." : "Add Liquidity"}
-                            </button>
-                        </div>
+                        {isHowItWorksOpen && (
+                            <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 -mt-2">
+                                <ul className="text-xs text-amber-600 space-y-1">
+                                    <li>• Your funds are locked in the market's liquidity pool</li>
+                                    <li>• You earn a share of all trading fees</li>
+                                    <li>• Fees compound as more trades happen</li>
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Action Button - Centered */}
+                        <button
+                            onClick={handleAddLiquidity}
+                            disabled={isLoading || !amount || Number(amount) <= 0}
+                            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition disabled:opacity-50 mt-2"
+                        >
+                            {isLoading ? "Processing..." : "Add Liquidity"}
+                        </button>
                     </div>
                 )}
             </div>
