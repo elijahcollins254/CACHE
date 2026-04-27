@@ -7,6 +7,9 @@
  * - Phone users: Uses session cookies + phone_number header
  * - Google OAuth users: Uses session cookies + email header (fallback)
  */
+
+import { fetchCsrfToken, getCsrfTokenFromCookies } from './csrf';
+
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     const storedUser = localStorage.getItem("poly_user");
     const user = storedUser ? JSON.parse(storedUser) : null;
@@ -36,6 +39,25 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
         }
     } else {
         console.warn("[fetchWithAuth] ⚠️ No user in localStorage - backend request will fail auth check");
+    }
+
+    // Add CSRF token for POST, PUT, DELETE requests
+    const method = options.method?.toUpperCase() || 'GET';
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        // Try to get CSRF token from cookies first (fastest)
+        let csrfToken = getCsrfTokenFromCookies();
+        
+        // If not in cookies, fetch from Django endpoint
+        if (!csrfToken) {
+            csrfToken = await fetchCsrfToken();
+        }
+        
+        if (csrfToken) {
+            headers['X-CSRFToken'] = csrfToken;
+            console.log('[fetchWithAuth] CSRF token added to request');
+        } else {
+            console.warn('[fetchWithAuth] ⚠️ No CSRF token available - request may fail');
+        }
     }
 
     return fetch(url, {
