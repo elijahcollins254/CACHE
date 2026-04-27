@@ -8,6 +8,74 @@ import { generateMarketSlug } from "@/lib/slugify";
 import ShareButton from "./ShareButton";
 import { useEffect, useState } from "react";
 
+// LMSR Configuration
+const LMSR_B = 100.0;
+const PAYOUT_PER_SHARE = 100;
+
+/**
+ * Calculate LMSR cost function: C(q) = b * ln(exp(q_yes/b) + exp(q_no/b))
+ */
+function lmsrCost(q_yes: number, q_no: number, b: number = LMSR_B): number {
+  try {
+    if (!Number.isFinite(q_yes) || !Number.isFinite(q_no) || !Number.isFinite(b)) {
+      return 0;
+    }
+    const exp_yes = Math.exp(q_yes / b);
+    const exp_no = Math.exp(q_no / b);
+    const result = b * Math.log(exp_yes + exp_no);
+    return Number.isFinite(result) ? result : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Calculate cost to buy 1 share using LMSR
+ */
+function calculateLMSRBuyCost(
+  q_yes_before: number,
+  q_no_before: number,
+  outcome: string,
+  b: number = LMSR_B
+): number {
+  const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before + 1 : q_yes_before;
+  const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before + 1;
+
+  const cost_before = lmsrCost(q_yes_before, q_no_before, b);
+  const cost_after = lmsrCost(q_yes_after, q_no_after, b);
+
+  const result = (cost_after - cost_before) * PAYOUT_PER_SHARE;
+  return Number.isFinite(result) && result >= 0 ? result : 0;
+}
+
+/**
+ * Derive q_yes and q_no from probability
+ */
+function deriveQValuesFromProbability(
+  yes_probability: number,
+  b: number = LMSR_B
+): { q_yes: number; q_no: number } {
+  const yes_prob = yes_probability / 100;
+  const clampedProb = Math.max(0.01, Math.min(0.99, yes_prob));
+  const p_ratio = clampedProb / (1 - clampedProb);
+  const q_yes = b * Math.log(p_ratio);
+  const q_no = 0;
+  return { q_yes, q_no };
+}
+
+/**
+ * Calculate the current share price (cost to buy 1 share)
+ */
+function getCurrentSharePrice(
+  yes_probability: number,
+  outcome: string,
+  b: number = LMSR_B
+): number {
+  const { q_yes, q_no } = deriveQValuesFromProbability(yes_probability, b);
+  const price = calculateLMSRBuyCost(q_yes, q_no, outcome, b);
+  return price;
+}
+
 interface MarketCardProps {
   market: {
     id: number;
@@ -83,8 +151,8 @@ export default function MarketCard({ market }: MarketCardProps) {
 
   const yesProbability = market.yes_probability;
   const noProbability = 100 - yesProbability;
-  const yesPriceKes = yesProbability;  // Price in KES (derived from probability)
-  const noPriceKes = noProbability;    // Price in KES
+  const yesPriceKes = getCurrentSharePrice(market.yes_probability, "Yes");
+  const noPriceKes = getCurrentSharePrice(market.yes_probability, "No");
 
   const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
 
@@ -95,7 +163,7 @@ export default function MarketCard({ market }: MarketCardProps) {
           <div className="flex gap-1.5 min-w-min pb-0.5">
             {market.options?.map((option) => {
               const optionYesProb = option.yes_probability;
-              const optionPriceKes = optionYesProb;  // Price in KES per share
+              const optionPriceKes = getCurrentSharePrice(optionYesProb, "Yes");
               return (
                 <div
                   key={option.id}
