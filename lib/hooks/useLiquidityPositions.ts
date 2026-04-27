@@ -23,7 +23,7 @@ export const useLiquidityPositions = () => {
 
         try {
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/liquidity/positions/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/liquidity/positions/`,
                 {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
@@ -51,11 +51,14 @@ export const useLiquidityPositions = () => {
 
             try {
                 const response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/add-liquidity/`,
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/liquidity/deposit/`,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ amount }),
+                        body: JSON.stringify({ 
+                            market_id: marketId,
+                            amount_kes: amount 
+                        }),
                     }
                 );
 
@@ -81,17 +84,19 @@ export const useLiquidityPositions = () => {
     );
 
     const removeLiquidity = useCallback(
-        async (positionId: number, amount: number) => {
+        async (positionId: number) => {
             setLoading(true);
             setError(null);
 
             try {
                 const response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/liquidity/positions/${positionId}/remove/`,
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/liquidity/withdraw/`,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ amount }),
+                        body: JSON.stringify({ 
+                            lp_provider_id: positionId 
+                        }),
                     }
                 );
 
@@ -122,10 +127,13 @@ export const useLiquidityPositions = () => {
 
             try {
                 const response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/liquidity/positions/${positionId}/claim-fees/`,
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/liquidity/claim-fees/`,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            lp_provider_id: positionId
+                        }),
                     }
                 );
 

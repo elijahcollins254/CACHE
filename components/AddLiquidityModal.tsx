@@ -72,7 +72,7 @@ export default function AddLiquidityModal({
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        amount: amountValue,
+                        amount_kes: amountValue,
                     }),
                 }
             );
