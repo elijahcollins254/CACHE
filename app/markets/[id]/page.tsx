@@ -1961,16 +1961,18 @@ export default function MarketDetail() {
         </main>
 
             {/* Add Liquidity Modal */}
-            <AddLiquidityModal
-                isOpen={showLiquidityModal}
-                onClose={() => setShowLiquidityModal(false)}
-                marketId={marketId}
-                marketQuestion={market?.question || ""}
-                onSuccess={() => {
-                    dispatch(fetchMarkets());
-                    fetchMarketDetails();
-                }}
-            />
+            {marketId !== null && (
+                <AddLiquidityModal
+                    isOpen={showLiquidityModal}
+                    onClose={() => setShowLiquidityModal(false)}
+                    marketId={marketId}
+                    marketQuestion={market?.question || ""}
+                    onSuccess={() => {
+                        dispatch(fetchMarkets());
+                        fetchMarketDetails();
+                    }}
+                />
+            )}
 
             {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
