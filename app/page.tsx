@@ -45,7 +45,7 @@ export default function Home() {
       <main className="mx-auto max-w-7xl px-5 sm:px-6 pt-32 sm:pt-28 md:pt-40 pb-24 sm:pb-8 page-enter-slide-up">
 
         {/* Bitcoin Live Market - Featured Section */}
-        <div className="mb-8 lg:mb-12">
+        {/* <div className="mb-8 lg:mb-12">
           <div className="flex items-center gap-2 mb-4">
             <h4 className="text-xl sm:text-xl font-bold text-gray-900">Live</h4>
           </div>
@@ -54,12 +54,13 @@ export default function Home() {
               <BitcoinCard />
             </Suspense>
           </div>
-        </div>
+        </div> */}
 
         {/* All Markets Section */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">All Markets</h4>
-        </div>
+        </div> */}
+        
 
         {/* Markets Grid */}
         <div className="mt-6">
