@@ -8,7 +8,7 @@ import { signOut } from "next-auth/react";
 import { useAppDispatch, useAppSelector, selectUser, selectBalance, selectPortfolioBalance, selectNotifications, selectUnreadCount, selectNotificationsLoading, selectAllMarkets } from "@/lib/redux/hooks";
 import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications, markAllNotificationsRead } from "@/lib/redux/slices/notificationsSlice";
-import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle } from "lucide-react";
+import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle, Droplet } from "lucide-react";
 import { generateMarketSlug } from "@/lib/slugify";
 import DepositModal from "./DepositModal";
 import ThemeToggle from "./ThemeToggle";
@@ -328,6 +328,14 @@ export default function Navbar() {
                                             Profile
                                         </Link>
                                         <Link
+                                            href="/liquidity"
+                                            onClick={() => setIsMobileProfileOpen(false)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
+                                        >
+                                            <Droplet className="h-4 w-4" />
+                                            Liquidity
+                                        </Link>
+                                        <Link
                                             href="/how-it-works"
                                             onClick={() => setIsMobileProfileOpen(false)}
                                             className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
@@ -398,6 +406,14 @@ export default function Navbar() {
                                         >
                                             <User className="h-4 w-4" />
                                             Profile
+                                        </Link>
+                                        <Link
+                                            href="/liquidity"
+                                            onClick={() => setIsProfileOpen(false)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
+                                        >
+                                            <Droplet className="h-4 w-4" />
+                                            Liquidity
                                         </Link>
                                         <Link
                                             href="/how-it-works"
