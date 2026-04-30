@@ -14,6 +14,10 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     const storedUser = localStorage.getItem("poly_user");
     const user = storedUser ? JSON.parse(storedUser) : null;
 
+    // Prepend API base URL if not already a full URL
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+    const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
+
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         ...((options.headers as Record<string, string>) || {}),
@@ -60,7 +64,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
         }
     }
 
-    return fetch(url, {
+    return fetch(fullUrl, {
         ...options,
         headers,
         credentials: "include",  // Include session cookies for Django auth
