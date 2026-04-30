@@ -64,11 +64,15 @@ export default function LiquidityPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
+    if (status === 'loading') {
+      return; // Wait for session to load
+    }
+
     if (status === 'authenticated' && session) {
       setIsInitialLoading(true);
-      fetchLpPositions();
-      fetchMarkets();
-      setIsInitialLoading(false);
+      Promise.all([fetchLpPositions(), fetchMarkets()]).finally(() => {
+        setIsInitialLoading(false);
+      });
     } else if (status === 'unauthenticated') {
       setIsInitialLoading(false);
     }
@@ -111,9 +115,11 @@ export default function LiquidityPage() {
         setLpPositions(data);
       } else {
         console.error('Failed to fetch LP positions:', res.status);
+        setError('Failed to load liquidity positions');
       }
     } catch (err) {
       console.error('Error fetching LP positions:', err);
+      setError('Error loading liquidity positions');
     }
   };
 
@@ -131,9 +137,11 @@ export default function LiquidityPage() {
         }
       } else {
         console.error('Failed to fetch markets:', res.status);
+        setError('Failed to load markets');
       }
     } catch (err) {
       console.error('Error fetching markets:', err);
+      setError('Error loading markets');
     }
   };
 
@@ -320,7 +328,7 @@ export default function LiquidityPage() {
               Loading liquidity data...
             </div>
           )}
-          {status === 'unauthenticated' && (
+          {!isInitialLoading && status === 'unauthenticated' && (
             <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/30 rounded-2xl text-yellow-700 dark:text-yellow-400">
               <div className="flex items-center gap-3">
                 <AlertCircle size={20} />
@@ -328,7 +336,7 @@ export default function LiquidityPage() {
               </div>
             </div>
           )}
-          {error && (
+          {error && !isInitialLoading && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/30 rounded-2xl text-red-700 dark:text-red-400">
               <div className="flex items-center gap-3">
                 <AlertCircle size={20} />
