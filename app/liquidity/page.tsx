@@ -1,8 +1,8 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/useAuth';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, ChevronRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
@@ -44,7 +44,7 @@ interface RiskScore {
 
 
 export default function LiquidityPage() {
-  const { data: session, status } = useSession();
+  const { user: authUser, loading: authLoading } = useAuth("/liquidity");
   const [lpPositions, setLpPositions] = useState<LPPosition[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
@@ -64,19 +64,19 @@ export default function LiquidityPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'loading') {
-      return; // Wait for session to load
+    if (authLoading) {
+      return; // Wait for auth to load
     }
 
-    if (status === 'authenticated' && session) {
+    if (authUser) {
       setIsInitialLoading(true);
       Promise.all([fetchLpPositions(), fetchMarkets()]).finally(() => {
         setIsInitialLoading(false);
       });
-    } else if (status === 'unauthenticated') {
+    } else {
       setIsInitialLoading(false);
     }
-  }, [status, session]);
+  }, [authLoading, authUser]);
 
   useEffect(() => {
     if (selectedMarket) {
@@ -320,7 +320,7 @@ export default function LiquidityPage() {
               Loading liquidity data...
             </div>
           )}
-          {!isInitialLoading && status === 'unauthenticated' && (
+          {!isInitialLoading && !authUser && (
             <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/30 rounded-2xl text-yellow-700 dark:text-yellow-400">
               <div className="flex items-center gap-3">
                 <AlertCircle size={20} />
