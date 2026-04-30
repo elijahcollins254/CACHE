@@ -35,7 +35,7 @@ export default function SystemStatus() {
             // Check API health
             const healthRes = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/health/`,
-                { method: "GET", timeout: 5000 }
+                { method: "GET" }
             ).catch(() => null);
 
             const responseTime = Date.now() - startTime;
