@@ -44,7 +44,7 @@ export default function AlertsCenter() {
 
             if (healthRes && !healthRes.ok) {
                 newAlerts.push({
-                    id: "health-' + Date.now(),
+                    id: "health-" + Date.now().toString(),
                     type: "error",
                     title: "System Health Alert",
                     message: "API connectivity issues detected",
