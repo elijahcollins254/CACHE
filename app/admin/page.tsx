@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { Plus, CheckCircle, XCircle, Loader, Users, Lock, ArrowLeft, Zap, BarChart3, TrendingUp, AlertTriangle, Grid } from "lucide-react";
+import { Plus, CheckCircle, XCircle, Loader, Users, Lock, ArrowLeft, Zap, BarChart3, TrendingUp, AlertTriangle, Grid, Bell, Activity as ActivityIcon } from "lucide-react";
+import DashboardHome from "./components/DashboardHome";
+import MarketImbalanceMonitor from "./components/MarketImbalanceMonitor";
+import AlertsCenter from "./components/AlertsCenter";
+import SystemStatus from "./components/SystemStatus";
 
 export default function AdminPanel() {
     // Backend Authentication State
@@ -41,13 +45,14 @@ export default function AdminPanel() {
 
     useEffect(() => {
         verifyAdminAccess();
+        // Don't load markets here - load them when markets tab is accessed
     }, []);
 
     const [markets, setMarkets] = useState<any[]>([]);
     const [selectedMarketDetails, setSelectedMarketDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [activeTab, setActiveTab] = useState<"markets" | "users" | "transactions">("markets");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "alerts" | "imbalances" | "system" | "markets" | "users" | "transactions">("dashboard");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedMarket, setSelectedMarket] = useState<any>(null);
     const [resolvingMarket, setResolvingMarket] = useState<string | null>(null);
@@ -209,10 +214,12 @@ export default function AdminPanel() {
     };
 
     useEffect(() => {
-        loadMarkets();
-    }, []);
+        if (activeTab === "markets" && markets.length === 0) {
+            loadMarkets();
+        }
+    }, [activeTab]);
 
-    useEffect(() => {
+    useEffect(() {
         if (activeTab === "users" && users.length === 0) {
             loadUsers();
         }
@@ -422,17 +429,6 @@ export default function AdminPanel() {
         }
     };
 
-;
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-background">                <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] p-6">
-                    <div className="h-12 w-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-background pb-12">            <div className="pt-24 px-4">
                 <div className="max-w-[1200px] mx-auto">
@@ -482,10 +478,59 @@ export default function AdminPanel() {
 
                     {/* Tabs */}
                     <div className="apple-card mb-8">
-                        <div className="border-b border-border flex">
+                        <div className="border-b border-border flex flex-wrap">
+                            <button
+                                onClick={() => setActiveTab("dashboard")}
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
+                                    activeTab === "dashboard"
+                                        ? "text-black border-b-2 border-black"
+                                        : "text-muted-foreground hover:text-black"
+                                }`}
+                            >
+                                Dashboard
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("alerts")}
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
+                                    activeTab === "alerts"
+                                        ? "text-black border-b-2 border-black"
+                                        : "text-muted-foreground hover:text-black"
+                                }`}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <Bell className="h-4 w-4" />
+                                    Alerts
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("imbalances")}
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
+                                    activeTab === "imbalances"
+                                        ? "text-black border-b-2 border-black"
+                                        : "text-muted-foreground hover:text-black"
+                                }`}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    Imbalances
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("system")}
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
+                                    activeTab === "system"
+                                        ? "text-black border-b-2 border-black"
+                                        : "text-muted-foreground hover:text-black"
+                                }`}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <ActivityIcon className="h-4 w-4" />
+                                    System
+                                </span>
+                            </button>
                             <button
                                 onClick={() => setActiveTab("markets")}
-                                className={`flex-1 px-6 py-4 font-bold transition-all ${
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
                                     activeTab === "markets"
                                         ? "text-black border-b-2 border-black"
                                         : "text-muted-foreground hover:text-black"
@@ -495,7 +540,7 @@ export default function AdminPanel() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("transactions")}
-                                className={`flex-1 px-6 py-4 font-bold transition-all ${
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
                                     activeTab === "transactions"
                                         ? "text-black border-b-2 border-black"
                                         : "text-muted-foreground hover:text-black"
@@ -505,7 +550,7 @@ export default function AdminPanel() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("users")}
-                                className={`flex-1 px-6 py-4 font-bold transition-all ${
+                                className={`flex-1 px-6 py-4 font-bold transition-all min-w-max ${
                                     activeTab === "users"
                                         ? "text-black border-b-2 border-black"
                                         : "text-muted-foreground hover:text-black"
@@ -517,6 +562,42 @@ export default function AdminPanel() {
                                 </span>
                             </button>
                         </div>
+
+                        {/* Dashboard Tab */}
+                        {activeTab === "dashboard" && (
+                            <div className="p-6">
+                                <DashboardHome loading={false} error={error} />
+                            </div>
+                        )}
+
+                        {/* Alerts Tab */}
+                        {activeTab === "alerts" && (
+                            <div className="p-6">
+                                <AlertsCenter />
+                            </div>
+                        )}
+
+                        {/* Market Imbalances Tab */}
+                        {activeTab === "imbalances" && (
+                            <div className="p-6">
+                                <div className="mb-4">
+                                    <h2 className="text-lg font-bold text-black">Unusual Betting Patterns</h2>
+                                    <p className="text-sm text-muted-foreground">Markets showing significant volume imbalances and sentiment deviations</p>
+                                </div>
+                                <MarketImbalanceMonitor />
+                            </div>
+                        )}
+
+                        {/* System Status Tab */}
+                        {activeTab === "system" && (
+                            <div className="p-6">
+                                <div className="mb-4">
+                                    <h2 className="text-lg font-bold text-black">System Health & Status</h2>
+                                    <p className="text-sm text-muted-foreground">Real-time monitoring of platform infrastructure and performance</p>
+                                </div>
+                                <SystemStatus />
+                            </div>
+                        )}
 
                         {/* Markets Tab */}
 
