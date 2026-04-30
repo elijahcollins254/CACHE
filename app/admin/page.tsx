@@ -219,7 +219,7 @@ export default function AdminPanel() {
         }
     }, [activeTab]);
 
-    useEffect(() {
+    useEffect(() => {
         if (activeTab === "users" && users.length === 0) {
             loadUsers();
         }
