@@ -30,7 +30,7 @@ type DashboardData = {
         net_cash_flow: number;
     };
     by_category: Record<string, { volume: number; markets: number; commission: number }>;
-    top_markets: Array<{ id: number; question: string; volume: number; yes_probability: number; status: string; commission: number }>;
+    top_markets: Array<{ id: number; question: string; volume: number; yes_probability: number; status: string; commission: number; category?: string }>;
     daily_volume: Array<{ date: string; volume: number }>;
 };
 
@@ -353,7 +353,7 @@ export default function DashboardHome({ loading, error }: DashboardHomeProps) {
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-black line-clamp-2">{market.question}</p>
                                     <div className="flex gap-2 mt-1 text-xs">
-                                        <span className="px-2 py-0.5 bg-muted rounded">{market.category}</span>
+                                        {market.category && <span className="px-2 py-0.5 bg-muted rounded">{market.category}</span>}
                                         <span className="px-2 py-0.5 bg-muted rounded">{market.yes_probability}% Yes</span>
                                     </div>
                                 </div>
