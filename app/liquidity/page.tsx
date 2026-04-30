@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
-import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, ChevronRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
+import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, AlertTriangle, Copy, Check, X } from 'lucide-react';
 
 interface LPPosition {
   id: number;
@@ -42,6 +42,13 @@ interface RiskScore {
   time_to_resolution_score: number;
 }
 
+interface ConfirmModal {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  action: (() => void) | null;
+}
+
 
 export default function LiquidityPage() {
   const { user: authUser, loading: authLoading } = useAuth("/liquidity");
@@ -62,6 +69,7 @@ export default function LiquidityPage() {
   const [copiedMarketId, setCopiedMarketId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState<ConfirmModal>({ isOpen: false, title: '', message: '', action: null });
 
   useEffect(() => {
     if (authLoading) {
@@ -206,28 +214,33 @@ export default function LiquidityPage() {
   };
 
   const handleWithdraw = async (lpProviderId: number) => {
-    if (!confirm('Are you sure you want to withdraw?')) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Withdrawal',
+      message: 'Are you sure you want to withdraw your liquidity? This action cannot be undone.',
+      action: async () => {
+        setLoading(true);
+        try {
+          const res = await fetchWithAuth('/api/markets/liquidity/withdraw/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lp_provider_id: lpProviderId }),
+          });
 
-    setLoading(true);
-    try {
-      const res = await fetchWithAuth('/api/markets/liquidity/withdraw/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lp_provider_id: lpProviderId }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setSuccess('✓ Withdrawal complete!');
-        fetchLpPositions();
-      } else {
-        setError(data.message || 'Withdrawal failed');
-      }
-    } catch (err) {
-      setError('Error processing withdrawal');
-    } finally {
-      setLoading(false);
-    }
+          const data = await res.json();
+          if (res.ok) {
+            setSuccess('✓ Withdrawal complete!');
+            fetchLpPositions();
+          } else {
+            setError(data.message || 'Withdrawal failed');
+          }
+        } catch (err) {
+          setError('Error processing withdrawal');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleClaimFees = async (lpProviderId: number) => {
@@ -309,69 +322,93 @@ export default function LiquidityPage() {
   });
 
   return (
-    <>      <div className="min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      {/* Custom Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl sm:rounded-3xl w-full sm:w-full max-w-sm shadow-2xl animation-in animate-in slide-in-from-bottom-5 sm:scale-in">
+            <div className="p-6 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-2">{confirmModal.title}</h2>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-8">{confirmModal.message}</p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal({ isOpen: false, title: '', message: '', action: null })}
+                  className="flex-1 px-4 py-3 rounded-xl font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    confirmModal.action?.();
+                    setConfirmModal({ isOpen: false, title: '', message: '', action: null });
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-amber-50 to-stone-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-20">
 
           {/* Alerts */}
-          {isInitialLoading && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/30 rounded-2xl text-blue-700 dark:text-blue-400 flex items-center gap-3">
-              <Loader2 size={20} className="animate-spin" />
-              Loading liquidity data...
-            </div>
-          )}
           {!isInitialLoading && !authUser && (
-            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/30 rounded-2xl text-yellow-700 dark:text-yellow-400">
-              <div className="flex items-center gap-3">
-                <AlertCircle size={20} />
-                Please log in to view your liquidity positions
+            <div className="mb-6 p-4 sm:p-5 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-2xl">
+              <div className="flex items-center gap-3 text-amber-900 dark:text-amber-400">
+                <AlertCircle size={18} className="flex-shrink-0" />
+                <p className="text-sm sm:text-base">Please log in to view your liquidity positions</p>
               </div>
             </div>
           )}
           {error && !isInitialLoading && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/30 rounded-2xl text-red-700 dark:text-red-400">
-              <div className="flex items-center gap-3">
-                <AlertCircle size={20} />
-                {error}
+            <div className="mb-6 p-4 sm:p-5 bg-red-50/50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/30 rounded-2xl">
+              <div className="flex items-center gap-3 text-red-900 dark:text-red-400">
+                <AlertCircle size={18} className="flex-shrink-0" />
+                <p className="text-sm sm:text-base">{error}</p>
               </div>
             </div>
           )}
           {success && (
-            <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/30 rounded-2xl text-green-700 dark:text-green-400">
-              {success}
+            <div className="mb-6 p-4 sm:p-5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/30 rounded-2xl">
+              <p className="text-sm sm:text-base text-emerald-900 dark:text-emerald-400">{success}</p>
             </div>
           )}
 
           {/* Portfolio Summary */}
           {lpPositions.length > 0 && (
-            <div className="mb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-2xl p-6 border border-blue-200 dark:border-blue-900/30">
-                <p className="text-xs lg:text-sm text-blue-800 dark:text-blue-300 mb-2">Total Liquidity</p>
-                <p className="text-2xl lg:text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="mb-10 sm:mb-14 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/30 dark:border-blue-900/30">
+                <p className="text-xs text-blue-900 dark:text-blue-300 mb-2 font-medium">Total Liquidity</p>
+                <p className="text-lg sm:text-2xl font-bold text-blue-700 dark:text-blue-400 truncate">
                   KES {stats.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </p>
               </div>
-              <div className="bg-green-50 dark:bg-green-950/30 rounded-2xl p-6 border border-green-200 dark:border-green-900/30">
-                <p className="text-xs lg:text-sm text-green-800 dark:text-green-300 mb-2">Fees Earned</p>
-                <p className="text-2xl lg:text-3xl font-bold text-green-600 dark:text-green-400">
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 rounded-2xl p-4 sm:p-6 border border-emerald-200/30 dark:border-emerald-900/30">
+                <p className="text-xs text-emerald-900 dark:text-emerald-300 mb-2 font-medium">Fees Earned</p>
+                <p className="text-lg sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400 truncate">
                   KES {stats.totalFees.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className="bg-purple-50 dark:bg-purple-950/30 rounded-2xl p-6 border border-purple-200 dark:border-purple-900/30">
-                <p className="text-xs lg:text-sm text-purple-800 dark:text-purple-300 mb-2">Average APY</p>
-                <p className="text-2xl lg:text-3xl font-bold text-purple-600 dark:text-purple-400">
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-2xl p-4 sm:p-6 border border-amber-200/30 dark:border-amber-900/30">
+                <p className="text-xs text-amber-900 dark:text-amber-300 mb-2 font-medium">Average APY</p>
+                <p className="text-lg sm:text-2xl font-bold text-amber-700 dark:text-amber-400">
                   {stats.avgApy.toFixed(2)}%
                 </p>
               </div>
-              <div className="bg-orange-50 dark:bg-orange-950/30 rounded-2xl p-6 border border-orange-200 dark:border-orange-900/30">
-                <p className="text-xs lg:text-sm text-orange-800 dark:text-orange-300 mb-2">Gain %</p>
-                <p className="text-2xl lg:text-3xl font-bold text-orange-600 dark:text-orange-400">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 rounded-2xl p-4 sm:p-6 border border-orange-200/30 dark:border-orange-900/30">
+                <p className="text-xs text-orange-900 dark:text-orange-300 mb-2 font-medium">Gain %</p>
+                <p className="text-lg sm:text-2xl font-bold text-orange-700 dark:text-orange-400">
                   +{stats.gainsPercentage.toFixed(2)}%
                 </p>
               </div>
-              <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-900/30">
-                <p className="text-xs lg:text-sm text-indigo-800 dark:text-indigo-300 mb-2">Positions</p>
-                <p className="text-2xl lg:text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+              <div className="bg-gradient-to-br from-stone-100 to-stone-200/50 dark:from-stone-950/30 dark:to-stone-900/20 rounded-2xl p-4 sm:p-6 border border-stone-200/30 dark:border-stone-900/30">
+                <p className="text-xs text-stone-900 dark:text-stone-300 mb-2 font-medium">Positions</p>
+                <p className="text-lg sm:text-2xl font-bold text-stone-700 dark:text-stone-400">
                   {stats.positionCount}
                 </p>
               </div>
@@ -381,19 +418,19 @@ export default function LiquidityPage() {
 
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Content */}
             <div className="lg:col-span-2">
               {/* Tabs */}
-              <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex gap-4 mb-6 border-b border-stone-200 dark:border-stone-800">
                 {(['discover', 'portfolio'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`pb-4 px-1 font-medium transition-colors ${
+                    className={`pb-3 px-1 text-sm sm:text-base font-medium transition-colors ${
                       activeTab === tab
-                        ? 'text-gray-900 dark:text-white border-b-2 border-blue-600'
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'text-amber-700 dark:text-amber-400 border-b-2 border-amber-600 dark:border-amber-500'
+                        : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-300'
                     }`}
                   >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)} {tab === 'portfolio' && `(${lpPositions.length})`}
@@ -409,17 +446,17 @@ export default function LiquidityPage() {
                     placeholder="Search markets..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 text-sm sm:text-base rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-gray-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                   
                   {/* Category Filter */}
-                  <div className="flex gap-2 flex-wrap pb-4 border-b border-gray-200 dark:border-gray-800">
+                  <div className="flex gap-2 flex-wrap pb-4 border-b border-stone-200 dark:border-stone-800">
                     <button
                       onClick={() => setSelectedCategory('all')}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
                         selectedCategory === 'all'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700'
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-stone-200 dark:bg-stone-800 text-stone-900 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-700'
                       }`}
                     >
                       All
@@ -428,10 +465,10 @@ export default function LiquidityPage() {
                       <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
                           selectedCategory === cat
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700'
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-stone-200 dark:bg-stone-800 text-stone-900 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-700'
                         }`}
                       >
                         {cat}
@@ -440,42 +477,44 @@ export default function LiquidityPage() {
                   </div>
 
                   {filteredMarkets.length > 0 ? (
-                    filteredMarkets.map((market) => (
-                      <button
-                        key={market.id}
-                        onClick={() => setSelectedMarket(market.id)}
-                        className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                          selectedMarket === market.id
-                            ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-900'
-                            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
-                              {market.question}
-                            </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{market.volume}</p>
+                    <div className="space-y-3">
+                      {filteredMarkets.map((market) => (
+                        <button
+                          key={market.id}
+                          onClick={() => setSelectedMarket(market.id)}
+                          className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                            selectedMarket === market.id
+                              ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-300 dark:border-amber-900'
+                              : 'bg-white dark:bg-gray-900/50 border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm sm:text-base">
+                                {market.question}
+                              </h3>
+                              <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">{market.volume}</p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyMarketLink(market.id);
+                              }}
+                              className="flex-shrink-0 p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                            >
+                              {copiedMarketId === market.id ? (
+                                <Check size={16} className="text-emerald-600" />
+                              ) : (
+                                <Copy size={16} className="text-stone-600 dark:text-stone-400" />
+                              )}
+                            </button>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopyMarketLink(market.id);
-                            }}
-                            className="ml-2 p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                          >
-                            {copiedMarketId === market.id ? (
-                              <Check size={18} className="text-green-600" />
-                            ) : (
-                              <Copy size={18} className="text-gray-600 dark:text-gray-400" />
-                            )}
                         </button>
-                      </div>
-                    </button>
-                    ))
+                      ))}
+                    </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 dark:text-gray-400">
+                      <p className="text-stone-500 dark:text-stone-400 text-sm">
                         {markets.length === 0 ? 'No markets available yet' : 'No markets match your search'}
                       </p>
                     </div>
@@ -487,106 +526,106 @@ export default function LiquidityPage() {
               {activeTab === 'portfolio' && (
                 <div className="space-y-4">
                   {lpPositions.length > 0 && (
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-gray-900 dark:text-white">Your Positions</h3>
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Your Positions</h3>
                       <select
                         value={positionSortBy}
                         onChange={(e) => setPositionSortBy(e.target.value as 'apy' | 'fees' | 'capital')}
-                        className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 dark:text-white text-sm"
+                        className="px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-gray-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                       >
                         <option value="apy">Sort by APY</option>
-                        <option value="fees">Sort by Fees Earned</option>
+                        <option value="fees">Sort by Fees</option>
                         <option value="capital">Sort by Capital</option>
                       </select>
                     </div>
                   )}
                   {lpPositions.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No positions yet</p>
+                    <p className="text-center text-stone-500 py-8 text-sm">No positions yet</p>
                   ) : (
-                    sortedPositions.map((pos) => (
-                      <div
-                        key={pos.id}
-                        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6"
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
-                              {pos.market_question}
-                            </h3>
-                            <p className="text-xs text-gray-500 mt-1">
-                              <Calendar size={14} className="inline mr-1" />
-                              {pos.days_invested} days
-                            </p>
+                    <div className="space-y-4">
+                      {sortedPositions.map((pos) => (
+                        <div
+                          key={pos.id}
+                          className="bg-white dark:bg-gray-900/50 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 sm:p-5"
+                        >
+                          <div className="flex justify-between items-start mb-4 gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm sm:text-base">
+                                {pos.market_question}
+                              </h3>
+                              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                                <Calendar size={12} className="inline mr-1" />
+                                {pos.days_invested} days
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                {pos.estimated_apy.toFixed(2)}%
+                              </p>
+                              <p className="text-xs text-stone-500">APY</p>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                              {pos.estimated_apy.toFixed(2)}%
-                            </p>
-                            <p className="text-xs text-gray-500">APY</p>
-                          </div>
-                        </div>
 
-                        <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
-                            <p className="text-xs text-gray-600 dark:text-gray-400">Capital</p>
-                            <p className="font-semibold text-gray-900 dark:text-white">
-                              KES {pos.capital_provided.toFixed(0)}
-                            </p>
+                          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+                            <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                              <p className="text-xs text-stone-600 dark:text-stone-400 mb-1">Capital</p>
+                              <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                                KES {pos.capital_provided.toFixed(0)}
+                              </p>
+                            </div>
+                            <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-xl">
+                              <p className="text-xs text-emerald-800 dark:text-emerald-400 mb-1">Fees</p>
+                              <p className="text-sm sm:text-base font-semibold text-emerald-700 dark:text-emerald-400 truncate">
+                                +{pos.total_fees_earned.toFixed(2)}
+                              </p>
+                            </div>
+                            <div className="bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-xl">
+                              <p className="text-xs text-blue-800 dark:text-blue-400 mb-1">Unclaimed</p>
+                              <p className="text-sm sm:text-base font-semibold text-blue-700 dark:text-blue-400 truncate">
+                                {pos.unclaimed_fees.toFixed(2)}
+                              </p>
+                            </div>
                           </div>
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
-                            <p className="text-xs text-gray-600 dark:text-gray-400">Fees</p>
-                            <p className="font-semibold text-green-600 dark:text-green-400">
-                              +{pos.total_fees_earned.toFixed(2)}
-                            </p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
-                            <p className="text-xs text-gray-600 dark:text-gray-400">Unclaimed</p>
-                            <p className="font-semibold text-blue-600 dark:text-blue-400">
-                              {pos.unclaimed_fees.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="flex gap-2">
-                          <Link
-                            href={`/liquidity/analytics?position=${pos.id}`}
-                            className="flex-1 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-center inline-block"
-                          >
-                            Analytics
-                          </Link>
-                          <button
-                            onClick={() => handleClaimFees(pos.id)}
-                            disabled={pos.unclaimed_fees <= 0 || loading}
-                            className="flex-1 px-3 py-2 text-sm bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white rounded-lg"
-                          >
-                            Claim
-                          </button>
-                          <button
-                            onClick={() => handleWithdraw(pos.id)}
-                            disabled={loading}
-                            className="flex-1 px-3 py-2 text-sm bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg"
-                          >
-                            Withdraw
-                          </button>
+                          <div className="flex gap-2">
+                            <Link
+                              href={`/liquidity/analytics?position=${pos.id}`}
+                              className="flex-1 px-3 py-2 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-center font-medium transition-colors"
+                            >
+                              Analytics
+                            </Link>
+                            <button
+                              onClick={() => handleClaimFees(pos.id)}
+                              disabled={pos.unclaimed_fees <= 0 || loading}
+                              className="flex-1 px-3 py-2 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 disabled:bg-stone-300 dark:disabled:bg-stone-700 text-white disabled:text-stone-600 dark:disabled:text-stone-400 rounded-lg font-medium transition-colors"
+                            >
+                              Claim
+                            </button>
+                            <button
+                              onClick={() => handleWithdraw(pos.id)}
+                              disabled={loading}
+                              className="flex-1 px-3 py-2 text-xs sm:text-sm bg-red-600 hover:bg-red-700 disabled:bg-stone-300 dark:disabled:bg-stone-700 text-white disabled:text-stone-600 dark:disabled:text-stone-400 rounded-lg font-medium transition-colors"
+                            >
+                              Withdraw
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
-
-
             </div>
 
             {/* Right Sidebar - Deposit */}
             <div>
-              <div className="sticky top-24 bg-gray-50 dark:bg-gray-900 rounded-3xl p-8 border border-gray-200 dark:border-gray-800">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Deposit</h2>
+              <div className="sticky top-20 sm:top-24 bg-gradient-to-br from-white to-amber-50/30 dark:from-gray-900/80 dark:to-amber-950/20 rounded-3xl p-5 sm:p-7 border border-stone-200 dark:border-stone-800 backdrop-blur-sm">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-5 text-center">Deposit</h2>
 
                 {selectedMarket && poolStats ? (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Amount (KES)
                       </label>
                       <input
@@ -594,22 +633,22 @@ export default function LiquidityPage() {
                         placeholder="1,000"
                         value={depositAmount}
                         onChange={(e) => setDepositAmount(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 dark:text-white"
+                        className="w-full px-4 py-2.5 sm:py-3 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-gray-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
 
                     {poolRiskScore && (
-                      <div className={`p-4 rounded-2xl border ${
-                        poolRiskScore.risk_score <= 3 ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/30' :
-                        poolRiskScore.risk_score <= 6 ? 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900/30' :
-                        'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/30'
+                      <div className={`p-3 sm:p-4 rounded-2xl border ${
+                        poolRiskScore.risk_score <= 3 ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-900/30' :
+                        poolRiskScore.risk_score <= 6 ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-900/30' :
+                        'bg-red-50/50 dark:bg-red-950/20 border-red-200/50 dark:border-red-900/30'
                       }`}>
-                        <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                          <AlertTriangle size={16} />
-                          Risk Score: {poolRiskScore.risk_score}/10({poolRiskScore.risk_label})
+                        <p className="text-xs sm:text-sm font-medium mb-2 flex items-center gap-2">
+                          <AlertTriangle size={14} />
+                          Risk: {poolRiskScore.risk_score}/10 ({poolRiskScore.risk_label})
                         </p>
-                        <div className="text-xs space-y-1">
-                          <p>Vol: {poolRiskScore.volatility_score}/10</p>
+                        <div className="text-xs space-y-1 opacity-75">
+                          <p>Volatility: {poolRiskScore.volatility_score}/10</p>
                           <p>Concentration: {poolRiskScore.concentration_score}/10</p>
                           <p>Volume: {poolRiskScore.volume_score}/10</p>
                         </div>
@@ -617,9 +656,9 @@ export default function LiquidityPage() {
                     )}
 
                     {poolStats && (
-                      <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/30 rounded-2xl text-sm">
+                      <div className="p-3 sm:p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/30 rounded-2xl text-xs sm:text-sm">
                         <p className="font-medium text-gray-900 dark:text-white mb-2">Pool Info</p>
-                        <div className="space-y-1 text-gray-600 dark:text-gray-400">
+                        <div className="space-y-1 text-gray-600 dark:text-gray-400 text-xs">
                           <p>Providers: {poolStats.num_providers}</p>
                           <p>Fee Rate: {poolStats.fee_percent}%</p>
                           <p>Total Fees: KES {poolStats.total_fees_collected.toFixed(2)}</p>
@@ -630,22 +669,22 @@ export default function LiquidityPage() {
                     <button
                       onClick={handleDeposit}
                       disabled={loading || !depositAmount}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white disabled:text-gray-500 font-medium py-3 rounded-2xl transition-colors"
+                      className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-stone-300 disabled:to-stone-300 dark:disabled:from-stone-700 dark:disabled:to-stone-700 text-white disabled:text-stone-600 dark:disabled:text-stone-400 font-medium py-2.5 sm:py-3 rounded-xl transition-all"
                     >
-                      {loading ? <Loader2 className="animate-spin inline mr-2" size={18} /> : null}
+                      {loading ? <Loader2 className="animate-spin inline mr-2" size={16} /> : null}
                       {loading ? 'Processing...' : 'Deposit Liquidity'}
                     </button>
                   </div>
                 ) : (
-                  <p className="text-gray-500">Select a market to deposit</p>
+                  <p className="text-center text-stone-500 dark:text-stone-400 text-sm">Select a market to deposit</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Footer Links */}
-          <div className="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
-            <Link href="/liquidity/terms" className="text-blue-600 dark:text-blue-400 hover:underline">
+          <div className="mt-12 sm:mt-16 text-center text-xs sm:text-sm text-stone-600 dark:text-stone-400">
+            <Link href="/liquidity/terms" className="text-amber-600 dark:text-amber-400 hover:underline">
               Read liquidity terms and conditions
             </Link>
           </div>
