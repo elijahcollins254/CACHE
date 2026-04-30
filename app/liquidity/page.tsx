@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 import { Loader2, TrendingUp, Zap, DollarSign, Calendar, AlertCircle, ChevronRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 
@@ -43,7 +44,7 @@ interface RiskScore {
 
 
 export default function LiquidityPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [lpPositions, setLpPositions] = useState<LPPosition[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
@@ -60,13 +61,18 @@ export default function LiquidityPage() {
   const [positionSortBy, setPositionSortBy] = useState<'apy' | 'fees' | 'capital'>('apy');
   const [copiedMarketId, setCopiedMarketId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
-    if (session) {
+    if (status === 'authenticated' && session) {
+      setIsInitialLoading(true);
       fetchLpPositions();
       fetchMarkets();
+      setIsInitialLoading(false);
+    } else if (status === 'unauthenticated') {
+      setIsInitialLoading(false);
     }
-  }, [session]);
+  }, [status, session]);
 
   useEffect(() => {
     if (selectedMarket) {
@@ -99,10 +105,12 @@ export default function LiquidityPage() {
 
   const fetchLpPositions = async () => {
     try {
-      const res = await fetch('/api/markets/liquidity/positions/');
+      const res = await fetchWithAuth('/api/markets/liquidity/positions/');
       if (res.ok) {
         const data = await res.json();
         setLpPositions(data);
+      } else {
+        console.error('Failed to fetch LP positions:', res.status);
       }
     } catch (err) {
       console.error('Error fetching LP positions:', err);
@@ -111,7 +119,7 @@ export default function LiquidityPage() {
 
   const fetchMarkets = async () => {
     try {
-      const res = await fetch('/api/markets/');
+      const res = await fetchWithAuth('/api/markets/');
       if (res.ok) {
         const data = await res.json();
         const activeMarkets = data.filter(
@@ -121,6 +129,8 @@ export default function LiquidityPage() {
         if (activeMarkets.length > 0 && !selectedMarket) {
           setSelectedMarket(activeMarkets[0].id);
         }
+      } else {
+        console.error('Failed to fetch markets:', res.status);
       }
     } catch (err) {
       console.error('Error fetching markets:', err);
@@ -129,7 +139,7 @@ export default function LiquidityPage() {
 
   const fetchPoolStats = async (marketId: number) => {
     try {
-      const res = await fetch(`/api/markets/liquidity/pool-stats/?market_id=${marketId}`);
+      const res = await fetchWithAuth(`/api/markets/liquidity/pool-stats/?market_id=${marketId}`);
       if (res.ok) {
         setPoolStats(await res.json());
       }
@@ -140,7 +150,7 @@ export default function LiquidityPage() {
 
   const fetchPoolRiskScore = async (marketId: number) => {
     try {
-      const res = await fetch(`/api/markets/liquidity/risk-score/?market_id=${marketId}`);
+      const res = await fetchWithAuth(`/api/markets/liquidity/risk-score/?market_id=${marketId}`);
       if (res.ok) {
         setPoolRiskScore(await res.json());
       }
@@ -162,7 +172,7 @@ export default function LiquidityPage() {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/markets/liquidity/deposit/', {
+      const res = await fetchWithAuth('/api/markets/liquidity/deposit/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -192,7 +202,7 @@ export default function LiquidityPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/markets/liquidity/withdraw/', {
+      const res = await fetchWithAuth('/api/markets/liquidity/withdraw/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lp_provider_id: lpProviderId }),
@@ -215,7 +225,7 @@ export default function LiquidityPage() {
   const handleClaimFees = async (lpProviderId: number) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/markets/liquidity/claim-fees/', {
+      const res = await fetchWithAuth('/api/markets/liquidity/claim-fees/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lp_provider_id: lpProviderId }),
@@ -304,6 +314,20 @@ export default function LiquidityPage() {
           </div>
 
           {/* Alerts */}
+          {isInitialLoading && (
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/30 rounded-2xl text-blue-700 dark:text-blue-400 flex items-center gap-3">
+              <Loader2 size={20} className="animate-spin" />
+              Loading liquidity data...
+            </div>
+          )}
+          {status === 'unauthenticated' && (
+            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/30 rounded-2xl text-yellow-700 dark:text-yellow-400">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} />
+                Please log in to view your liquidity positions
+              </div>
+            </div>
+          )}
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/30 rounded-2xl text-red-700 dark:text-red-400">
               <div className="flex items-center gap-3">
@@ -415,39 +439,47 @@ export default function LiquidityPage() {
                     ))}
                   </div>
 
-                  {filteredMarkets.map((market) => (
-                    <button
-                      key={market.id}
-                      onClick={() => setSelectedMarket(market.id)}
-                      className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                        selectedMarket === market.id
-                          ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-900'
-                          : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
-                            {market.question}
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{market.volume}</p>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyMarketLink(market.id);
-                          }}
-                          className="ml-2 p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                        >
-                          {copiedMarketId === market.id ? (
-                            <Check size={18} className="text-green-600" />
-                          ) : (
-                            <Copy size={18} className="text-gray-600 dark:text-gray-400" />
-                          )}
+                  {filteredMarkets.length > 0 ? (
+                    filteredMarkets.map((market) => (
+                      <button
+                        key={market.id}
+                        onClick={() => setSelectedMarket(market.id)}
+                        className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                          selectedMarket === market.id
+                            ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-900'
+                            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
+                              {market.question}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{market.volume}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyMarketLink(market.id);
+                            }}
+                            className="ml-2 p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                          >
+                            {copiedMarketId === market.id ? (
+                              <Check size={18} className="text-green-600" />
+                            ) : (
+                              <Copy size={18} className="text-gray-600 dark:text-gray-400" />
+                            )}
                         </button>
                       </div>
                     </button>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 dark:text-gray-400">
+                        {markets.length === 0 ? 'No markets available yet' : 'No markets match your search'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

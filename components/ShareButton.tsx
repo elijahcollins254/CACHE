@@ -33,6 +33,7 @@ export default function ShareButton({
     try {
       // Try native Web Share API first (supports image on native shares)
       if (navigator.share) {
+      
         const shareData: any = {
           title: shareTitle,
           text: shareText,
