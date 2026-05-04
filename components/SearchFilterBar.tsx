@@ -476,8 +476,7 @@ export default function SearchFilterBar() {
                                 animationDelay: `${index * 50}ms`
                             }}
                         >
-                        
-                            {/* {cat === "Mentions" ? "@" : cat} */}
+                            {cat === "Mentions" ? "@" : cat}
                         </button>
                     ))}
                 </div>
