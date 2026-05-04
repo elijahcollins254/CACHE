@@ -8,7 +8,7 @@ import { setFilteredMarkets } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
 import { Search, Sliders, TrendingUp } from "lucide-react";
 
-const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Crypto", "Saved", "Resolved", "Closing Soon", "Mentions"];
+const categories = ["Trending", "New", "Politics", "Sports", "Economy", "Crypto", "Mentions", "Closing Soon", "Saved", "Resolved"];
 
 export default function SearchFilterBar() {
     const dispatch = useAppDispatch();
@@ -476,7 +476,8 @@ export default function SearchFilterBar() {
                                 animationDelay: `${index * 50}ms`
                             }}
                         >
-                            {cat === "Mentions" ? "@" : cat}
+                        
+                            {/* {cat === "Mentions" ? "@" : cat} */}
                         </button>
                     ))}
                 </div>
