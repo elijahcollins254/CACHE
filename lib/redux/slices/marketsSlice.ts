@@ -40,22 +40,51 @@ const initialState: MarketsState = {
     savedMarketIds: [],
 };
 
+// USD to KES conversion rate
+const USD_TO_KES = 130;
+
+// Helper function to convert USD volume to KES format string
+const convertVolumeToKES = (usdVolume: string | number): string => {
+    try {
+        const numValue = typeof usdVolume === 'string' ? parseFloat(usdVolume) : usdVolume;
+        if (!isFinite(numValue) || numValue <= 0) return 'KES 0';
+        
+        const kesValue = numValue * USD_TO_KES;
+        
+        if (kesValue >= 1000000000) {
+            return `KES ${(kesValue / 1000000000).toFixed(1)}B`;
+        } else if (kesValue >= 1000000) {
+            return `KES ${(kesValue / 1000000).toFixed(1)}M`;
+        } else if (kesValue >= 1000) {
+            return `KES ${(kesValue / 1000).toFixed(1)}K`;
+        } else {
+            return `KES ${kesValue.toFixed(0)}`;
+        }
+    } catch (error) {
+        return 'KES 0';
+    }
+};
+
 // Helper function to transform Polymarket data to Market interface
 const transformPolymarketData = (polymarket: any): Market => {
     const metadata = polymarket.metadata || polymarket;
     
     // Extract yes probability from outcomePrices or use bestBid
-    let yesProbability = 0.5;
+    // Polymarket returns probabilities as decimals (0-1), convert to percentage (0-100)
+    let yesProbabilityDecimal = 0.5;
     if (metadata.outcomePrices) {
         try {
             const prices = JSON.parse(metadata.outcomePrices);
-            yesProbability = parseFloat(prices[0]) || 0.5;
+            yesProbabilityDecimal = parseFloat(prices[0]) || 0.5;
         } catch (e) {
-            yesProbability = metadata.bestBid || 0.5;
+            yesProbabilityDecimal = metadata.bestBid || 0.5;
         }
     } else if (metadata.bestBid) {
-        yesProbability = metadata.bestBid;
+        yesProbabilityDecimal = metadata.bestBid;
     }
+    
+    // Convert to percentage (0-100)
+    const yesProbability = parseFloat((yesProbabilityDecimal * 100).toFixed(2));
 
     // Determine status
     let status = 'active';
@@ -71,6 +100,10 @@ const transformPolymarketData = (polymarket: any): Market => {
     const daysUntilClose = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     const closingSoon = daysUntilClose > 0 && daysUntilClose <= 7;
 
+    // Convert volume from USD to KES
+    const volumeUSD = metadata.volume || metadata.volumeNum || 0;
+    const volumeKES = convertVolumeToKES(volumeUSD);
+
     return {
         id: polymarket.id,
         external_id: polymarket.external_id,
@@ -78,7 +111,7 @@ const transformPolymarketData = (polymarket: any): Market => {
         description: metadata.description,
         category: metadata.electionType || 'General',
         yes_probability: yesProbability,
-        volume: metadata.volume?.toString() || '0',
+        volume: volumeKES,
         status,
         end_date: metadata.endDate,
         is_live: metadata.active && !metadata.closed,

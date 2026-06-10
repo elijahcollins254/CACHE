@@ -363,6 +363,16 @@ export default function MarketDetail() {
     const fetchPriceHistory = async () => {
         setLoadingChart(true);
         try {
+            // For Polymarket data, skip API fetch and use generated data
+            if (market.source === 'polymarket') {
+                const generated = generateHistoricalPrices();
+                setPriceHistory({
+                    market: generated
+                });
+                setLoadingChart(false);
+                return;
+            }
+
             if (market.market_type === 'OPTION_LIST' && market.options) {
                 const histories: {[key: string]: {yes: number[]; no: number[]}} = {};
                 for (const option of market.options) {
