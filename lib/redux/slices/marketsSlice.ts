@@ -17,6 +17,9 @@ export interface Market {
     q_yes?: number;
     q_no?: number;
     b?: number;
+    source?: 'polymarket' | 'local';
+    external_id?: string;
+    description?: string;
 }
 
 interface MarketsState {
@@ -37,17 +40,104 @@ const initialState: MarketsState = {
     savedMarketIds: [],
 };
 
-// Thunk to fetch all markets
+// Helper function to transform Polymarket data to Market interface
+const transformPolymarketData = (polymarket: any): Market => {
+    const metadata = polymarket.metadata || polymarket;
+    
+    // Extract yes probability from outcomePrices or use bestBid
+    let yesProbability = 0.5;
+    if (metadata.outcomePrices) {
+        try {
+            const prices = JSON.parse(metadata.outcomePrices);
+            yesProbability = parseFloat(prices[0]) || 0.5;
+        } catch (e) {
+            yesProbability = metadata.bestBid || 0.5;
+        }
+    } else if (metadata.bestBid) {
+        yesProbability = metadata.bestBid;
+    }
+
+    // Determine status
+    let status = 'active';
+    if (metadata.closed) {
+        status = 'closed';
+    } else if (metadata.resolved) {
+        status = 'resolved';
+    }
+
+    // Check if market is closing soon (within 7 days)
+    const endDate = new Date(metadata.endDate);
+    const now = new Date();
+    const daysUntilClose = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    const closingSoon = daysUntilClose > 0 && daysUntilClose <= 7;
+
+    return {
+        id: polymarket.id,
+        external_id: polymarket.external_id,
+        question: metadata.question || polymarket.title || '',
+        description: metadata.description,
+        category: metadata.electionType || 'General',
+        yes_probability: yesProbability,
+        volume: metadata.volume?.toString() || '0',
+        status,
+        end_date: metadata.endDate,
+        is_live: metadata.active && !metadata.closed,
+        image_url: metadata.image || metadata.icon,
+        closing_soon: closingSoon,
+        source: 'polymarket',
+    };
+};
+
+// Helper function to transform local market data if needed
+const transformLocalMarketData = (market: any): Market => {
+    return {
+        ...market,
+        source: 'local',
+    };
+};
+
+// Thunk to fetch all markets from both sources
 export const fetchMarkets = createAsyncThunk(
     'markets/fetchMarkets',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/`);
-            if (!response.ok) {
-                return rejectWithValue('Failed to fetch markets');
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            
+            // Fetch from both APIs in parallel
+            const [brokerageRes, localRes] = await Promise.all([
+                fetch(`${baseUrl}/api/brokerage/markets/`).catch(() => null),
+                fetch(`${baseUrl}/api/markets/`).catch(() => null),
+            ]);
+
+            let allMarkets: Market[] = [];
+
+            // Process brokerage markets (Polymarket)
+            if (brokerageRes?.ok) {
+                try {
+                    const brokerageData = await brokerageRes.json();
+                    const brokerageMarkets = Array.isArray(brokerageData) ? brokerageData : brokerageData.results || [];
+                    allMarkets.push(...brokerageMarkets.map(transformPolymarketData));
+                } catch (error) {
+                    console.error('Error processing brokerage markets:', error);
+                }
             }
-            const data = await response.json();
-            return data;
+
+            // Process local markets
+            if (localRes?.ok) {
+                try {
+                    const localData = await localRes.json();
+                    const localMarkets = Array.isArray(localData) ? localData : localData.results || [];
+                    allMarkets.push(...localMarkets.map(transformLocalMarketData));
+                } catch (error) {
+                    console.error('Error processing local markets:', error);
+                }
+            }
+
+            if (allMarkets.length === 0) {
+                return rejectWithValue('Failed to fetch markets from both sources');
+            }
+
+            return allMarkets;
         } catch (error) {
             return rejectWithValue('Connection error');
         }
