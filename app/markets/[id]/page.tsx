@@ -645,38 +645,99 @@ export default function MarketDetail() {
         setMessage("");
 
         try {
-            const payload: any = {
-                market_id: marketId,
-                outcome,
-                action: activeTab,
-                order_type: orderType,
-            };
-
-            // Build payload based on order type and action
-            if (orderType === "market") {
-                if (activeTab === "sell") {
-                    // For SELL market orders, amount is shares
-                    payload.amount = shares;
+            // Determine if this is a Polymarket order
+            const isPolymarket = market.source === 'polymarket';
+            
+            let response;
+            
+            if (isPolymarket) {
+                // ============================================
+                // POLYMARKET ORDER PLACEMENT
+                // ============================================
+                
+                // Map outcome to side: "Yes" → "BUY", "No" → "SELL"
+                const side = outcome === "Yes" ? "BUY" : "SELL";
+                
+                // For market orders, calculate shares from KES amount
+                let size: number;
+                let price: number;
+                
+                if (orderType === "market") {
+                    // Convert KES to USD (1 USD = 130 KES)
+                    const kesAmount = Number(betAmount);
+                    const usdAmount = kesAmount / 130;
+                    
+                    // Use LMSR to calculate shares from USD amount
+                    const b = market.b || LMSR_B;
+                    const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
+                    
+                    // Estimate shares: cost in USD = amount
+                    // Use current market probability as price
+                    size = usdAmount / (market.yes_probability / 100);
+                    price = market.yes_probability / 100;
                 } else {
-                    // For BUY market orders, amount is KES
-                    payload.amount = betAmount;
+                    // For limit orders, use shares and limit_price directly
+                    size = shares;
+                    // Convert limit_price from percentage (0-100) to decimal (0-1)
+                    price = limitPrice / 100;
                 }
+                
+                const polyPayload = {
+                    market_id: market.external_id,  // Use Polymarket external_id
+                    side: side,
+                    size: size,
+                    price: Math.max(0.001, Math.min(0.999, price)), // Clamp between 0.001-0.999
+                };
+                
+                response = await fetchWithAuth(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/orders/place/`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(polyPayload),
+                    }
+                );
             } else {
-                // For limit orders, amount is always shares, not KES
-                payload.amount = shares;
-                payload.limit_price = limitPrice;
-            }
+                // ============================================
+                // LOCAL MARKET ORDER PLACEMENT
+                // ============================================
+                
+                const payload: any = {
+                    market_id: marketId,
+                    outcome,
+                    action: activeTab,
+                    order_type: orderType,
+                };
 
-            // Add option_id for option-list markets
-            if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                payload.option_id = selectedOptionId;
-            }
+                // Build payload based on order type and action
+                if (orderType === "market") {
+                    if (activeTab === "sell") {
+                        // For SELL market orders, amount is shares
+                        payload.amount = shares;
+                    } else {
+                        // For BUY market orders, amount is KES
+                        payload.amount = betAmount;
+                    }
+                } else {
+                    // For limit orders, amount is always shares, not KES
+                    payload.amount = shares;
+                    payload.limit_price = limitPrice;
+                }
 
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bet/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
+                // Add option_id for option-list markets
+                if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+                    payload.option_id = selectedOptionId;
+                }
+
+                response = await fetchWithAuth(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bet/`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    }
+                );
+            }
 
             const data = await response.json();
             if (response.ok) {
@@ -691,6 +752,7 @@ export default function MarketDetail() {
                     action: activeTab,
                     phoneNumber: userData.phone_number,
                     timestamp: new Date(),
+                    isPolymarket: isPolymarket,
                 };
 
                 if (orderType === "market") {
