@@ -42,7 +42,7 @@ export const fetchMarkets = createAsyncThunk(
     'markets/fetchMarkets',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/`);
             if (!response.ok) {
                 return rejectWithValue('Failed to fetch markets');
             }
