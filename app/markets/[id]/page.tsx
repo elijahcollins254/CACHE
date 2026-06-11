@@ -710,13 +710,15 @@ export default function MarketDetail() {
                     const kesAmount = Number(betAmount);
                     const usdAmount = kesAmount / 130;
                     
-                    // For market orders on Polymarket, size is USD amount
-                    size = usdAmount;
+                    // Round size to 8 decimal places (Polymarket requirement)
+                    size = Math.round(usdAmount * 100000000) / 100000000;
+                    
                     // Price is not used for market orders, but we send market probability as reference
                     price = market.yes_probability / 100;
                 } else {
                     // For limit orders, use shares and limit_price directly
-                    size = shares;
+                    // Round to 8 decimal places
+                    size = Math.round(shares * 100000000) / 100000000;
                     // Convert limit_price from percentage (0-100) to decimal (0-1)
                     price = Math.max(0.001, Math.min(0.999, limitPrice / 100));
                 }
