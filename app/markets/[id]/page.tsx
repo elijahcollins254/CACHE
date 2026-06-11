@@ -518,6 +518,13 @@ export default function MarketDetail() {
         setChatError("");
 
         try {
+            // Skip details fetch for Polymarket markets - they don't have the same endpoints
+            if (market.source === 'polymarket') {
+                console.log("Skipping details fetch for Polymarket market");
+                setChatLoading(false);
+                return;
+            }
+
             const response = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/details/`,
                 {
@@ -661,17 +668,35 @@ export default function MarketDetail() {
                 // Get token ID from market data
                 let tokenId: string;
                 try {
-                    const clobTokenIds = JSON.parse(market.clobTokenIds || '[]');
-                    // Select based on outcome: Yes token is usually first
-                    tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
+                    console.log("Market data for token IDs:", {
+                        clobTokenIds: market.clobTokenIds,
+                        clobTokenIdsType: typeof market.clobTokenIds,
+                        external_id: market.external_id,
+                    });
+
+                    let clobTokenIds = market.clobTokenIds;
+                    
+                    // Handle if it's already an array
+                    if (Array.isArray(clobTokenIds)) {
+                        tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
+                    } else if (typeof clobTokenIds === 'string') {
+                        // Try to parse if it's a JSON string
+                        clobTokenIds = JSON.parse(clobTokenIds);
+                        tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
+                    } else {
+                        throw new Error("clobTokenIds not found or in unexpected format");
+                    }
                 } catch (e) {
-                    setMessage("Invalid market configuration (missing token IDs)");
+                    console.error("Token ID parsing error:", e);
+                    console.error("Full market object:", market);
+                    setMessage(`Invalid market configuration: ${e instanceof Error ? e.message : 'missing token IDs'}`);
                     setPlacingBet(false);
                     return;
                 }
                 
                 if (!tokenId) {
-                    setMessage("Invalid market configuration (missing token IDs)");
+                    console.error("Token ID is empty or undefined");
+                    setMessage("Invalid market configuration (missing token ID)");
                     setPlacingBet(false);
                     return;
                 }
@@ -704,6 +729,8 @@ export default function MarketDetail() {
                     price: price,
                     order_type: orderType,          // 'market' or 'limit'
                 };
+                
+                console.log("Placing Polymarket order:", polyPayload);
                 
                 response = await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/orders/place/`,
@@ -1424,14 +1451,16 @@ export default function MarketDetail() {
                         </div>
 
                         {/* Add Liquidity Button */}
-                        <button
-                            onClick={() => setShowLiquidityModal(true)}
-                            disabled={market.status === 'CLOSED' || market.status === 'RESOLVED'}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-bold rounded-lg border border-blue-600/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Droplet className="h-5 w-5" />
-                            Add Liquidity
-                        </button>
+                        {market.source !== 'polymarket' && (
+                            <button
+                                onClick={() => setShowLiquidityModal(true)}
+                                disabled={market.status === 'CLOSED' || market.status === 'RESOLVED'}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-bold rounded-lg border border-blue-600/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Droplet className="h-5 w-5" />
+                                Add Liquidity
+                            </button>
+                        )}
                     </div>
 
                     {/* Right Column - Position Interface */}

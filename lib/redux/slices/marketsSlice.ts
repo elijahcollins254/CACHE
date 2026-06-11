@@ -20,6 +20,7 @@ export interface Market {
     source?: 'polymarket' | 'local';
     external_id?: string;
     description?: string;
+    clobTokenIds?: string | string[]; // Token IDs for Polymarket orders
 }
 
 interface MarketsState {
@@ -118,6 +119,7 @@ const transformPolymarketData = (polymarket: any): Market => {
         image_url: metadata.image || metadata.icon,
         closing_soon: closingSoon,
         source: 'polymarket',
+        clobTokenIds: metadata.clobTokenIds,
     };
 };
 
