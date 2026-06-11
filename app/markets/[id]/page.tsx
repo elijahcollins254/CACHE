@@ -658,6 +658,24 @@ export default function MarketDetail() {
                 // Map outcome to side: "Yes" → "BUY", "No" → "SELL"
                 const side = outcome === "Yes" ? "BUY" : "SELL";
                 
+                // Get token ID from market data
+                let tokenId: string;
+                try {
+                    const clobTokenIds = JSON.parse(market.clobTokenIds || '[]');
+                    // Select based on outcome: Yes token is usually first
+                    tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
+                } catch (e) {
+                    setMessage("Invalid market configuration (missing token IDs)");
+                    setPlacingBet(false);
+                    return;
+                }
+                
+                if (!tokenId) {
+                    setMessage("Invalid market configuration (missing token IDs)");
+                    setPlacingBet(false);
+                    return;
+                }
+                
                 // For market orders, calculate shares from KES amount
                 let size: number;
                 let price: number;
@@ -667,26 +685,24 @@ export default function MarketDetail() {
                     const kesAmount = Number(betAmount);
                     const usdAmount = kesAmount / 130;
                     
-                    // Use LMSR to calculate shares from USD amount
-                    const b = market.b || LMSR_B;
-                    const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
-                    
-                    // Estimate shares: cost in USD = amount
-                    // Use current market probability as price
-                    size = usdAmount / (market.yes_probability / 100);
+                    // For market orders on Polymarket, size is USD amount
+                    size = usdAmount;
+                    // Price is not used for market orders, but we send market probability as reference
                     price = market.yes_probability / 100;
                 } else {
                     // For limit orders, use shares and limit_price directly
                     size = shares;
                     // Convert limit_price from percentage (0-100) to decimal (0-1)
-                    price = limitPrice / 100;
+                    price = Math.max(0.001, Math.min(0.999, limitPrice / 100));
                 }
                 
                 const polyPayload = {
                     market_id: market.external_id,  // Use Polymarket external_id
+                    token_id: tokenId,               // Token ID for py-clob-client
                     side: side,
                     size: size,
-                    price: Math.max(0.001, Math.min(0.999, price)), // Clamp between 0.001-0.999
+                    price: price,
+                    order_type: orderType,          // 'market' or 'limit'
                 };
                 
                 response = await fetchWithAuth(
