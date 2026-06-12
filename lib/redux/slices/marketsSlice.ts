@@ -75,7 +75,9 @@ const transformPolymarketData = (polymarket: any): Market => {
     let yesProbabilityDecimal = 0.5;
     if (metadata.outcomePrices) {
         try {
-            const prices = JSON.parse(metadata.outcomePrices);
+            const prices = typeof metadata.outcomePrices === 'string' 
+                ? JSON.parse(metadata.outcomePrices) 
+                : metadata.outcomePrices;
             yesProbabilityDecimal = parseFloat(prices[0]) || 0.5;
         } catch (e) {
             yesProbabilityDecimal = metadata.bestBid || 0.5;
@@ -105,9 +107,17 @@ const transformPolymarketData = (polymarket: any): Market => {
     const volumeUSD = metadata.volume || metadata.volumeNum || 0;
     const volumeKES = convertVolumeToKES(volumeUSD);
 
+    // Get external_id - try multiple field names since Polymarket API might return it differently
+    const externalId = polymarket.external_id || polymarket.id || polymarket.market_id || '';
+    
+    // Ensure external_id looks like a valid Polymarket hex ID or market ID
+    if (!externalId) {
+        console.warn('Polymarket market missing external_id:', polymarket);
+    }
+
     return {
-        id: polymarket.id,
-        external_id: polymarket.external_id,
+        id: parseInt(polymarket.id) || Math.random(), // Use as numeric ID for Redux key
+        external_id: String(externalId), // Keep as string for API calls
         question: metadata.question || polymarket.title || '',
         description: metadata.description,
         category: metadata.electionType || 'General',

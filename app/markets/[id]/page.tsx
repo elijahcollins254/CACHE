@@ -366,8 +366,18 @@ export default function MarketDetail() {
             // For Polymarket data, fetch real trade history
             if (market.source === 'polymarket') {
                 try {
+                    // Use external_id for Polymarket API, fallback to id if not available
+                    const polyId = market.external_id || market.id;
+                    
+                    console.log("Fetching Polymarket trades for:", {
+                        polyId,
+                        external_id: market.external_id,
+                        id: market.id,
+                        source: market.source,
+                    });
+                    
                     const response = await fetchWithAuth(
-                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/${market.external_id}/trades/`,
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/${polyId}/trades/`,
                         {
                             method: "GET",
                             headers: { "Content-Type": "application/json" },
@@ -378,19 +388,28 @@ export default function MarketDetail() {
                         const trades = await response.json();
                         
                         // Extract price points from trades
-                        // Trades contain pricePoints with timestamp and price data
+                        // Trades contain price information we can use for the chart
                         if (trades && Array.isArray(trades) && trades.length > 0) {
                             // Group trades by time and calculate average prices
                             const pricePoints: { timestamp: number; yes_prob: number }[] = [];
                             
                             trades.forEach((trade: any) => {
-                                if (trade.price !== undefined && trade.size !== undefined) {
-                                    // trade.price should be the yes outcome price (0-1)
-                                    pricePoints.push({
-                                        timestamp: new Date(trade.timestamp || trade.created_at).getTime(),
-                                        yes_prob: (trade.price || 0.5) * 100,
-                                    });
+                                // Extract price from trade data
+                                let price = 0.5; // Default to 50/50
+                                
+                                if (trade.pricePoint !== undefined) {
+                                    price = trade.pricePoint;
+                                } else if (trade.price !== undefined) {
+                                    price = trade.price;
+                                } else if (trade.side && trade.size) {
+                                    // Estimate from trade side and size
+                                    price = trade.side === 'BUY' ? 0.6 : 0.4; // Rough approximation
                                 }
+                                
+                                pricePoints.push({
+                                    timestamp: new Date(trade.timestamp || trade.createdAt || Date.now()).getTime(),
+                                    yes_prob: Math.max(5, Math.min(95, (price || 0.5) * 100)),
+                                });
                             });
                             
                             if (pricePoints.length > 0) {
@@ -398,8 +417,15 @@ export default function MarketDetail() {
                                 pricePoints.sort((a, b) => a.timestamp - b.timestamp);
                                 const chartPoints = pricePoints.slice(-8);
                                 
-                                const yesProbs = chartPoints.map(p => Math.min(95, Math.max(5, p.yes_prob)));
+                                // If we have fewer than 8 points, pad with the first value
+                                while (chartPoints.length < 8) {
+                                    chartPoints.unshift(chartPoints[0]);
+                                }
+                                
+                                const yesProbs = chartPoints.map(p => p.yes_prob);
                                 const noProbs = yesProbs.map(y => 100 - y);
+                                
+                                console.log("Polymarket chart data:", { points: chartPoints.length, yesProbs });
                                 
                                 setPriceHistory({
                                     market: {
@@ -412,15 +438,28 @@ export default function MarketDetail() {
                             }
                         }
                     }
+                    
+                    // If response is empty or no trades, use current probability as single data point
+                    console.log("No trades found or empty response, using current probability");
+                    const currentProb = market.yes_probability || 50;
+                    setPriceHistory({
+                        market: {
+                            yes: Array(8).fill(currentProb),
+                            no: Array(8).fill(100 - currentProb),
+                        }
+                    });
                 } catch (err) {
-                    console.warn("Failed to fetch Polymarket trades, falling back to generated data:", err);
+                    console.warn("Error fetching Polymarket trades, using current probability:", err);
+                    // Fallback to current probability
+                    const currentProb = market.yes_probability || 50;
+                    setPriceHistory({
+                        market: {
+                            yes: Array(8).fill(currentProb),
+                            no: Array(8).fill(100 - currentProb),
+                        }
+                    });
                 }
                 
-                // Fallback to generated data if trade history unavailable
-                const generated = generateHistoricalPrices();
-                setPriceHistory({
-                    market: generated
-                });
                 setLoadingChart(false);
                 return;
             }
