@@ -1054,7 +1054,16 @@ export default function MarketDetail() {
     const noProbability = 100 - market.yes_probability;
 
     // Trading fee constant
-    const TRADING_FEE_PERCENT = 2; // 2% fee
+    const TRADING_FEE_PERCENT = 0.5; // 0.5% fee
+
+    // Calculate trading fee
+    const calculateTradingFee = (amount: number): { fee: number; totalCost: number } => {
+        const fee = amount * (TRADING_FEE_PERCENT / 100);
+        return {
+            fee: Math.round(fee * 100) / 100,
+            totalCost: Math.round((amount + fee) * 100) / 100,
+        };
+    };
 
     // Generate historical price data based on time period
     const generateHistoricalPrices = () => {
@@ -1824,6 +1833,30 @@ export default function MarketDetail() {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Fee Display for Limit Orders */}
+                                {activeTab === "buy" && (
+                                    (() => {
+                                        const limitOrderCost = shares * (limitPrice / 100) * 100;
+                                        const feeInfo = calculateTradingFee(limitOrderCost);
+                                        return (
+                                            <div className="bg-amber-950/30 rounded-lg p-3 mb-3 border border-amber-900/40">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-xs text-muted-foreground">Order Cost</span>
+                                                    <span className="text-sm font-semibold text-foreground">KES {(feeInfo.totalCost - feeInfo.fee).toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center pb-2 border-b border-amber-900/40 mb-2">
+                                                    <span className="text-xs text-muted-foreground">Trading Fee ({TRADING_FEE_PERCENT}%)</span>
+                                                    <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-xs font-bold text-foreground">Total Cost</span>
+                                                    <span className="text-sm font-bold text-foreground">KES {feeInfo.totalCost.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()
+                                )}
                             </>
                         ) : (
                             <>
@@ -1875,6 +1908,27 @@ export default function MarketDetail() {
                                                 })()}
                                             </span>
                                         </div>
+
+                                        {/* Fee Breakdown */}
+                                        {(() => {
+                                            const feeInfo = calculateTradingFee(Number(betAmount));
+                                            return (
+                                                <div className="bg-amber-950/30 rounded-lg p-3 mb-4 border border-amber-900/40">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-xs text-muted-foreground">Bet Amount</span>
+                                                        <span className="text-sm font-semibold text-foreground">KES {feeInfo.totalCost - feeInfo.fee}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center pb-2 border-b border-amber-900/40 mb-2">
+                                                        <span className="text-xs text-muted-foreground">Trading Fee ({TRADING_FEE_PERCENT}%)</span>
+                                                        <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-xs font-bold text-foreground">Total Cost</span>
+                                                        <span className="text-lg font-bold text-foreground">KES {feeInfo.totalCost}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </>
                                 )}
 
