@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
 import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
 import SearchFilterBar from "@/components/SearchFilterBar";
-import MarketCard from "@/components/MarketCard";
+import GroupedMarketList from "@/components/GroupedMarketList";
 import BitcoinCard from "@/components/BitcoinCard";
 
 const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Mentions", "Saved", "Resolved"];
@@ -62,29 +62,9 @@ export default function Home() {
         </div> */}
         
 
-        {/* Markets Grid */}
+        {/* Markets Grid - Now using GroupedMarketList for hierarchical display */}
         <div className="mt-6">
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-40 rounded-2xl bg-gray-100 animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300">
-            {filteredMarkets.length > 0 ? (
-              filteredMarkets.map((market, index) => (
-                <div key={market.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: `${index * 50}ms`}}>
-                  <MarketCard market={market} />
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center animate-in fade-in duration-300">
-                <p className="text-muted-foreground text-lg">No markets found in this category.</p>
-              </div>
-            )}
-          </div>
-        )}
+          <GroupedMarketList markets={filteredMarkets} loading={loading} />
         </div>
       </main>
     </div>

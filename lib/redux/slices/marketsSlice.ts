@@ -21,6 +21,11 @@ export interface Market {
     external_id?: string;
     description?: string;
     clobTokenIds?: string | string[]; // Token IDs for Polymarket orders
+    // Parent event grouping (for multi-outcome markets like "What will happen before GTA VI?")
+    parentEventId?: string;
+    parentEventTitle?: string;
+    groupItemTitle?: string;
+    groupItemThreshold?: string;
 }
 
 interface MarketsState {
@@ -118,6 +123,16 @@ const transformPolymarketData = (polymarket: any): Market => {
     // Get category - prioritize database category if available, fallback to electionType or General
     const category = polymarket.category || metadata.electionType || 'Other';
 
+    // Extract parent event information if available
+    // Polymarket markets can have a parent event (e.g., "What will happen before GTA VI?")
+    let parentEventId: string | undefined;
+    let parentEventTitle: string | undefined;
+    if (metadata.events && Array.isArray(metadata.events) && metadata.events.length > 0) {
+        const parentEvent = metadata.events[0];
+        parentEventId = String(parentEvent.id || parentEvent.ticker);
+        parentEventTitle = parentEvent.title;
+    }
+
     return {
         id: parseInt(polymarket.id) || Math.random(), // Use as numeric ID for Redux key
         external_id: String(externalId), // Keep as string for API calls
@@ -133,6 +148,10 @@ const transformPolymarketData = (polymarket: any): Market => {
         closing_soon: closingSoon,
         source: 'polymarket',
         clobTokenIds: metadata.clobTokenIds || polymarket.clobTokenIds,
+        parentEventId,
+        parentEventTitle,
+        groupItemTitle: metadata.groupItemTitle,
+        groupItemThreshold: metadata.groupItemThreshold,
     };
 };
 
