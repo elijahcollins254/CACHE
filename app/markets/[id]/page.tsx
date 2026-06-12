@@ -360,6 +360,58 @@ export default function MarketDetail() {
         }
     }, [market]);
 
+    // Auto-refresh Polymarket prices every 5 seconds
+    useEffect(() => {
+        if (!market || market.source !== 'polymarket') {
+            return; // Only poll for Polymarket markets
+        }
+
+        const pollInterval = setInterval(async () => {
+            try {
+                // Re-fetch markets to get updated prices with cache busting
+                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+                const timestamp = Date.now(); // Cache buster
+                
+                const response = await fetch(
+                    `${baseUrl}/api/brokerage/markets/?ts=${timestamp}`,
+                    {
+                        method: 'GET',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache',
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    const brokerageData = await response.json();
+                    const brokerageMarkets = Array.isArray(brokerageData) ? brokerageData : brokerageData.results || [];
+                    
+                    // Find current market in fresh data
+                    const freshMarket = brokerageMarkets.find((m: any) => {
+                        const freshId = parseInt(m.id);
+                        return freshId === market.id || m.external_id === market.external_id;
+                    });
+                    
+                    if (freshMarket) {
+                        // Update market with fresh data
+                        setMarket((prev: any) => ({
+                            ...prev,
+                            yes_probability: freshMarket.bestBid ? Math.round(freshMarket.bestBid * 100) : freshMarket.yes_probability,
+                            volume: freshMarket.volume,
+                        }));
+                        
+                        console.log(`✓ Updated market price: ${freshMarket.bestBid ? Math.round(freshMarket.bestBid * 100) : freshMarket.yes_probability}%`);
+                    }
+                }
+            } catch (err) {
+                console.warn("Error polling market updates:", err);
+            }
+        }, 5000); // Poll every 5 seconds
+
+        return () => clearInterval(pollInterval);
+    }, [market, dispatch]);
+
     const fetchPriceHistory = async () => {
         setLoadingChart(true);
         try {
@@ -603,6 +655,24 @@ export default function MarketDetail() {
             fetchPriceHistory();
         }
     }, [timePeriod, market]);
+
+    // Auto-refresh price history for Polymarket markets every 5 seconds
+    useEffect(() => {
+        if (!market || market.source !== 'polymarket') {
+            return; // Only auto-refresh for Polymarket markets
+        }
+
+        const refreshInterval = setInterval(async () => {
+            try {
+                await fetchPriceHistory();
+                console.log('✓ Refreshed price history');
+            } catch (err) {
+                console.warn("Error refreshing price history:", err);
+            }
+        }, 5000); // Refresh every 5 seconds
+
+        return () => clearInterval(refreshInterval);
+    }, [market, timePeriod]);
 
     const fetchMarketDetails = async () => {
         setChatLoading(true);
