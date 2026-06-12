@@ -98,13 +98,13 @@ const transformPolymarketData = (polymarket: any): Market => {
     }
 
     // Check if market is closing soon (within 7 days)
-    const endDate = new Date(metadata.endDate);
+    const endDate = new Date(metadata.endDate || polymarket.end_date);
     const now = new Date();
     const daysUntilClose = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     const closingSoon = daysUntilClose > 0 && daysUntilClose <= 7;
 
     // Convert volume from USD to KES
-    const volumeUSD = metadata.volume || metadata.volumeNum || 0;
+    const volumeUSD = metadata.volume || metadata.volumeNum || polymarket.volume || 0;
     const volumeKES = convertVolumeToKES(volumeUSD);
 
     // Get external_id - try multiple field names since Polymarket API might return it differently
@@ -115,21 +115,24 @@ const transformPolymarketData = (polymarket: any): Market => {
         console.warn('Polymarket market missing external_id:', polymarket);
     }
 
+    // Get category - prioritize database category if available, fallback to electionType or General
+    const category = polymarket.category || metadata.electionType || 'Other';
+
     return {
         id: parseInt(polymarket.id) || Math.random(), // Use as numeric ID for Redux key
         external_id: String(externalId), // Keep as string for API calls
-        question: metadata.question || polymarket.title || '',
-        description: metadata.description,
-        category: metadata.electionType || 'General',
+        question: metadata.question || polymarket.question || polymarket.title || '',
+        description: metadata.description || polymarket.description,
+        category: category,
         yes_probability: yesProbability,
         volume: volumeKES,
         status,
-        end_date: metadata.endDate,
-        is_live: metadata.active && !metadata.closed,
-        image_url: metadata.image || metadata.icon,
+        end_date: metadata.endDate || polymarket.end_date,
+        is_live: (metadata.active !== false && !metadata.closed) || polymarket.is_approved,
+        image_url: metadata.image || metadata.icon || polymarket.image_url,
         closing_soon: closingSoon,
         source: 'polymarket',
-        clobTokenIds: metadata.clobTokenIds,
+        clobTokenIds: metadata.clobTokenIds || polymarket.clobTokenIds,
     };
 };
 
