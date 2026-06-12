@@ -363,8 +363,60 @@ export default function MarketDetail() {
     const fetchPriceHistory = async () => {
         setLoadingChart(true);
         try {
-            // For Polymarket data, skip API fetch and use generated data
+            // For Polymarket data, fetch real trade history
             if (market.source === 'polymarket') {
+                try {
+                    const response = await fetchWithAuth(
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/${market.external_id}/trades/`,
+                        {
+                            method: "GET",
+                            headers: { "Content-Type": "application/json" },
+                        }
+                    );
+                    
+                    if (response.ok) {
+                        const trades = await response.json();
+                        
+                        // Extract price points from trades
+                        // Trades contain pricePoints with timestamp and price data
+                        if (trades && Array.isArray(trades) && trades.length > 0) {
+                            // Group trades by time and calculate average prices
+                            const pricePoints: { timestamp: number; yes_prob: number }[] = [];
+                            
+                            trades.forEach((trade: any) => {
+                                if (trade.price !== undefined && trade.size !== undefined) {
+                                    // trade.price should be the yes outcome price (0-1)
+                                    pricePoints.push({
+                                        timestamp: new Date(trade.timestamp || trade.created_at).getTime(),
+                                        yes_prob: (trade.price || 0.5) * 100,
+                                    });
+                                }
+                            });
+                            
+                            if (pricePoints.length > 0) {
+                                // Sort by timestamp and take last 8 points for the chart
+                                pricePoints.sort((a, b) => a.timestamp - b.timestamp);
+                                const chartPoints = pricePoints.slice(-8);
+                                
+                                const yesProbs = chartPoints.map(p => Math.min(95, Math.max(5, p.yes_prob)));
+                                const noProbs = yesProbs.map(y => 100 - y);
+                                
+                                setPriceHistory({
+                                    market: {
+                                        yes: yesProbs,
+                                        no: noProbs,
+                                    }
+                                });
+                                setLoadingChart(false);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Failed to fetch Polymarket trades, falling back to generated data:", err);
+                }
+                
+                // Fallback to generated data if trade history unavailable
                 const generated = generateHistoricalPrices();
                 setPriceHistory({
                     market: generated
