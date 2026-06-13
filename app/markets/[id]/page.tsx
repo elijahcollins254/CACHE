@@ -1210,6 +1210,38 @@ export default function MarketDetail() {
         localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
     };
 
+    /**
+     * Get recommended markets intelligently
+     * Priority:
+     * 1. Related markets from backend (same parent question)
+     * 2. Markets in same category
+     * 3. Trending markets (by volume)
+     */
+    const getRecommendedMarkets = () => {
+        // First priority: use relatedMarkets from backend (markets with same parent question)
+        if (relatedMarkets && relatedMarkets.length > 0) {
+            return relatedMarkets.filter(m => m.id !== marketId).slice(0, 3);
+        }
+        
+        // Fallback: markets in same category
+        const sameCategory = allMarkets.filter(
+            m => m.category === market?.category && m.id !== marketId
+        );
+        if (sameCategory.length > 0) {
+            return sameCategory.slice(0, 3);
+        }
+        
+        // Last resort: trending markets (sorted by volume, highest first)
+        return allMarkets
+            .filter(m => m.id !== marketId)
+            .sort((a, b) => {
+                const volA = parseInt(a.volume?.replace(/[^\d]/g, '') || '0');
+                const volB = parseInt(b.volume?.replace(/[^\d]/g, '') || '0');
+                return volB - volA;
+            })
+            .slice(0, 3);
+    };
+
     return (
         <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
               <SearchFilterBar />
@@ -2028,7 +2060,7 @@ export default function MarketDetail() {
                         <div className="mt-8 pt-6 border-t border-border">
                             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Recommended Markets</h3>
                             <div className="space-y-2">
-                                {allMarkets.slice(0, 3).map((rec_market: any) => (
+                                {getRecommendedMarkets().map((rec_market: any) => (
                                     <Link 
                                         key={rec_market.id}
                                         href={`/markets/${rec_market.id}-${generateMarketSlug(rec_market.question)}`}
