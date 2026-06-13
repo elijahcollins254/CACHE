@@ -1056,7 +1056,7 @@ export default function MarketDetail() {
     const noProbability = 100 - market.yes_probability;
 
     // Trading fee constant
-    const TRADING_FEE_PERCENT = 0.5; // 0.5% fee
+    const TRADING_FEE_PERCENT = 2.0; // 2.0% fee
 
     // Calculate trading fee
     const calculateTradingFee = (amount: number): { fee: number; totalCost: number } => {
