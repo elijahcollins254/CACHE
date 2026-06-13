@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useMemo } from "react";
 import Image from "next/image";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
 import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
+import ParentMarketCard from "@/components/ParentMarketCard";
 import BitcoinCard from "@/components/BitcoinCard";
 
 const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Mentions", "Saved", "Resolved"];
@@ -17,6 +18,38 @@ export default function Home() {
   const allMarkets = useAppSelector(selectAllMarkets);
   const filteredMarkets = useAppSelector(selectFilteredMarkets);
   const loading = useAppSelector(selectMarketsLoading);
+
+  // Organize markets into parent/child structure
+  const organizedMarkets = useMemo(() => {
+    const marketMap = new Map();
+    const parentMarketIds = new Set();
+    const childMarketIds = new Set();
+
+    // First pass: identify parent markets and group children
+    const grouped: { [key: string]: any[] } = {};
+    
+    filteredMarkets.forEach((market) => {
+      // Check if market has children (based on your API structure)
+      if (market.children && Array.isArray(market.children) && market.children.length > 0) {
+        parentMarketIds.add(market.id);
+        grouped[market.id] = market.children;
+        market.children.forEach((child: any) => {
+          childMarketIds.add(child.id);
+        });
+      }
+    });
+
+    // Return organized structure: display only parents and standalone markets
+    return {
+      displayMarkets: filteredMarkets.filter((market) => {
+        // Show if it's a parent market OR if it's not a child market
+        return parentMarketIds.has(market.id) || !childMarketIds.has(market.id);
+      }),
+      parentGroups: grouped,
+      parentMarketIds,
+      childMarketIds,
+    };
+  }, [filteredMarkets]);
 
   // Load saved markets from localStorage on mount
   useEffect(() => {
@@ -71,13 +104,22 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300">
-            {filteredMarkets.length > 0 ? (
-              filteredMarkets.map((market, index) => (
-                <div key={market.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: `${index * 50}ms`}}>
-                  <MarketCard market={market} />
-                </div>
-              ))
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300 auto-rows-max">
+            {organizedMarkets.displayMarkets.length > 0 ? (
+              organizedMarkets.displayMarkets.map((market, index) => {
+                const isParent = organizedMarkets.parentMarketIds.has(market.id);
+                const childMarkets = organizedMarkets.parentGroups[market.id] || [];
+
+                return (
+                  <div key={market.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: `${index * 50}ms`}}>
+                    {isParent ? (
+                      <ParentMarketCard parentMarket={market} childMarkets={childMarkets} />
+                    ) : (
+                      <MarketCard market={market} />
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <div className="col-span-full py-20 text-center animate-in fade-in duration-300">
                 <p className="text-muted-foreground text-lg">No markets found in this category.</p>
