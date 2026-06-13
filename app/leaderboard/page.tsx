@@ -105,18 +105,16 @@ export default function LeaderboardPage() {
         <SearchFilterBar />
       </Suspense>
 
-      <main className="mx-auto max-w-[1400px] px-4 md:px-8 pt-48 pb-20 relative z-0">
-
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">Leaderboard</h1>
-          <p className="text-muted-foreground mt-2">See who's winning on Polymarket</p>
+      <main className="mx-auto max-w-[1400px] px-4 md:px-8 pt-4 pb-20 relative z-0">
+        <div className="mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Leaderboard</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Leaderboard - Left Column */}
           <div className="lg:col-span-2 flex flex-col overflow-hidden">
             {/* Controls - Sticky */}
-            <div className="bg-background sticky top-0 z-10 space-y-6 pb-8 border-b border-border/30">
+            <div className="bg-background sticky top-0 z-10 space-y-4 pb-4 border-b border-border/30">
               {/* Time Period Tabs */}
               <div className="flex gap-0.5 border-b border-border/20">
                 {(["today", "weekly", "monthly", "all"] as const).map((period) => (
@@ -135,7 +133,7 @@ export default function LeaderboardPage() {
               </div>
 
               {/* Search and Filters */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
                   <Search className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground/50" />
                   <input
@@ -143,7 +141,7 @@ export default function LeaderboardPage() {
                     placeholder="Search traders"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-5 py-3 bg-muted/50 border border-border/30 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-foreground/30 focus:bg-muted transition"
+                    className="w-full pl-12 pr-4 py-2 text-sm bg-muted/50 border border-border/30 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-foreground/30 focus:bg-muted transition"
                   />
                 </div>
 
@@ -151,7 +149,7 @@ export default function LeaderboardPage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-5 py-3 bg-muted/50 border border-border/30 rounded-xl text-foreground hover:bg-muted/70 transition focus:outline-none focus:ring-1 focus:ring-foreground/30"
+                  className="px-4 py-2 text-sm bg-muted/50 border border-border/30 rounded-lg text-foreground hover:bg-muted/70 transition focus:outline-none focus:ring-1 focus:ring-foreground/30"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -161,10 +159,10 @@ export default function LeaderboardPage() {
                 </select>
 
                 {/* Metric Toggle */}
-                <div className="flex gap-1 bg-muted/30 p-1 rounded-xl border border-border/30">
+                <div className="flex gap-1 bg-muted/30 p-0.5 rounded-lg border border-border/30 shrink-0">
                   <button
                     onClick={() => setSortBy("profit")}
-                    className={`px-5 py-2 rounded-lg transition font-semibold text-sm ${
+                    className={`px-3 py-1.5 rounded-md transition font-semibold text-xs ${
                       sortBy === "profit"
                         ? "bg-foreground text-background shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
@@ -174,7 +172,7 @@ export default function LeaderboardPage() {
                   </button>
                   <button
                     onClick={() => setSortBy("volume")}
-                    className={`px-5 py-2 rounded-lg transition font-semibold text-sm ${
+                    className={`px-3 py-1.5 rounded-md transition font-semibold text-xs ${
                       sortBy === "volume"
                         ? "bg-foreground text-background shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
@@ -207,7 +205,7 @@ export default function LeaderboardPage() {
             ) : (
               <div className="space-y-2">
                 {/* Header Row */}
-                <div className="hidden md:grid md:grid-cols-12 gap-6 px-6 py-4 text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest">
+                <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider">
                   <div className="col-span-6">Trader</div>
                   <div className="col-span-3 text-right">{sortBy === "profit" ? "Profit/Loss" : "Volume"}</div>
                   <div className="col-span-3 text-right">Balance</div>
@@ -217,34 +215,34 @@ export default function LeaderboardPage() {
                 {filteredLeaders.map((leader, index) => (
                   <div
                     key={leader.id}
-                    className="group grid grid-cols-12 gap-4 md:gap-6 px-4 md:px-6 py-4 md:py-5 bg-muted/20 hover:bg-muted/40 rounded-2xl border border-border/20 hover:border-border/40 transition-all duration-200 items-center backdrop-blur-sm"
+                    className="group grid grid-cols-12 gap-3 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-muted/15 hover:bg-muted/30 rounded-lg border border-border/20 hover:border-border/30 transition-all duration-200 items-center backdrop-blur-sm"
                   >
-                    {/* Medal for top 3 */}
+                    {/* Rank for top 3 */}
                     <div className="col-span-1 flex items-center justify-center">
-                      {index === 0 && <span className="text-2xl">🥇</span>}
-                      {index === 1 && <span className="text-2xl">🥈</span>}
-                      {index === 2 && <span className="text-2xl">🥉</span>}
+                      {index === 0 && <span className="text-xs font-bold text-amber-600 dark:text-amber-400">1st</span>}
+                      {index === 1 && <span className="text-xs font-bold text-gray-400 dark:text-gray-500">2nd</span>}
+                      {index === 2 && <span className="text-xs font-bold text-orange-600 dark:text-orange-400">3rd</span>}
+                      {index > 2 && <span className="text-xs font-semibold text-muted-foreground">{index + 1}</span>}
                     </div>
 
                     {/* Trader Info */}
                     <div className="col-span-11 md:col-span-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-full flex-shrink-0 ring-1 ring-border ${colors[index % colors.length]} group-hover:scale-110 transition`}></div>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-8 w-8 rounded-full flex-shrink-0 ring-1 ring-border ${colors[index % colors.length]} group-hover:scale-105 transition`}></div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-sm text-foreground truncate">
+                          <p className="font-semibold text-xs md:text-sm text-foreground truncate">
                             {leader.full_name}
                             {currentUserPhone === leader.phone_number && (
                               <span className="ml-2 inline-block px-2 py-1 text-xs font-bold bg-blue-500/20 text-blue-500 rounded-lg">You</span>
                             )}
                           </p>
-                          <p className="text-xs text-muted-foreground/60 truncate mt-0.5">{leader.phone_number}</p>
                         </div>
                       </div>
                     </div>
                     
                     {/* Profit/Loss or Volume */}
                     <div className="col-span-6 md:col-span-3 text-right">
-                      <p className={`font-semibold text-sm ${
+                      <p className={`font-semibold text-xs md:text-sm ${
                         parseFloat(leader.balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600'
                       }`}>
                         {sortBy === "profit"
@@ -255,7 +253,7 @@ export default function LeaderboardPage() {
 
                     {/* Balance */}
                     <div className="hidden md:col-span-3 md:text-right">
-                      <p className="font-semibold text-sm text-green-600 dark:text-green-400">KES {parseFloat(leader.balance).toLocaleString()}</p>
+                      <p className="font-semibold text-xs md:text-sm text-green-600 dark:text-green-400">KES {parseFloat(leader.balance).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -266,31 +264,30 @@ export default function LeaderboardPage() {
 
           {/* Right Sidebar - Biggest Wins */}
           <div className="lg:col-span-1 flex flex-col overflow-hidden">
-            <div className="bg-muted/20 border border-border/20 rounded-2xl p-6 flex flex-col flex-1 overflow-hidden backdrop-blur-sm">
-              <h2 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-3 flex-shrink-0">
-                <span className="text-2xl">🏆</span>
-                <span>Biggest wins</span>
+            <div className="bg-muted/20 border border-border/20 rounded-lg p-4 flex flex-col flex-1 overflow-hidden backdrop-blur-sm">
+              <h2 className="text-sm font-semibold text-foreground mb-3 flex-shrink-0 uppercase tracking-wider text-muted-foreground/70">
+                Top Wins
               </h2>
 
-              <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-muted space-y-3 max-h-[calc(100vh-320px)]">
+              <div className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-muted space-y-2 max-h-[calc(100vh-320px)]">
                 {topWins.map((win, index) => (
-                  <div key={win.id} className="group flex items-start gap-3 pb-3 border-b border-border/20 last:border-b-0 hover:bg-muted/30 p-3 -m-3 rounded-xl transition">
-                    {/* Medal */}
-                    <div className="text-2xl flex-shrink-0">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
-                      {index > 2 && <div className="h-7 w-7 flex items-center justify-center text-xs font-bold text-muted-foreground/60 bg-foreground/10 rounded-full">{index + 1}</div>}
+                  <div key={win.id} className="group flex items-start gap-2 pb-2 border-b border-border/20 last:border-b-0 hover:bg-muted/30 p-2 -m-2 rounded-md transition">
+                    {/* Rank */}
+                    <div className="text-xs flex-shrink-0 font-bold w-5 h-5 flex items-center justify-center rounded-full bg-foreground/10 text-foreground/70">
+                      {index === 0 && '1'}
+                      {index === 1 && '2'}
+                      {index === 2 && '3'}
+                      {index > 2 && index + 1}
                     </div>
 
                     {/* Avatar */}
-                    <div className={`h-8 w-8 rounded-full flex-shrink-0 ring-1 ring-border ${win.avatar_color} group-hover:scale-110 transition`}></div>
+                    <div className={`h-6 w-6 rounded-full flex-shrink-0 ring-1 ring-border ${win.avatar_color} group-hover:scale-105 transition`}></div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{win.user_name}</p>
-                      <p className="text-xs text-muted-foreground/70 truncate mb-1.5">{win.market_title}</p>
-                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                      <p className="text-xs font-semibold text-foreground truncate">{win.user_name}</p>
+                      <p className="text-xs text-muted-foreground/70 truncate mb-1">{win.market_title}</p>
+                      <p className="text-xs font-semibold text-green-600 dark:text-green-400">
                         +KES {win.profit.toLocaleString()}
                       </p>
                     </div>
