@@ -26,6 +26,8 @@ export interface Market {
     parentEventTitle?: string;
     groupItemTitle?: string;
     groupItemThreshold?: string;
+    // Child markets for grouped parent markets
+    children?: Market[];
 }
 
 interface MarketsState {
