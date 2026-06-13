@@ -1257,32 +1257,41 @@ export default function MarketDetail() {
                             </div>
                         </div>
 
-                        {/* Related Markets Options - Same Question */}
+                        {/* Related Markets Options - Same Question - Show as Full Cards */}
                         {relatedMarkets && relatedMarkets.length > 0 && (
-                            <div className="bg-muted rounded-2xl p-4">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Other Options</h3>
-                                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-                                    <div className="flex gap-2 min-w-min pb-2">
-                                        {relatedMarkets.map((relatedMarket: any) => (
-                                            <Link
-                                                key={relatedMarket.id}
-                                                href={`/markets/${relatedMarket.id}-${generateMarketSlug(relatedMarket.question)}`}
-                                                className="shrink-0 rounded-lg border-2 border-border hover:border-blue-400 bg-background hover:bg-muted/50 p-3 transition-all duration-300 min-w-[140px] cursor-pointer group"
-                                            >
-                                                <div className="text-[11px] font-semibold text-muted-foreground group-hover:text-foreground line-clamp-2 mb-2">
+                            <div>
+                                <h3 className="text-sm font-bold text-foreground mb-3">More Options</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {relatedMarkets.map((relatedMarket: any) => (
+                                        <Link
+                                            key={relatedMarket.id}
+                                            href={`/markets/${relatedMarket.id}-${generateMarketSlug(relatedMarket.question)}`}
+                                            className="group block overflow-hidden rounded-2xl border border-border bg-muted shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 p-3 cursor-pointer"
+                                        >
+                                            <div className="space-y-2">
+                                                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                                     {relatedMarket.description || `Option ${relatedMarket.id}`}
                                                 </div>
-                                                <div>
-                                                    <div className="text-lg font-bold text-foreground">
-                                                        {relatedMarket.yes_probability}%
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2">
+                                                        <div className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300 mb-1">Yes</div>
+                                                        <div className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
+                                                            {relatedMarket.yes_probability}%
+                                                        </div>
                                                     </div>
-                                                    <div className="text-[9px] text-muted-foreground">
-                                                        {relatedMarket.volume || 'KES 0'}
+                                                    <div className="rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-2">
+                                                        <div className="text-[10px] font-medium text-rose-700 dark:text-rose-300 mb-1">No</div>
+                                                        <div className="text-lg font-bold text-rose-900 dark:text-rose-100">
+                                                            {relatedMarket.no_probability}%
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </Link>
-                                        ))}
-                                    </div>
+                                                <div className="text-xs text-muted-foreground pt-1 border-t border-border">
+                                                    {relatedMarket.volume || 'KES 0'} • {relatedMarket.end_date}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
                                 </div>
                             </div>
                         )}
