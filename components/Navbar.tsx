@@ -327,14 +327,14 @@ export default function Navbar() {
                                             <User className="h-4 w-4" />
                                             Profile
                                         </Link>
-                                        <Link
+                                        {/* <Link
                                             href="/liquidity"
                                             onClick={() => setIsMobileProfileOpen(false)}
                                             className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground font-bold text-sm hover:bg-muted transition-all"
                                         >
                                             <Droplet className="h-4 w-4" />
                                             Liquidity
-                                        </Link>
+                                        </Link> */}
                                         <Link
                                             href="/how-it-works"
                                             onClick={() => setIsMobileProfileOpen(false)}
