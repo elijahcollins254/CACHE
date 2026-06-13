@@ -246,6 +246,7 @@ export default function MarketDetail() {
     const [availableShares, setAvailableShares] = useState<number | null>(null);
     const [loadingAvailableShares, setLoadingAvailableShares] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [relatedMarkets, setRelatedMarkets] = useState<any[]>([]);  // Markets with same question
     const chatInputRef = useRef<HTMLDivElement>(null);
 
     // Scroll to chat input when replying
@@ -700,6 +701,7 @@ export default function MarketDetail() {
                 setMarketPositions(data.positions || []);
                 setTopHolders(data.top_holders || { yes: [], no: [] });
                 setMarketActivity(data.activity || []);
+                setRelatedMarkets(data.related_markets || []);  // Set related markets with same question
                 
                 // Update market with description if provided
                 if (data.description) {
@@ -1254,6 +1256,36 @@ export default function MarketDetail() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Related Markets Options - Same Question */}
+                        {relatedMarkets && relatedMarkets.length > 0 && (
+                            <div className="bg-muted rounded-2xl p-4">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Other Options</h3>
+                                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                                    <div className="flex gap-2 min-w-min pb-2">
+                                        {relatedMarkets.map((relatedMarket: any) => (
+                                            <Link
+                                                key={relatedMarket.id}
+                                                href={`/markets/${relatedMarket.id}-${generateMarketSlug(relatedMarket.question)}`}
+                                                className="shrink-0 rounded-lg border-2 border-border hover:border-blue-400 bg-background hover:bg-muted/50 p-3 transition-all duration-300 min-w-[140px] cursor-pointer group"
+                                            >
+                                                <div className="text-[11px] font-semibold text-muted-foreground group-hover:text-foreground line-clamp-2 mb-2">
+                                                    {relatedMarket.description || `Option ${relatedMarket.id}`}
+                                                </div>
+                                                <div>
+                                                    <div className="text-lg font-bold text-foreground">
+                                                        {relatedMarket.yes_probability}%
+                                                    </div>
+                                                    <div className="text-[9px] text-muted-foreground">
+                                                        {relatedMarket.volume || 'KES 0'}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Probability Display */}
                         <div className="bg-muted rounded-2xl p-4">
