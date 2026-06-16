@@ -729,8 +729,11 @@ export default function MarketDetail() {
         setChatError("");
 
         try {
+            // Use external_id for Polymarket, local marketId for local markets
+            const chatMarketId = market?.source === 'polymarket' ? market.external_id : marketId;
+            
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/chat/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${chatMarketId}/chat/`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
