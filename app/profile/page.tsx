@@ -304,6 +304,7 @@ export default function Profile() {
                                         setIsEditing(false);
                                         setEditData({ 
                                             full_name: user.full_name || '',
+                                            username: user.username || '',
                                             phone_number: user.phone_number || ''
                                         });
                                     }}
