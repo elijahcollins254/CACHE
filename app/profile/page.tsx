@@ -259,7 +259,7 @@ export default function Profile() {
                                     type="text"
                                     value={editData.username}
                                     onChange={(e) => setEditData({ ...editData, username: e.target.value })}
-                                    disabled={user.username} // Disable editing if username already set
+                                    disabled={!!user.username} // Disable editing if username already set
                                     placeholder="Your unique username"
                                     className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
