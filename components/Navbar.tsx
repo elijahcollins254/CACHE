@@ -298,7 +298,7 @@ export default function Navbar() {
                                     aria-label="User menu"
                                 >
                                     <div className="h-6 w-6 rounded-full bg-black flex items-center justify-center text-xs text-white font-bold">
-                                        {user.full_name.charAt(0)}
+                                        {user.username ? user.username.charAt(0) : user.full_name.charAt(0)}
                                     </div>
                                 </button>
                                 {isMobileProfileOpen && (
@@ -374,10 +374,10 @@ export default function Navbar() {
                                     aria-label="User menu"
                                 >
                                     <div className="h-5 w-5 md:h-6 md:w-6 rounded-full bg-black flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
-                                        {user.full_name.charAt(0)}
+                                        {user.username ? user.username.charAt(0) : user.full_name.charAt(0)}
                                     </div>
                                     <span className="hidden sm:block text-xs md:text-xs font-bold text-foreground truncate max-w-20">
-                                        {user.full_name.split(' ')[0]}
+                                        {user.username ? `@${user.username}` : user.full_name.split(' ')[0]}
                                     </span>
                                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                                 </button>

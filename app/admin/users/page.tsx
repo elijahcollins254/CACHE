@@ -193,6 +193,7 @@ export default function AdminUsersPage() {
                                     <tr className="border-b border-border">
                                         <th className="text-left py-3 px-4 font-bold text-foreground">Phone</th>
                                         <th className="text-left py-3 px-4 font-bold text-foreground">Email</th>
+                                        <th className="text-left py-3 px-4 font-bold text-foreground">Username</th>
                                         <th className="text-left py-3 px-4 font-bold text-foreground">Name</th>
                                         <th className="text-left py-3 px-4 font-bold text-foreground">Joined</th>
                                         <th className="text-center py-3 px-4 font-bold text-foreground">Support Staff</th>
@@ -209,7 +210,10 @@ export default function AdminUsersPage() {
                                                     <p className="text-foreground">{user.email || "N/A"}</p>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <p className="text-foreground">{user.name || "N/A"}</p>
+                                                    <p className="font-semibold text-foreground">{user.username ? `@${user.username}` : "N/A"}</p>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <p className="text-foreground">{user.name || user.full_name || "N/A"}</p>
                                                 </td>
                                                 <td className="py-3 px-4">
                                                     <p className="text-sm text-muted-foreground">
@@ -232,7 +236,7 @@ export default function AdminUsersPage() {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                                            <td colSpan={6} className="py-8 text-center text-muted-foreground">
                                                 No users found
                                             </td>
                                         </tr>

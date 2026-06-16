@@ -8,6 +8,7 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 interface LeaderboardEntry {
   id: number;
   full_name: string;
+  username: string;
   phone_number: string;
   balance: string;
   total_winnings: string;
@@ -97,6 +98,7 @@ export default function LeaderboardPage() {
 
   const filteredLeaders = leaders.filter(leader =>
     leader.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    leader.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     leader.phone_number.includes(searchQuery)
   );
 
@@ -231,7 +233,7 @@ export default function LeaderboardPage() {
                         <div className={`h-8 w-8 rounded-full flex-shrink-0 ring-1 ring-border ${colors[index % colors.length]} group-hover:scale-105 transition`}></div>
                         <div className="min-w-0">
                           <p className="font-semibold text-xs md:text-sm text-foreground truncate">
-                            {leader.full_name}
+                            {leader.username ? `@${leader.username}` : leader.full_name}
                             {currentUserPhone === leader.phone_number && (
                               <span className="ml-2 inline-block px-2 py-1 text-xs font-bold bg-blue-500/20 text-blue-500 rounded-lg">You</span>
                             )}

@@ -26,7 +26,7 @@ export default function Profile() {
     const user = useAppSelector(selectUser);
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editData, setEditData] = useState({ full_name: '', phone_number: '' });
+    const [editData, setEditData] = useState({ full_name: '', username: '', phone_number: '' });
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeHistoryTab, setActiveHistoryTab] = useState<'all' | 'deposits' | 'withdrawals'>('all');
@@ -41,6 +41,7 @@ export default function Profile() {
 
         setEditData({ 
             full_name: user.full_name || '',
+            username: user.username || '',
             phone_number: user.phone_number || ''
         });
         fetchTransactions();
@@ -209,6 +210,13 @@ export default function Profile() {
                             <div className="flex items-center gap-3">
                                 <Phone className="h-5 w-5 text-muted-foreground" />
                                 <div className="flex-1">
+                                    <p className="text-sm text-muted-foreground">Username</p>
+                                    <p className="font-semibold text-foreground text-lg">{user.username ? `@${user.username}` : 'Not set'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Phone className="h-5 w-5 text-muted-foreground" />
+                                <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <p className="text-sm text-muted-foreground">Phone Number</p>
                                         {user.phone_locked && (
@@ -245,6 +253,20 @@ export default function Profile() {
                         </div>
                     ) : (
                         <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-muted-foreground mb-2">Username</label>
+                                <input
+                                    type="text"
+                                    value={editData.username}
+                                    onChange={(e) => setEditData({ ...editData, username: e.target.value })}
+                                    disabled={user.username} // Disable editing if username already set
+                                    placeholder="Your unique username"
+                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                                {user.username && (
+                                    <p className="text-xs text-muted-foreground mt-1">Username cannot be changed once set</p>
+                                )}
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-muted-foreground mb-2">Full Name</label>
                                 <input

@@ -5,6 +5,7 @@ export interface User {
     id: number;
     phone_number: string;
     full_name: string;
+    username: string;
     balance: string;
     kyc_verified: boolean;
     phone_locked?: boolean;

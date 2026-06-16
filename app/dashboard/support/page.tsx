@@ -13,8 +13,10 @@ interface Ticket {
   subject: string;
   user: number;
   user_name: string;
+  user_username: string;
   assigned_to: number | null;
   assigned_to_name: string | null;
+  assigned_to_username: string | null;
   status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
   created_at_iso: string;
   message_count: number;
@@ -30,6 +32,7 @@ interface Message {
   id: number;
   sender: number;
   sender_name: string;
+  sender_username: string;
   message: string;
   timestamp: string;
   is_from_user: boolean;
@@ -38,6 +41,7 @@ interface Message {
 interface SupportStaff {
   id: number;
   full_name: string;
+  username: string;
   phone_number: string;
 }
 
@@ -334,9 +338,9 @@ export default function SupportDashboard() {
                         </span>
                       </div>
                       <p className="text-sm line-clamp-2">{ticket.subject}</p>
-                      <p className="text-xs text-muted-foreground mt-1">From: {ticket.user_name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">From: {ticket.user_username ? `@${ticket.user_username}` : ticket.user_name}</p>
                       {ticket.assigned_to_name && (
-                        <p className="text-xs text-muted-foreground">Assigned to: {ticket.assigned_to_name}</p>
+                        <p className="text-xs text-muted-foreground">Assigned to: {ticket.assigned_to_username ? `@${ticket.assigned_to_username}` : ticket.assigned_to_name}</p>
                       )}
                       <p className="text-xs text-muted-foreground mt-1">{ticket.message_count} messages</p>
                     </button>
@@ -363,7 +367,7 @@ export default function SupportDashboard() {
                       </div>
                       <h4 className="text-lg font-semibold text-foreground">{selectedTicket.subject}</h4>
                       <p className="text-sm text-muted-foreground mt-1">
-                        From: <span className="font-semibold">{selectedTicket.user_name}</span>
+                        From: <span className="font-semibold">{selectedTicket.user_username ? `@${selectedTicket.user_username}` : selectedTicket.user_name}</span>
                       </p>
                     </div>
                     <button
@@ -400,7 +404,7 @@ export default function SupportDashboard() {
                         <option value="null">Unassigned</option>
                         {supportStaff.map((staff) => (
                           <option key={staff.id} value={staff.id.toString()}>
-                            {staff.full_name}
+                            {staff.username ? `@${staff.username}` : staff.full_name}
                           </option>
                         ))}
                       </select>
@@ -422,7 +426,7 @@ export default function SupportDashboard() {
                             : "bg-foreground text-background"
                         }`}
                       >
-                        <p className="text-xs font-semibold opacity-75 mb-1">{msg.sender_name}</p>
+                        <p className="text-xs font-semibold opacity-75 mb-1">{msg.sender_username ? `@${msg.sender_username}` : msg.sender_name}</p>
                         <p className="text-sm">{msg.message}</p>
                         <p className={`text-xs mt-1 ${msg.is_from_user ? "text-muted-foreground" : "opacity-75"}`}>
                           {new Date(msg.timestamp).toLocaleString()}

@@ -786,7 +786,8 @@ export default function AdminPanel() {
                                         <div className="space-y-6">
                                             {/* User Info */}
                                             <div className="border border-border rounded-lg p-6">
-                                                <h3 className="text-lg font-bold text-black mb-4">{selectedUserDetails.full_name}</h3>
+                                                <h3 className="text-lg font-bold text-black mb-2">{selectedUserDetails.username ? `@${selectedUserDetails.username}` : selectedUserDetails.full_name}</h3>
+                                                <p className="text-sm text-muted-foreground mb-4">{selectedUserDetails.full_name}</p>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <p className="text-xs text-muted-foreground">Phone</p>
@@ -941,7 +942,8 @@ export default function AdminPanel() {
                                                 {users.map((user) => (
                                                     <div key={user.id} className="border border-border rounded-lg p-4 hover:border-black transition-all flex items-center justify-between">
                                                         <div className="flex-1">
-                                                            <p className="font-bold text-black">{user.full_name}</p>
+                                                            <p className="font-bold text-black">{user.username ? `@${user.username}` : user.full_name}</p>
+                                                            <p className="text-sm text-muted-foreground">{user.full_name}</p>
                                                             <p className="text-sm text-muted-foreground">{user.phone_number}</p>
                                                             <div className="flex gap-2 mt-2 text-xs">
                                                                 <span className="px-2 py-1 bg-muted rounded">

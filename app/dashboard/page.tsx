@@ -141,7 +141,7 @@ export default function DashboardHub() {
                             </Link>
                             <div>
                                 <h1 className="text-4xl font-bold">Dashboard</h1>
-                                <p className="text-muted-foreground text-sm">Welcome back, {authUser?.full_name || "User"}</p>
+                                <p className="text-muted-foreground text-sm">Welcome back, {authUser?.username ? `@${authUser.username}` : authUser?.full_name || "User"}</p>
                             </div>
                         </div>
                         <button
