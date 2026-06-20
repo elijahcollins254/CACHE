@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets } from "@/lib/redux/hooks";
 import { setFilteredMarkets } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
+import { parseVolume } from "@/lib/volume";
 import { Search, Sliders, TrendingUp } from "lucide-react";
 
 const categories = ["Trending", "New", "Politics", "Sports", "Economy", "Crypto", "Technology", "Geopolitics", "Environment", "Closing Soon", "Saved", "Resolved"];
@@ -68,8 +69,8 @@ export default function SearchFilterBar() {
             );
         })
         .sort((a, b) => {
-            const aVol = parseInt(a.volume.replace(/\D/g, '')) || 0;
-            const bVol = parseInt(b.volume.replace(/\D/g, '')) || 0;
+            const aVol = parseVolume(a.volume);
+            const bVol = parseVolume(b.volume);
             return bVol - aVol;
         })
         .slice(0, 6);
@@ -157,8 +158,8 @@ export default function SearchFilterBar() {
                 return b.id - a.id;
             } else if (activeCategory === "Trending" || sortBy === "volume") {
                 // Sort by volume descending
-                const aVol = parseInt(a.volume.replace(/\D/g, '')) || 0;
-                const bVol = parseInt(b.volume.replace(/\D/g, '')) || 0;
+                const aVol = parseVolume(a.volume);
+                const bVol = parseVolume(b.volume);
                 return bVol - aVol;
             } else if (sortBy === "probability") {
                 return b.yes_probability - a.yes_probability;

@@ -10,6 +10,7 @@ import { fetchUserData, logout } from "@/lib/redux/slices/authSlice";
 import { fetchNotifications, markAllNotificationsRead } from "@/lib/redux/slices/notificationsSlice";
 import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle, Droplet } from "lucide-react";
 import { generateMarketSlug } from "@/lib/slugify";
+import { parseVolume } from "@/lib/volume";
 import DepositModal from "./DepositModal";
 import ThemeToggle from "./ThemeToggle";
 
@@ -601,8 +602,8 @@ export default function Navbar() {
                             // Sort by volume for Trending
                             if (mobileActiveCategory === "Trending") {
                                 filtered = filtered.sort((a, b) => {
-                                    const aVol = parseInt(a.volume.replace(/\D/g, '')) || 0;
-                                    const bVol = parseInt(b.volume.replace(/\D/g, '')) || 0;
+                                    const aVol = parseVolume(a.volume);
+                                    const bVol = parseVolume(b.volume);
                                     return bVol - aVol;
                                 });
                             }
