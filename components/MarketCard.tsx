@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
+import { formatKES, polymarketProbabilityToKES } from "@/lib/currency";
 import ShareButton from "./ShareButton";
 import { useEffect, useState } from "react";
 
@@ -87,6 +88,7 @@ interface MarketCardProps {
     end_date: string;
     is_live?: boolean;
     saved?: boolean;
+    source?: "polymarket" | "local";
     market_type?: string;
     options?: Array<{
       id: number;
@@ -151,8 +153,13 @@ export default function MarketCard({ market }: MarketCardProps) {
 
   const yesProbability = market.yes_probability;
   const noProbability = 100 - yesProbability;
-  const yesPriceKes = getCurrentSharePrice(market.yes_probability, "Yes");
-  const noPriceKes = getCurrentSharePrice(market.yes_probability, "No");
+  const isPolymarket = market.source === "polymarket";
+  const yesPriceKes = isPolymarket
+    ? polymarketProbabilityToKES(yesProbability)
+    : getCurrentSharePrice(yesProbability, "Yes");
+  const noPriceKes = isPolymarket
+    ? polymarketProbabilityToKES(noProbability)
+    : getCurrentSharePrice(yesProbability, "No");
 
   const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
 
@@ -163,7 +170,9 @@ export default function MarketCard({ market }: MarketCardProps) {
           <div className="flex gap-1.5 min-w-min pb-0.5">
             {market.options?.map((option) => {
               const optionYesProb = option.yes_probability;
-              const optionPriceKes = getCurrentSharePrice(optionYesProb, "Yes");
+              const optionPriceKes = isPolymarket
+                ? polymarketProbabilityToKES(optionYesProb)
+                : getCurrentSharePrice(optionYesProb, "Yes");
               return (
                 <div
                   key={option.id}
@@ -177,7 +186,7 @@ export default function MarketCard({ market }: MarketCardProps) {
                       {optionYesProb}%
                     </div>
                     <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
-                      KES {optionPriceKes.toFixed(2)}
+                      {formatKES(optionPriceKes)}
                     </div>
                   </div>
                 </div>
@@ -197,7 +206,7 @@ export default function MarketCard({ market }: MarketCardProps) {
             <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
               {yesProbability}%
             </div>
-            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">KES {yesPriceKes.toFixed(2)}</span>
+            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">{formatKES(yesPriceKes)}</span>
           </div>
         </div>
 
@@ -207,7 +216,7 @@ export default function MarketCard({ market }: MarketCardProps) {
             <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
               {noProbability}%
             </div>
-            <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">KES {noPriceKes.toFixed(2)}</span>
+            <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">{formatKES(noPriceKes)}</span>
           </div>
         </div>
       </div>

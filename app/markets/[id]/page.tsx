@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading,
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
+import { USD_TO_KES, convertUSDVolumeToKES, formatKES, polymarketProbabilityToKES } from "@/lib/currency";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
@@ -200,6 +201,18 @@ function getCurrentSharePrice(
     const price = calculateLMSRBuyCost(q_yes, q_no, 1, outcome, b);
     
     return price;
+}
+
+function getDisplaySharePriceKes(market: any, probability: number, outcome: string): number {
+    if (market?.source === "polymarket") {
+        return polymarketProbabilityToKES(probability);
+    }
+
+    return getCurrentSharePrice(market, outcome);
+}
+
+function getPayoutPerShareKes(market: any): number {
+    return market?.source === "polymarket" ? USD_TO_KES : PAYOUT_PER_SHARE;
 }
 
 export default function MarketDetail() {
@@ -399,7 +412,7 @@ export default function MarketDetail() {
                         setMarket((prev: any) => ({
                             ...prev,
                             yes_probability: freshMarket.bestBid ? Math.round(freshMarket.bestBid * 100) : freshMarket.yes_probability,
-                            volume: freshMarket.volume,
+                            volume: convertUSDVolumeToKES(freshMarket.volume || freshMarket.volumeNum || 0),
                         }));
                         
                         console.log(`✓ Updated market price: ${freshMarket.bestBid ? Math.round(freshMarket.bestBid * 100) : freshMarket.yes_probability}%`);
@@ -872,9 +885,9 @@ export default function MarketDetail() {
                 let price: number;
                 
                 if (orderType === "market") {
-                    // Convert KES to USD (1 USD = 130 KES)
+                    // Convert KES to USD for Polymarket.
                     const kesAmount = Number(betAmount);
-                    const usdAmount = kesAmount / 130;
+                    const usdAmount = kesAmount / USD_TO_KES;
                     
                     // Round size to 8 decimal places (Polymarket requirement)
                     size = Math.round(usdAmount * 100000000) / 100000000;
@@ -968,26 +981,19 @@ export default function MarketDetail() {
 
                 if (orderType === "market") {
                     const amountValue = Number(betAmount);
-                    
-                    // Use LMSR to calculate actual shares bought and potential winnings
-                    const b = market.b || LMSR_B;
-                    const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
-                    
-                    const actualShares = estimateSharesFromKES(amountValue, q_yes, q_no, selectedOutcome, b);
-                    
-                    // Max payout if you win: shares * 100 KES
-                    const potentialWinnings = actualShares * PAYOUT_PER_SHARE;
-                    
-                    let probabilityValue;
-                    if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                        const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                        if (option) {
-                            probabilityValue = selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
-                        } else {
-                            probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
-                        }
+                    const probabilityValue = getSelectedOutcomeProbability();
+                    let potentialWinnings = 0;
+
+                    if (isPolymarket) {
+                        const priceKes = polymarketProbabilityToKES(probabilityValue);
+                        const actualShares = priceKes > 0 ? amountValue / priceKes : 0;
+                        potentialWinnings = actualShares * getPayoutPerShareKes(market);
                     } else {
-                        probabilityValue = selectedOutcome === "Yes" ? market.yes_probability : 100 - market.yes_probability;
+                        // Use LMSR to calculate actual shares bought and potential winnings.
+                        const b = market.b || LMSR_B;
+                        const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
+                        const actualShares = estimateSharesFromKES(amountValue, q_yes, q_no, selectedOutcome, b);
+                        potentialWinnings = actualShares * PAYOUT_PER_SHARE;
                     }
                     
                     lastBetData = {
@@ -1101,10 +1107,28 @@ export default function MarketDetail() {
     // Use fetched price history or fallback to generated data
     const chartData = priceHistory;
 
+    const getSelectedOutcomeProbability = () => {
+        if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
+            const option = market.options?.find((o: any) => o.id === selectedOptionId);
+            if (option) {
+                return selectedOutcome === "Yes" ? option.yes_probability : (100 - option.yes_probability);
+            }
+        }
+
+        return selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+    };
+
     // Calculate estimated payout return using LMSR
     const calculateEstimatedReturn = () => {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
+
+        if (market?.source === "polymarket") {
+            const priceKes = polymarketProbabilityToKES(getSelectedOutcomeProbability());
+            if (priceKes <= 0) return 0;
+            const estimatedShares = amount / priceKes;
+            return estimatedShares * getPayoutPerShareKes(market);
+        }
         
         const b = market?.b || LMSR_B;
         const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
@@ -1140,6 +1164,20 @@ export default function MarketDetail() {
             };
         }
         
+        if (market.source === "polymarket") {
+            const totalCost = validShares * polymarketProbabilityToKES(limitPrice);
+            const maxPayout = validShares * getPayoutPerShareKes(market);
+            const winAmount = maxPayout * (1 - TRADING_FEE_PERCENT / 100);
+            const potentialProfit = winAmount - totalCost;
+
+            return {
+                totalCost: Number.isFinite(totalCost) ? totalCost : 0,
+                toWin: Number.isFinite(maxPayout - totalCost) ? (maxPayout - totalCost) : 0,
+                potentialProfit: Number.isFinite(potentialProfit) ? potentialProfit : 0,
+                winPayout: Number.isFinite(winAmount) ? winAmount : 0,
+            };
+        }
+
         const b = market.b || LMSR_B;
         const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
         
@@ -1374,7 +1412,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-green-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
-                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • {getCurrentSharePrice(market, "Yes").toFixed(2)} KES</span>
+                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • {formatKES(getDisplaySharePriceKes(market, market.yes_probability, "Yes"))}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1392,7 +1430,7 @@ export default function MarketDetail() {
                                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                                             <div>
                                                 <span className="font-semibold text-foreground block">No</span>
-                                                <span className="text-xs text-muted-foreground">{noProbability}% • {getCurrentSharePrice(market, "No").toFixed(2)} KES</span>
+                                                <span className="text-xs text-muted-foreground">{noProbability}% • {formatKES(getDisplaySharePriceKes(market, noProbability, "No"))}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1654,7 +1692,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                     }`}
                                                 >
-                                                    Yes ({option.yes_probability}%) KES {option.yes_probability}
+                                                    Yes ({option.yes_probability}%) {formatKES(getDisplaySharePriceKes(market, option.yes_probability, "Yes"))}
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -1667,7 +1705,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                     }`}
                                                 >
-                                                    No ({100 - option.yes_probability}%) KES {100 - option.yes_probability}
+                                                    No ({100 - option.yes_probability}%) {formatKES(getDisplaySharePriceKes(market, 100 - option.yes_probability, "No"))}
                                                 </button>
                                             </div>
                                         </div>
@@ -1731,8 +1769,10 @@ export default function MarketDetail() {
                                     <div className="space-y-2">
                                         {(() => {
                                             const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                                            const yesPriceKes = option?.yes_probability ? option.yes_probability : 0;
-                                            const noPriceKes = option?.yes_probability ? (100 - option.yes_probability) : 0;
+                                            const yesProbability = option?.yes_probability || 0;
+                                            const noProbability = 100 - yesProbability;
+                                            const yesPriceKes = getDisplaySharePriceKes(market, yesProbability, "Yes");
+                                            const noPriceKes = getDisplaySharePriceKes(market, noProbability, "No");
                                             return (
                                                 <>
                                                     <button
@@ -1743,7 +1783,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                         }`}
                                                     >
-                                                        Yes ({option?.yes_probability}%) KES {yesPriceKes.toFixed(2)}
+                                                        Yes ({yesProbability}%) {formatKES(yesPriceKes)}
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOutcome("No")}
@@ -1753,7 +1793,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                         }`}
                                                     >
-                                                        No ({100 - (option?.yes_probability || 0)}%) KES {noPriceKes.toFixed(2)}
+                                                        No ({noProbability}%) {formatKES(noPriceKes)}
                                                     </button>
                                                 </>
                                             );
@@ -1772,7 +1812,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes <span className="text-xs font-bold ml-1">({market.yes_probability}%) KES {market.yes_probability}</span>
+                                        Yes <span className="text-xs font-bold ml-1">({market.yes_probability}%) {formatKES(getDisplaySharePriceKes(market, market.yes_probability, "Yes"))}</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
@@ -1782,7 +1822,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                         }`}
                                     >
-                                        No <span className="text-xs font-bold ml-1">({noProbability}%) KES {noProbability}</span>
+                                        No <span className="text-xs font-bold ml-1">({noProbability}%) {formatKES(getDisplaySharePriceKes(market, noProbability, "No"))}</span>
                                     </button>
                                 </div>
                             )}
@@ -1913,7 +1953,9 @@ export default function MarketDetail() {
                                 {/* Fee Display for Limit Orders */}
                                 {activeTab === "buy" && (
                                     (() => {
-                                        const limitOrderCost = shares * (limitPrice / 100) * 100;
+                                        const limitOrderCost = market.source === "polymarket"
+                                            ? shares * polymarketProbabilityToKES(limitPrice)
+                                            : shares * (limitPrice / 100) * PAYOUT_PER_SHARE;
                                         const feeInfo = calculateTradingFee(limitOrderCost);
                                         return (
                                             <div className="bg-amber-950/30 rounded-lg p-3 mb-3 border border-amber-900/40">

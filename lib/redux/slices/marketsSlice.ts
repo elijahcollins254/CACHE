@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { convertUSDVolumeToKES } from '@/lib/currency';
 
 export interface Market {
     id: number;
@@ -49,31 +50,6 @@ const initialState: MarketsState = {
     savedMarketIds: [],
 };
 
-// USD to KES conversion rate
-const USD_TO_KES = 130;
-
-// Helper function to convert USD volume to KES format string
-const convertVolumeToKES = (usdVolume: string | number): string => {
-    try {
-        const numValue = typeof usdVolume === 'string' ? parseFloat(usdVolume) : usdVolume;
-        if (!isFinite(numValue) || numValue <= 0) return 'KES 0';
-        
-        const kesValue = numValue * USD_TO_KES;
-        
-        if (kesValue >= 1000000000) {
-            return `KES ${(kesValue / 1000000000).toFixed(1)}B`;
-        } else if (kesValue >= 1000000) {
-            return `KES ${(kesValue / 1000000).toFixed(1)}M`;
-        } else if (kesValue >= 1000) {
-            return `KES ${(kesValue / 1000).toFixed(1)}K`;
-        } else {
-            return `KES ${kesValue.toFixed(0)}`;
-        }
-    } catch (error) {
-        return 'KES 0';
-    }
-};
-
 // Helper function to transform Polymarket data to Market interface
 const transformPolymarketData = (polymarket: any): Market => {
     const metadata = polymarket.metadata || polymarket;
@@ -113,7 +89,7 @@ const transformPolymarketData = (polymarket: any): Market => {
 
     // Convert volume from USD to KES
     const volumeUSD = metadata.volume || metadata.volumeNum || polymarket.volume || 0;
-    const volumeKES = convertVolumeToKES(volumeUSD);
+    const volumeKES = convertUSDVolumeToKES(volumeUSD);
 
     // Get external_id - try multiple field names since Polymarket API might return it differently
     const externalId = polymarket.external_id || polymarket.id || polymarket.market_id || '';
