@@ -11,6 +11,18 @@ import { Search, Sliders, TrendingUp } from "lucide-react";
 
 const categories = ["Trending", "New", "Politics", "Sports", "Economy", "Crypto", "Technology", "Geopolitics", "Environment", "Closing Soon", "Saved", "Resolved"];
 
+const categorySlug = (value: string) => value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const categoryBySlug = new Map(categories.map((category) => [categorySlug(category), category]));
+
+const getCategoryFromPath = (pathname: string, fallback: string | null) => {
+    if (pathname.startsWith("/category")) {
+        const [, , slug] = pathname.split("/");
+        return slug ? categoryBySlug.get(slug) || "Trending" : "Trending";
+    }
+
+    return fallback || "Trending";
+};
+
 export default function SearchFilterBar() {
     const dispatch = useAppDispatch();
     const router = useRouter();
@@ -25,8 +37,7 @@ export default function SearchFilterBar() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState(() => {
-        // Initialize from URL param if present, otherwise default to "Trending"
-        return searchParams.get("category") || "Trending";
+        return getCategoryFromPath(pathname, searchParams.get("category"));
     });
     const [searchTab, setSearchTab] = useState<"markets" | "profiles">("markets");
     const [minProbability, setMinProbability] = useState(0);
@@ -65,7 +76,8 @@ export default function SearchFilterBar() {
             if (searchQuery.trim().length === 0) return true; // Show all when empty
             return (
                 m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                m.category.toLowerCase().includes(searchQuery.toLowerCase())
+                m.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (m.subcategory || "").toLowerCase().includes(searchQuery.toLowerCase())
             );
         })
         .sort((a, b) => {
@@ -78,10 +90,8 @@ export default function SearchFilterBar() {
     // Update activeCategory when URL params change
     useEffect(() => {
         const categoryParam = searchParams.get("category");
-        if (categoryParam) {
-            setActiveCategory(categoryParam);
-        }
-    }, [searchParams]);
+        setActiveCategory(getCategoryFromPath(pathname, categoryParam));
+    }, [pathname, searchParams]);
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -141,7 +151,8 @@ export default function SearchFilterBar() {
 
         let filtered = marketsToFilter.filter(m => {
             const matchSearch = m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                m.category.toLowerCase().includes(searchQuery.toLowerCase());
+                                m.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                (m.subcategory || "").toLowerCase().includes(searchQuery.toLowerCase());
             const probability = filterMode === "yes" ? m.yes_probability : (100 - m.yes_probability);
             const matchProbability = probability >= minProbability && probability <= maxProbability;
             return matchSearch && matchProbability;
@@ -177,9 +188,8 @@ export default function SearchFilterBar() {
         setSortBy("volume");
         setFilterMode("yes");
         setActiveCategory("Trending");
-        // Reset URL param if on home page
         if (!isMarketPage) {
-            router.push("/");
+            router.push(pathname.startsWith("/category") ? "/category" : "/");
         }
     };
 
@@ -251,7 +261,7 @@ export default function SearchFilterBar() {
                                                                 </p>
                                                                 <div className="flex items-center gap-2 mt-1">
                                                                     <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded group-hover:bg-muted/80 transition-all duration-200">
-                                                                        {market.category}
+                                                                        {market.subcategory || market.category}
                                                                     </span>
                                                                     <span className="text-xs text-muted-foreground group-hover:text-muted-foreground/70 transition-all duration-200">
                                                                         {market.yes_probability}% Yes
@@ -270,7 +280,8 @@ export default function SearchFilterBar() {
                                                 {allMarkets.filter(m => 
                                                     (m.status !== "RESOLVED") &&
                                                     (m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                    m.category.toLowerCase().includes(searchQuery.toLowerCase()))
+                                                    m.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                    (m.subcategory || "").toLowerCase().includes(searchQuery.toLowerCase()))
                                                 ).length > 6 && (
                                                     <div className="border-t border-border p-3">
                                                         <button 
@@ -460,13 +471,13 @@ export default function SearchFilterBar() {
                         <button
                             key={cat}
                             onClick={() => {
-                                if (isMarketPage) {
-                                    // Navigate to home with category filter
-                                    router.push(`/?category=${encodeURIComponent(cat)}`);
-                                } else {
-                                    // On home page, just update the category state
+                                const href = cat === "Trending" ? "/category" : `/category/${categorySlug(cat)}`;
+
+                                if (pathname === "/") {
                                     setActiveCategory(cat);
                                 }
+
+                                router.push(href);
                             }}
                             className={`category-tab-item px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-medium whitespace-nowrap rounded-lg transition-all duration-300 relative ${
                                 activeCategory === cat

@@ -4,6 +4,7 @@ export interface Market {
     id: number;
     question: string;
     category: string;
+    subcategory?: string | null;
     yes_probability: number;
     volume: string;
     status: string;
@@ -97,11 +98,11 @@ const transformPolymarketData = (polymarket: any): Market => {
     const yesProbability = parseFloat((yesProbabilityDecimal * 100).toFixed(2));
 
     // Determine status
-    let status = 'active';
+    let status = 'OPEN';
     if (metadata.closed) {
-        status = 'closed';
+        status = 'CLOSED';
     } else if (metadata.resolved) {
-        status = 'resolved';
+        status = 'RESOLVED';
     }
 
     // Check if market is closing soon (within 7 days)
@@ -124,6 +125,7 @@ const transformPolymarketData = (polymarket: any): Market => {
 
     // Get category - prioritize database category if available, fallback to electionType or General
     const category = polymarket.category || metadata.electionType || 'Other';
+    const subcategory = polymarket.subcategory || metadata.subcategory || null;
 
     // Extract parent event information if available
     // Polymarket markets can have a parent event (e.g., "What will happen before GTA VI?")
@@ -141,6 +143,7 @@ const transformPolymarketData = (polymarket: any): Market => {
         question: metadata.question || polymarket.question || polymarket.title || '',
         description: metadata.description || polymarket.description,
         category: category,
+        subcategory,
         yes_probability: yesProbability,
         volume: volumeKES,
         status,
@@ -154,6 +157,9 @@ const transformPolymarketData = (polymarket: any): Market => {
         parentEventTitle,
         groupItemTitle: metadata.groupItemTitle,
         groupItemThreshold: metadata.groupItemThreshold,
+        children: Array.isArray(polymarket.children)
+            ? polymarket.children.map(transformPolymarketData)
+            : undefined,
     };
 };
 
