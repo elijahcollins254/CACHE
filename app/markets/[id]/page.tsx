@@ -211,8 +211,95 @@ function getDisplaySharePriceKes(market: any, probability: number, outcome: stri
     return getCurrentSharePrice(market, outcome);
 }
 
-function getPayoutPerShareKes(market: any): number {
-    return market?.source === "polymarket" ? USD_TO_KES : PAYOUT_PER_SHARE;
+    function getPayoutPerShareKes(market: any): number {
+        return market?.source === "polymarket" ? USD_TO_KES : PAYOUT_PER_SHARE;
+    }
+
+function getPolymarketTokenId(market: any, outcome: "Yes" | "No" = "Yes"): string | null {
+    const tokenIds = market?.clobTokenIds;
+    let parsedTokenIds: string[] = [];
+
+    if (Array.isArray(tokenIds)) {
+        parsedTokenIds = tokenIds;
+    } else if (typeof tokenIds === "string") {
+        try {
+            const parsed = JSON.parse(tokenIds);
+            parsedTokenIds = Array.isArray(parsed) ? parsed : [];
+        } catch {
+            parsedTokenIds = [];
+        }
+    }
+
+    const tokenId = parsedTokenIds[outcome === "Yes" ? 0 : 1];
+    return tokenId ? String(tokenId) : null;
+}
+
+function normalizePolymarketHistory(data: any, currentProbability: number): { yes: number[]; no: number[] } {
+    const history = Array.isArray(data?.history) ? data.history : [];
+    const yes = history
+        .map((point: any) => {
+            const rawPrice = point?.p ?? point?.price ?? point?.value;
+            const price = typeof rawPrice === "string" ? parseFloat(rawPrice) : rawPrice;
+            if (!Number.isFinite(price)) return null;
+            const probability = price <= 1 ? price * 100 : price;
+            return Math.max(0, Math.min(100, probability));
+        })
+        .filter((probability: number | null): probability is number => probability !== null);
+
+    if (yes.length === 0) {
+        const fallback = Number.isFinite(currentProbability) ? currentProbability : 50;
+        return {
+            yes: Array(8).fill(fallback),
+            no: Array(8).fill(100 - fallback),
+        };
+    }
+
+    return {
+        yes,
+        no: yes.map((probability) => 100 - probability),
+    };
+}
+
+const CHART_LEFT = 150;
+const CHART_RIGHT = 850;
+const CHART_TOP = 40;
+const CHART_BOTTOM = 240;
+
+function chartY(probability: number): number {
+    const clamped = Math.max(0, Math.min(100, Number.isFinite(probability) ? probability : 50));
+    return CHART_BOTTOM - ((clamped / 100) * (CHART_BOTTOM - CHART_TOP));
+}
+
+function chartPoints(values: number[]): Array<{ x: number; y: number }> {
+    const usableValues = values.length > 0 ? values : [50];
+    const denominator = Math.max(usableValues.length - 1, 1);
+
+    return usableValues.map((value, index) => ({
+        x: CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * index) / denominator,
+        y: chartY(value),
+    }));
+}
+
+function chartLinePath(values: number[]): string {
+    return chartPoints(values)
+        .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+        .join(" ");
+}
+
+function chartAreaPath(values: number[]): string {
+    const points = chartPoints(values);
+    const linePath = points
+        .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+        .join(" ");
+    const first = points[0];
+    const last = points[points.length - 1];
+
+    return `${linePath} L ${last.x} ${CHART_BOTTOM} L ${first.x} ${CHART_BOTTOM} Z`;
+}
+
+function chartLastPoint(values: number[]): { x: number; y: number } {
+    const points = chartPoints(values);
+    return points[points.length - 1];
 }
 
 export default function MarketDetail() {
@@ -429,21 +516,30 @@ export default function MarketDetail() {
     const fetchPriceHistory = async () => {
         setLoadingChart(true);
         try {
-            // For Polymarket data, fetch real trade history
+            // For Polymarket data, fetch CLOB price history by outcome token.
             if (market.source === 'polymarket') {
                 try {
-                    // Use external_id for Polymarket API, fallback to id if not available
                     const polyId = market.external_id || market.id;
+                    const tokenId = getPolymarketTokenId(market, "Yes");
                     
-                    console.log("Fetching Polymarket trades for:", {
+                    console.log("Fetching Polymarket price history for:", {
                         polyId,
+                        tokenId,
                         external_id: market.external_id,
                         id: market.id,
                         source: market.source,
                     });
                     
+                    const queryParams = new URLSearchParams({
+                        period: timePeriod,
+                        outcome: "Yes",
+                    });
+                    if (tokenId) {
+                        queryParams.set("token_id", tokenId);
+                    }
+
                     const response = await fetchWithAuth(
-                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/${polyId}/trades/`,
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/${polyId}/price-history/?${queryParams}`,
                         {
                             method: "GET",
                             headers: { "Content-Type": "application/json" },
@@ -451,62 +547,16 @@ export default function MarketDetail() {
                     );
                     
                     if (response.ok) {
-                        const trades = await response.json();
-                        
-                        // Extract price points from trades
-                        // Trades contain price information we can use for the chart
-                        if (trades && Array.isArray(trades) && trades.length > 0) {
-                            // Group trades by time and calculate average prices
-                            const pricePoints: { timestamp: number; yes_prob: number }[] = [];
-                            
-                            trades.forEach((trade: any) => {
-                                // Extract price from trade data
-                                let price = 0.5; // Default to 50/50
-                                
-                                if (trade.pricePoint !== undefined) {
-                                    price = trade.pricePoint;
-                                } else if (trade.price !== undefined) {
-                                    price = trade.price;
-                                } else if (trade.side && trade.size) {
-                                    // Estimate from trade side and size
-                                    price = trade.side === 'BUY' ? 0.6 : 0.4; // Rough approximation
-                                }
-                                
-                                pricePoints.push({
-                                    timestamp: new Date(trade.timestamp || trade.createdAt || Date.now()).getTime(),
-                                    yes_prob: Math.max(5, Math.min(95, (price || 0.5) * 100)),
-                                });
-                            });
-                            
-                            if (pricePoints.length > 0) {
-                                // Sort by timestamp and take last 8 points for the chart
-                                pricePoints.sort((a, b) => a.timestamp - b.timestamp);
-                                const chartPoints = pricePoints.slice(-8);
-                                
-                                // If we have fewer than 8 points, pad with the first value
-                                while (chartPoints.length < 8) {
-                                    chartPoints.unshift(chartPoints[0]);
-                                }
-                                
-                                const yesProbs = chartPoints.map(p => p.yes_prob);
-                                const noProbs = yesProbs.map(y => 100 - y);
-                                
-                                console.log("Polymarket chart data:", { points: chartPoints.length, yesProbs });
-                                
-                                setPriceHistory({
-                                    market: {
-                                        yes: yesProbs,
-                                        no: noProbs,
-                                    }
-                                });
-                                setLoadingChart(false);
-                                return;
-                            }
-                        }
+                        const data = await response.json();
+                        const normalized = normalizePolymarketHistory(data, market.yes_probability || 50);
+
+                        console.log("Polymarket chart data:", { points: normalized.yes.length });
+                        setPriceHistory({ market: normalized });
+                        setLoadingChart(false);
+                        return;
                     }
                     
-                    // If response is empty or no trades, use current probability as single data point
-                    console.log("No trades found or empty response, using current probability");
+                    console.log("No price history found, using current probability");
                     const currentProb = market.yes_probability || 50;
                     setPriceHistory({
                         market: {
@@ -515,7 +565,7 @@ export default function MarketDetail() {
                         }
                     });
                 } catch (err) {
-                    console.warn("Error fetching Polymarket trades, using current probability:", err);
+                    console.warn("Error fetching Polymarket price history, using current probability:", err);
                     // Fallback to current probability
                     const currentProb = market.yes_probability || 50;
                     setPriceHistory({
