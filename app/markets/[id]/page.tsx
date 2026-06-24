@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState, Suspense, useRef } from "react";
+import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
+import { useMarketWebSocket } from "@/lib/useMarketWebSocket";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import MarketChart, { ChartDataPoint } from "@/components/MarketChart";
 
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import { USD_TO_KES, convertUSDVolumeToKES, formatKES, polymarketProbabilityToKES } from "@/lib/currency";
@@ -298,6 +301,68 @@ function generatePolylinePoints(values: number[], yMin: number, yMax: number): s
         .join(" ");
 }
 
+/**
+ * Transform historical price data into Recharts-compatible format
+ * Converts {yes: [], no: []} format to [{timestamp, yes, no}, ...]
+ */
+function transformHistoryToChartData(
+    yesValues: number[],
+    noValues: number[],
+    startTime: number = Date.now() / 1000
+): ChartDataPoint[] {
+    if (!Array.isArray(yesValues) || yesValues.length === 0) {
+        return [];
+    }
+
+    const points: ChartDataPoint[] = [];
+    const totalPoints = Math.min(yesValues.length, noValues.length);
+    const intervalSeconds = totalPoints > 1 ? 300 : 0; // 5-minute intervals
+
+    for (let i = 0; i < totalPoints; i++) {
+        points.push({
+            timestamp: startTime + i * intervalSeconds,
+            yes: yesValues[i],
+            no: noValues[i],
+        });
+    }
+
+    return points;
+}
+
+/**
+ * Transform Polymarket API response into chart data
+ * API returns {t: unix_timestamp, p: price_0_to_1}
+ */
+function transformPolymarketHistory(
+    rawHistory: any[],
+    currentProbability: number
+): ChartDataPoint[] {
+    if (!Array.isArray(rawHistory) || rawHistory.length === 0) {
+        // Return current price as single point
+        return [
+            {
+                timestamp: Date.now() / 1000,
+                yes: currentProbability,
+                no: 100 - currentProbability,
+            },
+        ];
+    }
+
+    return rawHistory.map((point: any) => {
+        const rawPrice = point?.p ?? point?.price ?? point?.value ?? 0.5;
+        const price = typeof rawPrice === "string" ? parseFloat(rawPrice) : rawPrice;
+        const yesProb = price <= 1 ? price * 100 : price;
+        const noProb = 100 - yesProb;
+        const timestamp = (point?.t ?? point?.timestamp ?? Date.now()) / 1000;
+
+        return {
+            timestamp,
+            yes: Math.max(0, Math.min(100, yesProb)),
+            no: Math.max(0, Math.min(100, noProb)),
+        };
+    });
+}
+
 export default function MarketDetail() {
     const { id: paramId } = useParams();
     const marketId = extractMarketId(paramId);
@@ -333,7 +398,7 @@ export default function MarketDetail() {
     const [chatError, setChatError] = useState("");
     const [probabilityViewMode, setProbabilityViewMode] = useState<"percentage" | "graph">("graph");
     const [timePeriod, setTimePeriod] = useState<"1H" | "6H" | "1D" | "1W" | "1M" | "ALL">("ALL");
-    const [priceHistory, setPriceHistory] = useState<{[key: string]: {yes: number[]; no: number[]}}>({});
+    const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [limitPrice, setLimitPrice] = useState<number>(50); // Default to 50% probability
@@ -343,10 +408,8 @@ export default function MarketDetail() {
     const [loadingAvailableShares, setLoadingAvailableShares] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [relatedMarkets, setRelatedMarkets] = useState<any[]>([]);  // Markets with same question
+    const [wsConnected, setWsConnected] = useState(false);
     const chatInputRef = useRef<HTMLDivElement>(null);
-
-    // Map priceHistory to chartData for SVG rendering
-    const chartData = priceHistory;
 
     // Scroll to chat input when replying
     useEffect(() => {
@@ -403,6 +466,44 @@ export default function MarketDetail() {
             setIsSaved(savedMarketIds.includes(marketId));
         }
     }, [allMarkets, marketId, savedMarketIds]);
+
+    // WebSocket hook for real-time price updates
+    const onPriceUpdate = useCallback((update: any) => {
+        console.log('[WebSocket] Price update received:', update);
+        
+        // Add new price point to chart
+        setChartData(prev => {
+            const newData = [...prev];
+            // Find if we have data for this timestamp or add new
+            const lastPoint = newData[newData.length - 1];
+            const now = Date.now() / 1000;
+            
+            if (lastPoint && Math.abs(lastPoint.timestamp - now) < 60) {
+                // Update last point if within 1 minute
+                newData[newData.length - 1] = {
+                    timestamp: now,
+                    yes: update.price ? update.price * 100 : lastPoint.yes,
+                    no: update.price ? (1 - update.price) * 100 : lastPoint.no,
+                };
+            } else {
+                // Add new point
+                newData.push({
+                    timestamp: now,
+                    yes: update.price ? update.price * 100 : 50,
+                    no: update.price ? (1 - update.price) * 100 : 50,
+                });
+            }
+            
+            // Keep only last 100 points to avoid memory issues
+            return newData.slice(-100);
+        });
+    }, []);
+
+    useMarketWebSocket(
+        marketId ? String(marketId) : null,
+        onPriceUpdate,
+        true // enabled
+    );
 
 
 
@@ -546,32 +647,30 @@ export default function MarketDetail() {
                     
                     if (response.ok) {
                         const data = await response.json();
-                        const normalized = normalizePolymarketHistory(data, market.yes_probability || 50);
+                        const normalized = transformPolymarketHistory(data?.history || [], market.yes_probability || 50);
 
-                        console.log("Polymarket chart data:", { points: normalized.yes.length });
-                        setPriceHistory({ market: normalized });
+                        console.log("Polymarket chart data:", { points: normalized.length, first: normalized[0], last: normalized[normalized.length - 1] });
+                        setChartData(normalized);
                         setLoadingChart(false);
                         return;
                     }
                     
                     console.log("No price history found, using current probability");
                     const currentProb = market.yes_probability || 50;
-                    setPriceHistory({
-                        market: {
-                            yes: Array(8).fill(currentProb),
-                            no: Array(8).fill(100 - currentProb),
-                        }
-                    });
+                    setChartData([{
+                        timestamp: Date.now() / 1000,
+                        yes: currentProb,
+                        no: 100 - currentProb,
+                    }]);
                 } catch (err) {
                     console.warn("Error fetching Polymarket price history, using current probability:", err);
                     // Fallback to current probability
                     const currentProb = market.yes_probability || 50;
-                    setPriceHistory({
-                        market: {
-                            yes: Array(8).fill(currentProb),
-                            no: Array(8).fill(100 - currentProb),
-                        }
-                    });
+                    setChartData([{
+                        timestamp: Date.now() / 1000,
+                        yes: currentProb,
+                        no: 100 - currentProb,
+                    }]);
                 }
                 
                 setLoadingChart(false);
@@ -648,65 +747,37 @@ export default function MarketDetail() {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.data && data.data.length > 0) {
-                        const yesProbs = data.data.map((d: any) => d.yes_probability);
-                        const noProbs = data.data.map((d: any) => d.no_probability);
-                        
-                        if (yesProbs.length < 8) {
-                            while (yesProbs.length < 8) {
-                                yesProbs.unshift(yesProbs[0]);
-                                noProbs.unshift(noProbs[0]);
-                            }
-                        } else if (yesProbs.length > 8) {
-                            const step = Math.floor(yesProbs.length / 8);
-                            const sampledYes = [];
-                            const sampledNo = [];
-                            for (let i = 0; i < 8; i++) {
-                                const index = i * step;
-                                sampledYes.push(yesProbs[index]);
-                                sampledNo.push(noProbs[index]);
-                            }
-                            yesProbs.splice(0, yesProbs.length, ...sampledYes);
-                            noProbs.splice(0, noProbs.length, ...sampledNo);
-                        }
-                        
-                        setPriceHistory({
-                            market: {
-                                yes: yesProbs,
-                                no: noProbs,
-                            }
-                        });
+                        const points = data.data.map((d: any) => ({
+                            timestamp: d.timestamp || Date.now() / 1000,
+                            yes: d.yes_probability || d.probability || 50,
+                            no: d.no_probability || (100 - (d.probability || 50)),
+                        }));
+                        setChartData(points);
                     } else {
-                        const generated = generateHistoricalPrices();
-                        setPriceHistory({
-                            market: generated
-                        });
+                        const currentProb = market.yes_probability || 50;
+                        setChartData([{
+                            timestamp: Date.now() / 1000,
+                            yes: currentProb,
+                            no: 100 - currentProb,
+                        }]);
                     }
                 } else {
-                    const generated = generateHistoricalPrices();
-                    setPriceHistory({
-                        market: generated
-                    });
+                    const currentProb = market.yes_probability || 50;
+                    setChartData([{
+                        timestamp: Date.now() / 1000,
+                        yes: currentProb,
+                        no: 100 - currentProb,
+                    }]);
                 }
             }
         } catch (err) {
             console.error("Error fetching price history:", err);
-            if (market.market_type === 'OPTION_LIST' && market.options) {
-                const histories: {[key: string]: {yes: number[]; no: number[]}} = {};
-                for (const option of market.options) {
-                    const yesProb = option.yes_probability;
-                    const noProb = option.no_probability;
-                    histories[`option_${option.id}`] = {
-                        yes: Array(8).fill(yesProb),
-                        no: Array(8).fill(noProb),
-                    };
-                }
-                setPriceHistory(histories);
-            } else {
-                const generated = generateHistoricalPrices();
-                setPriceHistory({
-                    market: generated
-                });
-            }
+            const currentProb = market?.yes_probability || 50;
+            setChartData([{
+                timestamp: Date.now() / 1000,
+                yes: currentProb,
+                no: 100 - currentProb,
+            }]);
         } finally {
             setLoadingChart(false);
         }
@@ -1511,181 +1582,14 @@ export default function MarketDetail() {
                                             </div>
                                         </div>
 
-                                        {/* SVG Chart */}
+                                        {/* Price History Chart - Using Recharts */}
                                         <div className={isMobile ? "px-3 py-4" : "px-6 py-4"}>
-                                            {(() => {
-                                                // Calculate Y scale based on actual data
-                                                let allYValues: number[] = [];
-                                                if (market.market_type === 'BINARY' && chartData?.market) {
-                                                    allYValues = [...chartData.market.yes, ...chartData.market.no];
-                                                } else if (chartData && market.options) {
-                                                    market.options.forEach((opt: any) => {
-                                                        const hist = chartData[`option_${opt.id}`];
-                                                        if (hist?.yes) allYValues.push(...hist.yes);
-                                                    });
-                                                }
-                                                const { min: yMin, max: yMax } = allYValues.length > 0 ? getYScaleRange(allYValues) : { min: 0, max: 100 };
-                                                
-                                                return (
-                                                    <svg width="100%" height={isMobile ? "220" : "280"} viewBox="0 0 900 280" className="w-full" style={{minHeight: isMobile ? '220px' : '280px'}}>
-                                                        <defs>
-                                                    {market.market_type === 'BINARY' ? (
-                                                        <>
-                                                            {/* Gradient for Yes */}
-                                                            <linearGradient id="yesGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                                <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.2" />
-                                                                <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
-                                                            </linearGradient>
-                                                            {/* Gradient for No */}
-                                                            <linearGradient id="noGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                                <stop offset="0%" stopColor="rgb(249, 115, 22)" stopOpacity="0.2" />
-                                                                <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
-                                                            </linearGradient>
-                                                        </>
-                                                    ) : (
-                                                        market.options?.map((option: any, index: number) => {
-                                                            const colors = [
-                                                                "rgb(59, 130, 246)", // blue
-                                                                "rgb(249, 115, 22)", // orange
-                                                                "rgb(34, 197, 94)", // green
-                                                                "rgb(239, 68, 68)", // red
-                                                                "rgb(168, 85, 247)", // purple
-                                                            ];
-                                                            const color = colors[index % colors.length];
-                                                            return (
-                                                                <linearGradient key={`optionGradient${option.id}`} id={`optionGradient${option.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                                                    <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-                                                                    <stop offset="100%" stopColor={color} stopOpacity="0" />
-                                                                </linearGradient>
-                                                            );
-                                                        })
-                                                    )}
-                                                </defs>
-
-                                                {/* Horizontal Grid Lines & Labels */}
-                                                {[240, 200, 160, 120, 80, 40].map((y, idx) => {
-                                                    const percent = idx * 20;
-                                                    return (
-                                                        <g key={`h-grid-${y}`}>
-                                                            <line x1="80" y1={y} x2="900" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-border opacity-30" />
-                                                            <text x="70" y={y + 4} textAnchor="end" fontSize={isMobile ? "10" : "12"} className="fill-muted-foreground">{percent}%</text>
-                                                        </g>
-                                                    );
-                                                })}
-
-                                                {/* Vertical Grid Lines */}
-                                                {[150, 250, 350, 450, 550, 650, 750].map((x) => (
-                                                    <line key={`v-grid-${x}`} x1={x} y1="40" x2={x} y2="240" stroke="currentColor" strokeWidth="0.5" className="text-border opacity-20" />
-                                                ))}
-
-                                                {/* Axes */}
-                                                <line x1="80" y1="240" x2="900" y2="240" stroke="currentColor" strokeWidth="1.5" className="text-border" />
-                                                <line x1="80" y1="40" x2="80" y2="240" stroke="currentColor" strokeWidth="1.5" className="text-border" />
-
-                                                {/* Time Labels - Show fewer on mobile */}
-                                                {(isMobile 
-                                                    ? [
-                                                        { x: 150, label: "12 PM" },
-                                                        { x: 350, label: "12 PM" },
-                                                        { x: 550, label: "12 PM" },
-                                                        { x: 750, label: "12 PM" }
-                                                    ]
-                                                    : [
-                                                        { x: 150, label: "12 PM" },
-                                                        { x: 250, label: "12 AM" },
-                                                        { x: 350, label: "12 PM" },
-                                                        { x: 450, label: "12 AM" },
-                                                        { x: 550, label: "12 PM" },
-                                                        { x: 650, label: "12 AM" },
-                                                        { x: 750, label: "12 PM" }
-                                                    ]
-                                                ).map(({ x, label }) => (
-                                                    <text key={`time-${label}`} x={x} y="265" textAnchor="middle" fontSize={isMobile ? "9" : "12"} className="fill-muted-foreground">
-                                                        {label}
-                                                    </text>
-                                                ))}
-
-                                                        {market.market_type === 'BINARY' && chartData?.market?.yes?.length > 0 ? (
-                                                            <>
-                                                                {/* Yes Polyline (filled area + stroke) */}
-                                                                <polyline
-                                                                    points={generatePolylinePoints(chartData.market.yes, yMin, yMax)}
-                                                                    fill="none"
-                                                                    stroke="rgb(59, 130, 246)"
-                                                                    strokeWidth="2"
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                    vectorEffect="non-scaling-stroke"
-                                                                />
-
-                                                                {/* No Polyline */}
-                                                                <polyline
-                                                                    points={generatePolylinePoints(chartData.market.no, yMin, yMax)}
-                                                                    fill="none"
-                                                                    stroke="rgb(249, 115, 22)"
-                                                                    strokeWidth="2"
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                    vectorEffect="non-scaling-stroke"
-                                                                />
-
-                                                                {/* Current Price Dots */}
-                                                                {chartData.market.yes.length > 0 && (
-                                                                    <>
-                                                                        {(() => {
-                                                                            const lastIdx = chartData.market.yes.length - 1;
-                                                                            const x = CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * lastIdx) / Math.max(lastIdx, 1);
-                                                                            const yYes = CHART_BOTTOM - (((chartData.market.yes[lastIdx] - yMin) / (yMax - yMin)) * (CHART_BOTTOM - CHART_TOP));
-                                                                            const yNo = CHART_BOTTOM - (((chartData.market.no[lastIdx] - yMin) / (yMax - yMin)) * (CHART_BOTTOM - CHART_TOP));
-                                                                            return (
-                                                                                <>
-                                                                                    <circle cx={x} cy={yYes} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                                                    <circle cx={x} cy={yNo} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                                                </>
-                                                                            );
-                                                                        })()}
-                                                                    </>
-                                                                )}
-                                                            </>
-                                                        ) : (
-                                                            market.options?.map((option: any, index: number) => {
-                                                                const colors = [
-                                                                    "rgb(59, 130, 246)", // blue
-                                                                    "rgb(249, 115, 22)", // orange
-                                                                    "rgb(34, 197, 94)", // green
-                                                                    "rgb(239, 68, 68)", // red
-                                                                    "rgb(168, 85, 247)", // purple
-                                                                ];
-                                                                const color = colors[index % colors.length];
-                                                                const history = chartData[`option_${option.id}`];
-                                                                if (!history?.yes?.length) return null;
-                                                                
-                                                                return (
-                                                                    <g key={`option-${option.id}`}>
-                                                                        {/* Option Polyline */}
-                                                                        <polyline
-                                                                            points={generatePolylinePoints(history.yes, yMin, yMax)}
-                                                                            fill="none"
-                                                                            stroke={color}
-                                                                            strokeWidth="2"
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                            vectorEffect="non-scaling-stroke"
-                                                                        />
-                                                                        {/* Current Price Dot */}
-                                                                        {history.yes.length > 0 && (() => {
-                                                                            const lastIdx = history.yes.length - 1;
-                                                                            const x = CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * lastIdx) / Math.max(lastIdx, 1);
-                                                                            const y = CHART_BOTTOM - (((history.yes[lastIdx] - yMin) / (yMax - yMin)) * (CHART_BOTTOM - CHART_TOP));
-                                                                            return <circle cx={x} cy={y} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />;
-                                                                        })()}
-                                                                    </g>
-                                                                );
-                                                            })
-                                                        )}
-                                                    </svg>
-                                                );
-                                            })()}
+                                            <MarketChart
+                                                data={chartData}
+                                                loading={loadingChart}
+                                                isMobile={isMobile}
+                                                timePeriod={timePeriod}
+                                            />
                                         </div>
 
                                         {/* Chart Footer Info */}
