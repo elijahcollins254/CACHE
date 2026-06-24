@@ -256,7 +256,7 @@ function normalizePolymarketHistory(data: any, currentProbability: number): { ye
 
     return {
         yes,
-        no: yes.map((probability) => 100 - probability),
+        no: yes.map((probability: number) => 100 - probability),
     };
 }
 
@@ -1600,19 +1600,19 @@ export default function MarketDetail() {
                                                     <>
                                                         {/* Yes Area */}
                                                         <path
-                                                            d={`M 150 ${240 - (chartData.market.yes[0] * 2)} L 250 ${240 - (chartData.market.yes[1] * 2)} L 350 ${240 - (chartData.market.yes[2] * 2)} L 450 ${240 - (chartData.market.yes[3] * 2)} L 550 ${240 - (chartData.market.yes[4] * 2)} L 650 ${240 - (chartData.market.yes[5] * 2)} L 750 ${240 - (chartData.market.yes[6] * 2)} L 850 ${240 - (chartData.market.yes[7] * 2)} L 850 240 L 150 240 Z`}
+                                                            d={chartAreaPath(chartData.market.yes)}
                                                             fill="url(#yesGradient2)"
                                                         />
 
                                                         {/* No Area */}
                                                         <path
-                                                            d={`M 150 ${240 - (chartData.market.no[0] * 2)} L 250 ${240 - (chartData.market.no[1] * 2)} L 350 ${240 - (chartData.market.no[2] * 2)} L 450 ${240 - (chartData.market.no[3] * 2)} L 550 ${240 - (chartData.market.no[4] * 2)} L 650 ${240 - (chartData.market.no[5] * 2)} L 750 ${240 - (chartData.market.no[6] * 2)} L 850 ${240 - (chartData.market.no[7] * 2)} L 850 240 L 150 240 Z`}
+                                                            d={chartAreaPath(chartData.market.no)}
                                                             fill="url(#noGradient2)"
                                                         />
 
                                                         {/* Yes Line */}
                                                         <path
-                                                            d={`M 150 ${240 - (chartData.market.yes[0] * 2)} L 250 ${240 - (chartData.market.yes[1] * 2)} L 350 ${240 - (chartData.market.yes[2] * 2)} L 450 ${240 - (chartData.market.yes[3] * 2)} L 550 ${240 - (chartData.market.yes[4] * 2)} L 650 ${240 - (chartData.market.yes[5] * 2)} L 750 ${240 - (chartData.market.yes[6] * 2)} L 850 ${240 - (chartData.market.yes[7] * 2)}`}
+                                                            d={chartLinePath(chartData.market.yes)}
                                                             stroke="rgb(59, 130, 246)"
                                                             strokeWidth="3"
                                                             fill="none"
@@ -1622,7 +1622,7 @@ export default function MarketDetail() {
 
                                                         {/* No Line */}
                                                         <path
-                                                            d={`M 150 ${240 - (chartData.market.no[0] * 2)} L 250 ${240 - (chartData.market.no[1] * 2)} L 350 ${240 - (chartData.market.no[2] * 2)} L 450 ${240 - (chartData.market.no[3] * 2)} L 550 ${240 - (chartData.market.no[4] * 2)} L 650 ${240 - (chartData.market.no[5] * 2)} L 750 ${240 - (chartData.market.no[6] * 2)} L 850 ${240 - (chartData.market.no[7] * 2)}`}
+                                                            d={chartLinePath(chartData.market.no)}
                                                             stroke="rgb(249, 115, 22)"
                                                             strokeWidth="3"
                                                             fill="none"
@@ -1631,8 +1631,12 @@ export default function MarketDetail() {
                                                         />
 
                                                         {/* Current Price Dots */}
-                                                        <circle cx="850" cy={240 - (chartData.market.yes[7] * 2)} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                        <circle cx="850" cy={240 - (chartData.market.no[7] * 2)} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                        {chartData.market.yes.length > 0 && (
+                                                            <>
+                                                                <circle cx={chartLastPoint(chartData.market.yes).x} cy={chartLastPoint(chartData.market.yes).y} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                <circle cx={chartLastPoint(chartData.market.no).x} cy={chartLastPoint(chartData.market.no).y} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                            </>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     market.options?.map((option: any, index: number) => {
@@ -1645,18 +1649,17 @@ export default function MarketDetail() {
                                                         ];
                                                         const color = colors[index % colors.length];
                                                         const history = chartData[`option_${option.id}`];
-                                                        if (!history) return null;
-                                                        const pathD = `M 150 ${240 - (history.yes[0] * 2)} L 250 ${240 - (history.yes[1] * 2)} L 350 ${240 - (history.yes[2] * 2)} L 450 ${240 - (history.yes[3] * 2)} L 550 ${240 - (history.yes[4] * 2)} L 650 ${240 - (history.yes[5] * 2)} L 750 ${240 - (history.yes[6] * 2)} L 850 ${240 - (history.yes[7] * 2)}`;
+                                                        if (!history || history.yes.length === 0) return null;
                                                         return (
                                                             <g key={`option-${option.id}`}>
                                                                 {/* Area */}
                                                                 <path
-                                                                    d={`${pathD} L 850 240 L 150 240 Z`}
+                                                                    d={chartAreaPath(history.yes)}
                                                                     fill={`url(#optionGradient${option.id})`}
                                                                 />
                                                                 {/* Line */}
                                                                 <path
-                                                                    d={pathD}
+                                                                    d={chartLinePath(history.yes)}
                                                                     stroke={color}
                                                                     strokeWidth="3"
                                                                     fill="none"
@@ -1664,7 +1667,7 @@ export default function MarketDetail() {
                                                                     strokeLinejoin="round"
                                                                 />
                                                                 {/* Current Price Dot */}
-                                                                <circle cx="850" cy={240 - (history.yes[7] * 2)} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                <circle cx={chartLastPoint(history.yes).x} cy={chartLastPoint(history.yes).y} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />
                                                             </g>
                                                         );
                                                     })
