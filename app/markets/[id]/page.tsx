@@ -482,7 +482,6 @@ export default function MarketDetail() {
                         method: 'GET',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'Cache-Control': 'no-cache',
                         }
                     }
                 );
