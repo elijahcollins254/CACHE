@@ -284,36 +284,18 @@ function chartY(probability: number, yMin: number = 0, yMax: number = 100): numb
     return CHART_BOTTOM - (normalized * (CHART_BOTTOM - CHART_TOP));
 }
 
-function chartPoints(values: number[], yMin: number = 0, yMax: number = 100): Array<{ x: number; y: number }> {
-    const usableValues = values.length > 0 ? values : [50];
-    const denominator = Math.max(usableValues.length - 1, 1);
-
-    return usableValues.map((value, index) => ({
-        x: CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * index) / denominator,
-        y: chartY(value, yMin, yMax),
-    }));
-}
-
-function chartLinePath(values: number[], yMin: number = 0, yMax: number = 100): string {
-    return chartPoints(values, yMin, yMax)
-        .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+function generatePolylinePoints(values: number[], yMin: number, yMax: number): string {
+    if (values.length === 0) return "";
+    const denominator = Math.max(values.length - 1, 1);
+    
+    return values
+        .map((value, index) => {
+            const x = CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * index) / denominator;
+            const normalized = (value - yMin) / (yMax - yMin);
+            const y = CHART_BOTTOM - (normalized * (CHART_BOTTOM - CHART_TOP));
+            return `${x},${y}`;
+        })
         .join(" ");
-}
-
-function chartAreaPath(values: number[], yMin: number = 0, yMax: number = 100): string {
-    const points = chartPoints(values, yMin, yMax);
-    const linePath = points
-        .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-        .join(" ");
-    const first = points[0];
-    const last = points[points.length - 1];
-
-    return `${linePath} L ${last.x} ${CHART_BOTTOM} L ${first.x} ${CHART_BOTTOM} Z`;
-}
-
-function chartLastPoint(values: number[], yMin: number = 0, yMax: number = 100): { x: number; y: number } {
-    const points = chartPoints(values, yMin, yMax);
-    return points[points.length - 1];
 }
 
 export default function MarketDetail() {
@@ -365,22 +347,6 @@ export default function MarketDetail() {
 
     // Map priceHistory to chartData for SVG rendering
     const chartData = priceHistory;
-    
-    // Debug: log chartData structure
-    useEffect(() => {
-        if (chartData?.market?.yes?.length > 0) {
-            console.log("✓ chartData ready:", {
-                hasMarket: !!chartData.market,
-                yesPoints: chartData.market.yes.length,
-                noPoints: chartData.market.no?.length,
-                firstYes: chartData.market.yes[0],
-                lastYes: chartData.market.yes[chartData.market.yes.length - 1],
-                marketType: market?.market_type,
-            });
-        } else {
-            console.log("✗ chartData NOT ready:", { chartData, marketType: market?.market_type });
-        }
-    }, [chartData, market?.market_type]);
 
     // Scroll to chat input when replying
     useEffect(() => {
@@ -1639,45 +1605,45 @@ export default function MarketDetail() {
                                                     </text>
                                                 ))}
 
-                                                        {market.market_type === 'BINARY' && chartData?.market ? (
+                                                        {market.market_type === 'BINARY' && chartData?.market?.yes?.length > 0 ? (
                                                             <>
-                                                                {/* Yes Area */}
-                                                                <path
-                                                                    d={chartAreaPath(chartData.market.yes, yMin, yMax)}
-                                                                    fill="url(#yesGradient2)"
-                                                                />
-
-                                                                {/* No Area */}
-                                                                <path
-                                                                    d={chartAreaPath(chartData.market.no, yMin, yMax)}
-                                                                    fill="url(#noGradient2)"
-                                                                />
-
-                                                                {/* Yes Line */}
-                                                                <path
-                                                                    d={chartLinePath(chartData.market.yes, yMin, yMax)}
+                                                                {/* Yes Polyline (filled area + stroke) */}
+                                                                <polyline
+                                                                    points={generatePolylinePoints(chartData.market.yes, yMin, yMax)}
+                                                                    fill="none"
                                                                     stroke="rgb(59, 130, 246)"
-                                                                    strokeWidth="3"
-                                                                    fill="none"
+                                                                    strokeWidth="2"
                                                                     strokeLinecap="round"
                                                                     strokeLinejoin="round"
+                                                                    vectorEffect="non-scaling-stroke"
                                                                 />
 
-                                                                {/* No Line */}
-                                                                <path
-                                                                    d={chartLinePath(chartData.market.no, yMin, yMax)}
-                                                                    stroke="rgb(249, 115, 22)"
-                                                                    strokeWidth="3"
+                                                                {/* No Polyline */}
+                                                                <polyline
+                                                                    points={generatePolylinePoints(chartData.market.no, yMin, yMax)}
                                                                     fill="none"
+                                                                    stroke="rgb(249, 115, 22)"
+                                                                    strokeWidth="2"
                                                                     strokeLinecap="round"
                                                                     strokeLinejoin="round"
+                                                                    vectorEffect="non-scaling-stroke"
                                                                 />
 
                                                                 {/* Current Price Dots */}
                                                                 {chartData.market.yes.length > 0 && (
                                                                     <>
-                                                                        <circle cx={chartLastPoint(chartData.market.yes, yMin, yMax).x} cy={chartLastPoint(chartData.market.yes, yMin, yMax).y} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                                        <circle cx={chartLastPoint(chartData.market.no, yMin, yMax).x} cy={chartLastPoint(chartData.market.no, yMin, yMax).y} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                        {(() => {
+                                                                            const lastIdx = chartData.market.yes.length - 1;
+                                                                            const x = CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * lastIdx) / Math.max(lastIdx, 1);
+                                                                            const yYes = CHART_BOTTOM - (((chartData.market.yes[lastIdx] - yMin) / (yMax - yMin)) * (CHART_BOTTOM - CHART_TOP));
+                                                                            const yNo = CHART_BOTTOM - (((chartData.market.no[lastIdx] - yMin) / (yMax - yMin)) * (CHART_BOTTOM - CHART_TOP));
+                                                                            return (
+                                                                                <>
+                                                                                    <circle cx={x} cy={yYes} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                                    <circle cx={x} cy={yNo} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                                </>
+                                                                            );
+                                                                        })()}
                                                                     </>
                                                                 )}
                                                             </>
@@ -1692,25 +1658,27 @@ export default function MarketDetail() {
                                                                 ];
                                                                 const color = colors[index % colors.length];
                                                                 const history = chartData[`option_${option.id}`];
-                                                                if (!history || history.yes.length === 0) return null;
+                                                                if (!history?.yes?.length) return null;
+                                                                
                                                                 return (
                                                                     <g key={`option-${option.id}`}>
-                                                                        {/* Area */}
-                                                                        <path
-                                                                            d={chartAreaPath(history.yes, yMin, yMax)}
-                                                                            fill={`url(#optionGradient${option.id})`}
-                                                                        />
-                                                                        {/* Line */}
-                                                                        <path
-                                                                            d={chartLinePath(history.yes, yMin, yMax)}
-                                                                            stroke={color}
-                                                                            strokeWidth="3"
+                                                                        {/* Option Polyline */}
+                                                                        <polyline
+                                                                            points={generatePolylinePoints(history.yes, yMin, yMax)}
                                                                             fill="none"
+                                                                            stroke={color}
+                                                                            strokeWidth="2"
                                                                             strokeLinecap="round"
                                                                             strokeLinejoin="round"
+                                                                            vectorEffect="non-scaling-stroke"
                                                                         />
                                                                         {/* Current Price Dot */}
-                                                                        <circle cx={chartLastPoint(history.yes, yMin, yMax).x} cy={chartLastPoint(history.yes, yMin, yMax).y} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                        {history.yes.length > 0 && (() => {
+                                                                            const lastIdx = history.yes.length - 1;
+                                                                            const x = CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * lastIdx) / Math.max(lastIdx, 1);
+                                                                            const y = CHART_BOTTOM - (((history.yes[lastIdx] - yMin) / (yMax - yMin)) * (CHART_BOTTOM - CHART_TOP));
+                                                                            return <circle cx={x} cy={y} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />;
+                                                                        })()}
                                                                     </g>
                                                                 );
                                                             })
