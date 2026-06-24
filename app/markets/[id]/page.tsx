@@ -265,29 +265,43 @@ const CHART_RIGHT = 850;
 const CHART_TOP = 40;
 const CHART_BOTTOM = 240;
 
-function chartY(probability: number): number {
-    const clamped = Math.max(0, Math.min(100, Number.isFinite(probability) ? probability : 50));
-    return CHART_BOTTOM - ((clamped / 100) * (CHART_BOTTOM - CHART_TOP));
+// Calculate Y scale range based on actual data (with padding)
+function getYScaleRange(values: number[]): { min: number; max: number } {
+    if (values.length === 0) return { min: 0, max: 100 };
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min;
+    const padding = range === 0 ? 10 : range * 0.1; // 10% padding or minimum 10
+    return {
+        min: Math.max(0, min - padding),
+        max: Math.min(100, max + padding),
+    };
 }
 
-function chartPoints(values: number[]): Array<{ x: number; y: number }> {
+function chartY(probability: number, yMin: number = 0, yMax: number = 100): number {
+    const clamped = Math.max(yMin, Math.min(yMax, Number.isFinite(probability) ? probability : 50));
+    const normalized = (clamped - yMin) / (yMax - yMin); // 0 to 1
+    return CHART_BOTTOM - (normalized * (CHART_BOTTOM - CHART_TOP));
+}
+
+function chartPoints(values: number[], yMin: number = 0, yMax: number = 100): Array<{ x: number; y: number }> {
     const usableValues = values.length > 0 ? values : [50];
     const denominator = Math.max(usableValues.length - 1, 1);
 
     return usableValues.map((value, index) => ({
         x: CHART_LEFT + ((CHART_RIGHT - CHART_LEFT) * index) / denominator,
-        y: chartY(value),
+        y: chartY(value, yMin, yMax),
     }));
 }
 
-function chartLinePath(values: number[]): string {
-    return chartPoints(values)
+function chartLinePath(values: number[], yMin: number = 0, yMax: number = 100): string {
+    return chartPoints(values, yMin, yMax)
         .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
         .join(" ");
 }
 
-function chartAreaPath(values: number[]): string {
-    const points = chartPoints(values);
+function chartAreaPath(values: number[], yMin: number = 0, yMax: number = 100): string {
+    const points = chartPoints(values, yMin, yMax);
     const linePath = points
         .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
         .join(" ");
@@ -297,8 +311,8 @@ function chartAreaPath(values: number[]): string {
     return `${linePath} L ${last.x} ${CHART_BOTTOM} L ${first.x} ${CHART_BOTTOM} Z`;
 }
 
-function chartLastPoint(values: number[]): { x: number; y: number } {
-    const points = chartPoints(values);
+function chartLastPoint(values: number[], yMin: number = 0, yMax: number = 100): { x: number; y: number } {
+    const points = chartPoints(values, yMin, yMax);
     return points[points.length - 1];
 }
 
@@ -1533,8 +1547,22 @@ export default function MarketDetail() {
 
                                         {/* SVG Chart */}
                                         <div className={isMobile ? "px-3 py-4" : "px-6 py-4"}>
-                                            <svg width="100%" height={isMobile ? "220" : "280"} viewBox="0 0 900 280" className="w-full" style={{minHeight: isMobile ? '220px' : '280px'}}>
-                                                <defs>
+                                            {(() => {
+                                                // Calculate Y scale based on actual data
+                                                let allYValues: number[] = [];
+                                                if (market.market_type === 'BINARY' && chartData?.market) {
+                                                    allYValues = [...chartData.market.yes, ...chartData.market.no];
+                                                } else if (chartData && market.options) {
+                                                    market.options.forEach((opt: any) => {
+                                                        const hist = chartData[`option_${opt.id}`];
+                                                        if (hist?.yes) allYValues.push(...hist.yes);
+                                                    });
+                                                }
+                                                const { min: yMin, max: yMax } = allYValues.length > 0 ? getYScaleRange(allYValues) : { min: 0, max: 100 };
+                                                
+                                                return (
+                                                    <svg width="100%" height={isMobile ? "220" : "280"} viewBox="0 0 900 280" className="w-full" style={{minHeight: isMobile ? '220px' : '280px'}}>
+                                                        <defs>
                                                     {market.market_type === 'BINARY' ? (
                                                         <>
                                                             {/* Gradient for Yes */}
@@ -1611,87 +1639,85 @@ export default function MarketDetail() {
                                                     </text>
                                                 ))}
 
-                                                {market.market_type === 'BINARY' && chartData?.market ? (
-                                                    <>
-                                                        {console.log("Rendering chart with paths:", {
-                                                            pathYes: chartLinePath(chartData.market.yes).substring(0, 50),
-                                                            pathNo: chartLinePath(chartData.market.no).substring(0, 50),
-                                                        })}
-                                                        {/* Yes Area */}
-                                                        <path
-                                                            d={chartAreaPath(chartData.market.yes)}
-                                                            fill="url(#yesGradient2)"
-                                                        />
-
-                                                        {/* No Area */}
-                                                        <path
-                                                            d={chartAreaPath(chartData.market.no)}
-                                                            fill="url(#noGradient2)"
-                                                        />
-
-                                                        {/* Yes Line */}
-                                                        <path
-                                                            d={chartLinePath(chartData.market.yes)}
-                                                            stroke="rgb(59, 130, 246)"
-                                                            strokeWidth="3"
-                                                            fill="none"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-
-                                                        {/* No Line */}
-                                                        <path
-                                                            d={chartLinePath(chartData.market.no)}
-                                                            stroke="rgb(249, 115, 22)"
-                                                            strokeWidth="3"
-                                                            fill="none"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-
-                                                        {/* Current Price Dots */}
-                                                        {chartData.market.yes.length > 0 && (
+                                                        {market.market_type === 'BINARY' && chartData?.market ? (
                                                             <>
-                                                                <circle cx={chartLastPoint(chartData.market.yes).x} cy={chartLastPoint(chartData.market.yes).y} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                                <circle cx={chartLastPoint(chartData.market.no).x} cy={chartLastPoint(chartData.market.no).y} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                            </>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    market.options?.map((option: any, index: number) => {
-                                                        const colors = [
-                                                            "rgb(59, 130, 246)", // blue
-                                                            "rgb(249, 115, 22)", // orange
-                                                            "rgb(34, 197, 94)", // green
-                                                            "rgb(239, 68, 68)", // red
-                                                            "rgb(168, 85, 247)", // purple
-                                                        ];
-                                                        const color = colors[index % colors.length];
-                                                        const history = chartData[`option_${option.id}`];
-                                                        if (!history || history.yes.length === 0) return null;
-                                                        return (
-                                                            <g key={`option-${option.id}`}>
-                                                                {/* Area */}
+                                                                {/* Yes Area */}
                                                                 <path
-                                                                    d={chartAreaPath(history.yes)}
-                                                                    fill={`url(#optionGradient${option.id})`}
+                                                                    d={chartAreaPath(chartData.market.yes, yMin, yMax)}
+                                                                    fill="url(#yesGradient2)"
                                                                 />
-                                                                {/* Line */}
+
+                                                                {/* No Area */}
                                                                 <path
-                                                                    d={chartLinePath(history.yes)}
-                                                                    stroke={color}
+                                                                    d={chartAreaPath(chartData.market.no, yMin, yMax)}
+                                                                    fill="url(#noGradient2)"
+                                                                />
+
+                                                                {/* Yes Line */}
+                                                                <path
+                                                                    d={chartLinePath(chartData.market.yes, yMin, yMax)}
+                                                                    stroke="rgb(59, 130, 246)"
                                                                     strokeWidth="3"
                                                                     fill="none"
                                                                     strokeLinecap="round"
                                                                     strokeLinejoin="round"
                                                                 />
-                                                                {/* Current Price Dot */}
-                                                                <circle cx={chartLastPoint(history.yes).x} cy={chartLastPoint(history.yes).y} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />
-                                                            </g>
-                                                        );
-                                                    })
-                                                )}
-                                            </svg>
+
+                                                                {/* No Line */}
+                                                                <path
+                                                                    d={chartLinePath(chartData.market.no, yMin, yMax)}
+                                                                    stroke="rgb(249, 115, 22)"
+                                                                    strokeWidth="3"
+                                                                    fill="none"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                />
+
+                                                                {/* Current Price Dots */}
+                                                                {chartData.market.yes.length > 0 && (
+                                                                    <>
+                                                                        <circle cx={chartLastPoint(chartData.market.yes, yMin, yMax).x} cy={chartLastPoint(chartData.market.yes, yMin, yMax).y} r="5" fill="rgb(59, 130, 246)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                        <circle cx={chartLastPoint(chartData.market.no, yMin, yMax).x} cy={chartLastPoint(chartData.market.no, yMin, yMax).y} r="5" fill="rgb(249, 115, 22)" stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                    </>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            market.options?.map((option: any, index: number) => {
+                                                                const colors = [
+                                                                    "rgb(59, 130, 246)", // blue
+                                                                    "rgb(249, 115, 22)", // orange
+                                                                    "rgb(34, 197, 94)", // green
+                                                                    "rgb(239, 68, 68)", // red
+                                                                    "rgb(168, 85, 247)", // purple
+                                                                ];
+                                                                const color = colors[index % colors.length];
+                                                                const history = chartData[`option_${option.id}`];
+                                                                if (!history || history.yes.length === 0) return null;
+                                                                return (
+                                                                    <g key={`option-${option.id}`}>
+                                                                        {/* Area */}
+                                                                        <path
+                                                                            d={chartAreaPath(history.yes, yMin, yMax)}
+                                                                            fill={`url(#optionGradient${option.id})`}
+                                                                        />
+                                                                        {/* Line */}
+                                                                        <path
+                                                                            d={chartLinePath(history.yes, yMin, yMax)}
+                                                                            stroke={color}
+                                                                            strokeWidth="3"
+                                                                            fill="none"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                        />
+                                                                        {/* Current Price Dot */}
+                                                                        <circle cx={chartLastPoint(history.yes, yMin, yMax).x} cy={chartLastPoint(history.yes, yMin, yMax).y} r="5" fill={color} stroke="rgb(15, 23, 42)" strokeWidth="2" />
+                                                                    </g>
+                                                                );
+                                                            })
+                                                        )}
+                                                    </svg>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Chart Footer Info */}
