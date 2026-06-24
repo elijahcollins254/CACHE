@@ -351,6 +351,22 @@ export default function MarketDetail() {
 
     // Map priceHistory to chartData for SVG rendering
     const chartData = priceHistory;
+    
+    // Debug: log chartData structure
+    useEffect(() => {
+        if (chartData?.market?.yes?.length > 0) {
+            console.log("✓ chartData ready:", {
+                hasMarket: !!chartData.market,
+                yesPoints: chartData.market.yes.length,
+                noPoints: chartData.market.no?.length,
+                firstYes: chartData.market.yes[0],
+                lastYes: chartData.market.yes[chartData.market.yes.length - 1],
+                marketType: market?.market_type,
+            });
+        } else {
+            console.log("✗ chartData NOT ready:", { chartData, marketType: market?.market_type });
+        }
+    }, [chartData, market?.market_type]);
 
     // Scroll to chat input when replying
     useEffect(() => {
@@ -1597,6 +1613,10 @@ export default function MarketDetail() {
 
                                                 {market.market_type === 'BINARY' && chartData?.market ? (
                                                     <>
+                                                        {console.log("Rendering chart with paths:", {
+                                                            pathYes: chartLinePath(chartData.market.yes).substring(0, 50),
+                                                            pathNo: chartLinePath(chartData.market.no).substring(0, 50),
+                                                        })}
                                                         {/* Yes Area */}
                                                         <path
                                                             d={chartAreaPath(chartData.market.yes)}
