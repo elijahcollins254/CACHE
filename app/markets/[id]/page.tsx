@@ -349,6 +349,9 @@ export default function MarketDetail() {
     const [relatedMarkets, setRelatedMarkets] = useState<any[]>([]);  // Markets with same question
     const chatInputRef = useRef<HTMLDivElement>(null);
 
+    // Map priceHistory to chartData for SVG rendering
+    const chartData = priceHistory;
+
     // Scroll to chat input when replying
     useEffect(() => {
         if (replyingToId && chatInputRef.current) {
