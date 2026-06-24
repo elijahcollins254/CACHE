@@ -1157,9 +1157,6 @@ export default function MarketDetail() {
         return { yes: yesHistory, no: noHistory };
     };
 
-    // Use fetched price history or fallback to generated data
-    const chartData = priceHistory;
-
     const getSelectedOutcomeProbability = () => {
         if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
             const option = market.options?.find((o: any) => o.id === selectedOptionId);
