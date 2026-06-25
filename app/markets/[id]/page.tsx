@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Clock3, TrendingUp, Wallet } from "lucide-react";
+import { ArrowLeft, Clock3, TrendingUp, Wallet, DollarSign } from "lucide-react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import MarketChart from "@/components/MarketChart";
 
@@ -137,6 +137,13 @@ export default function BrokerageMarketDetailPage() {
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedOutcome, setSelectedOutcome] = useState<"Yes" | "No">("Yes");
+  const [orderType, setOrderType] = useState<"market" | "limit">("market");
+  const [orderAmount, setOrderAmount] = useState("100");
+  const [limitPrice, setLimitPrice] = useState("50");
+  const [limitShares, setLimitShares] = useState("1");
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderMessage, setOrderMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!marketIdParam) return;
@@ -217,6 +224,82 @@ export default function BrokerageMarketDetailPage() {
   const outcomePrices = useMemo(() => parseNumberArray(market?.outcomePrices), [market]);
   const yesProbability = useMemo(() => parseProbability(outcomePrices[0], market?.bestBid ? market.bestBid * 100 : 50), [outcomePrices, market]);
   const noProbability = 100 - yesProbability;
+
+  const orderPreview = useMemo(() => {
+    const amount = Number(orderAmount);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+
+    const payout = amount * ((selectedOutcome === "Yes" ? yesProbability : noProbability) / 100);
+    const slippage = Math.max(0.25, Math.min(5, Math.abs(yesProbability - 50) / 10));
+
+    return {
+      payout: payout.toFixed(2),
+      slippage: slippage.toFixed(2),
+      impliedPrice: (selectedOutcome === "Yes" ? yesProbability : noProbability).toFixed(1),
+    };
+  }, [noProbability, orderAmount, selectedOutcome, yesProbability]);
+
+  const handlePlaceOrder = async () => {
+    if (!market) return;
+
+    const parsedAmount = Number(orderAmount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setOrderMessage("Enter a valid amount in USD.");
+      return;
+    }
+
+    if (orderType === "limit") {
+      const parsedLimitPrice = Number(limitPrice);
+      const parsedShares = Number(limitShares);
+      if (!Number.isFinite(parsedLimitPrice) || parsedLimitPrice <= 0 || parsedLimitPrice > 100) {
+        setOrderMessage("Enter a valid limit price between 1 and 100.");
+        return;
+      }
+      if (!Number.isFinite(parsedShares) || parsedShares <= 0) {
+        setOrderMessage("Enter a valid share quantity.");
+        return;
+      }
+    }
+
+    const storedUser = localStorage.getItem("poly_user");
+    if (!storedUser) {
+      setOrderMessage("Please log in to place an order.");
+      return;
+    }
+
+    setPlacingOrder(true);
+    setOrderMessage(null);
+
+    try {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/orders/place/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          market_id: market.id,
+          side: selectedOutcome === "Yes" ? "BUY" : "SELL",
+          size: orderType === "limit" ? Number(limitShares) : parsedAmount / 100,
+          price: orderType === "limit"
+            ? Math.max(0.001, Math.min(0.999, Number(limitPrice) / 100))
+            : Math.max(0.001, Math.min(0.999, yesProbability / 100)),
+          order_type: orderType,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "Order placement failed.");
+      }
+
+      setOrderMessage(`Order submitted for ${selectedOutcome} (${orderType}).`);
+      setOrderAmount("100");
+      setLimitPrice("50");
+      setLimitShares("1");
+    } catch (err) {
+      setOrderMessage(err instanceof Error ? err.message : "Order placement failed.");
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -327,6 +410,110 @@ export default function BrokerageMarketDetailPage() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="text-lg font-semibold">Trade</h2>
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {(["Yes", "No"] as const).map((outcome) => (
+                    <button
+                      key={outcome}
+                      type="button"
+                      onClick={() => setSelectedOutcome(outcome)}
+                      className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${selectedOutcome === outcome ? "border-foreground bg-foreground text-background" : "border-border bg-background/70 text-foreground hover:bg-muted"}`}
+                    >
+                      {outcome}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {(["market", "limit"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setOrderType(type)}
+                      className={`rounded-2xl border px-3 py-2 text-sm font-semibold capitalize transition ${orderType === type ? "border-foreground bg-foreground text-background" : "border-border bg-background/70 text-foreground hover:bg-muted"}`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+
+                {orderType === "market" ? (
+                  <label className="block text-sm font-medium text-muted-foreground">
+                    Amount (USD)
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={orderAmount}
+                      onChange={(event) => setOrderAmount(event.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-border bg-background/70 px-3 py-3 text-base font-semibold text-foreground outline-none ring-0"
+                    />
+                  </label>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="block text-sm font-medium text-muted-foreground">
+                      Limit price (%)
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        value={limitPrice}
+                        onChange={(event) => setLimitPrice(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-border bg-background/70 px-3 py-3 text-base font-semibold text-foreground outline-none ring-0"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-muted-foreground">
+                      Shares
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={limitShares}
+                        onChange={(event) => setLimitShares(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-border bg-background/70 px-3 py-3 text-base font-semibold text-foreground outline-none ring-0"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                {orderPreview ? (
+                  <div className="rounded-2xl border border-border bg-background/70 p-3 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <span>Estimated payout</span>
+                      <span className="font-semibold text-foreground">USD {orderPreview.payout}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span>Estimated slippage</span>
+                      <span className="font-semibold text-foreground">{orderPreview.slippage}%</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span>Implied price</span>
+                      <span className="font-semibold text-foreground">{orderPreview.impliedPrice}%</span>
+                    </div>
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handlePlaceOrder}
+                  disabled={placingOrder}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  {placingOrder ? "Placing order..." : `Place ${orderType === "market" ? "market" : "limit"} ${selectedOutcome}`}
+                </button>
+
+                {orderMessage ? (
+                  <p className="rounded-2xl border border-border bg-background/70 px-3 py-2 text-sm text-muted-foreground">
+                    {orderMessage}
+                  </p>
+                ) : null}
               </div>
             </div>
 
