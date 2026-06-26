@@ -556,11 +556,11 @@ export default function MarketDetail() {
     }, [activeTab, market, selectedOutcome, selectedOptionId]);
 
     useEffect(() => {
-        if (market && market.id) {
+        if (market?.id) {
             fetchMarketDetails();
             fetchPriceHistory();
         }
-    }, [market]);
+    }, [market?.id]);
 
     // Auto-refresh Polymarket prices every 5 seconds
     useEffect(() => {
@@ -613,8 +613,11 @@ export default function MarketDetail() {
         return () => clearInterval(pollInterval);
     }, [market, dispatch]);
 
-    const fetchPriceHistory = useCallback(async () => {
-        setLoadingChart(true);
+    const fetchPriceHistory = useCallback(async (showLoading: boolean = true) => {
+        if (showLoading) {
+            setLoadingChart(true);
+        }
+
         try {
             // For Polymarket data, fetch CLOB price history by outcome token.
             if (market.source === 'polymarket') {
@@ -652,7 +655,9 @@ export default function MarketDetail() {
 
                         console.log("Polymarket chart data:", { points: normalized.length, first: normalized[0], last: normalized[normalized.length - 1] });
                         setChartData(normalized);
-                        setLoadingChart(false);
+                        if (showLoading) {
+                            setLoadingChart(false);
+                        }
                         return;
                     }
                     
@@ -674,7 +679,9 @@ export default function MarketDetail() {
                     }]);
                 }
                 
-                setLoadingChart(false);
+                if (showLoading) {
+                    setLoadingChart(false);
+                }
                 return;
             }
 
@@ -780,15 +787,17 @@ export default function MarketDetail() {
                 no: 100 - currentProb,
             }]);
         } finally {
-            setLoadingChart(false);
+            if (showLoading) {
+                setLoadingChart(false);
+            }
         }
     }, [market, timePeriod, marketId]);
 
     useEffect(() => {
-        if (market && market.id) {
+        if (market?.id) {
             fetchPriceHistory();
         }
-    }, [timePeriod, market]);
+    }, [timePeriod, market?.id]);
 
     // Auto-refresh price history for Polymarket markets every 5 seconds
     useEffect(() => {
@@ -798,7 +807,7 @@ export default function MarketDetail() {
 
         const refreshInterval = setInterval(async () => {
             try {
-                await fetchPriceHistory();
+                await fetchPriceHistory(false);
                 console.log('✓ Refreshed price history');
             } catch (err) {
                 console.warn("Error refreshing price history:", err);
