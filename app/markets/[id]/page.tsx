@@ -14,7 +14,7 @@ import SearchFilterBar from "@/components/SearchFilterBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send, BarChart3, Percent, Droplet } from "lucide-react";
+import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send, Droplet } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
 import AddLiquidityModal from "@/components/AddLiquidityModal";
@@ -396,7 +396,6 @@ export default function MarketDetail() {
     const [chatLoading, setChatLoading] = useState(false);
     const [sendingChat, setSendingChat] = useState(false);
     const [chatError, setChatError] = useState("");
-    const [probabilityViewMode, setProbabilityViewMode] = useState<"percentage" | "graph">("graph");
     const [timePeriod, setTimePeriod] = useState<"1H" | "6H" | "1D" | "1W" | "1M" | "ALL">("ALL");
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [priceHistory, setPriceHistory] = useState<Record<string, { yes: number[]; no: number[] }>>({});
@@ -1495,161 +1494,63 @@ export default function MarketDetail() {
                             </div>
                         )}
 
-                        {/* Probability Display */}
                         <div className="bg-muted rounded-2xl p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <div>
-                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Options</h3>
-                                </div>
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={() => setProbabilityViewMode("percentage")}
-                                        className={`p-2 rounded transition ${
-                                            probabilityViewMode === "percentage"
-                                                ? "bg-foreground text-background"
-                                                : "bg-border text-muted-foreground hover:bg-border/80 hover:text-foreground"
-                                        }`}
-                                        title="View as percentages"
-                                    >
-                                        <Percent className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setProbabilityViewMode("graph")}
-                                        className={`p-2 rounded transition ${
-                                            probabilityViewMode === "graph"
-                                                ? "bg-foreground text-background"
-                                                : "bg-border text-muted-foreground hover:bg-border/80 hover:text-foreground"
-                                        }`}
-                                        title="View as chart"
-                                    >
-                                        <BarChart3 className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            {probabilityViewMode === "percentage" ? (
-                                <div className="space-y-3">
-                                    <button onClick={() => setSelectedOutcome("Yes")} className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                                        selectedOutcome === "Yes"
-                                                ? "bg-green-500/20 border-green-500"
-                                                : "bg-muted hover:bg-muted/80 border-border hover:border-green-500/50"
-                                    }`}>
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                                            <div>
-                                                <span className="font-semibold text-foreground block">{market.question.split('?')[0].includes('Will') ? 'Yes' : 'True'}</span>
-                                                <span className="text-xs text-muted-foreground">{market.yes_probability}% • {formatKES(getDisplaySharePriceKes(market, market.yes_probability, "Yes"))}</span>
-                                            </div>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-foreground">Market Odds</h3>
+                                        <p className="text-xs text-muted-foreground mt-1">Latest probability and trend</p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                            {market.yes_probability}% Yes
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                                                <div className="h-full bg-green-400" style={{width: `${market.yes_probability}%`}}></div>
-                                            </div>
-                                        </div>
-                                    </button>
-                                    <button onClick={() => setSelectedOutcome("No")} className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                                        selectedOutcome === "No"
-                                                ? "bg-red-500/20 border-red-500"
-                                                : "bg-muted hover:bg-muted/80 border-border hover:border-red-500/50"
-                                    }`}>
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                                            <div>
-                                                <span className="font-semibold text-foreground block">No</span>
-                                                <span className="text-xs text-muted-foreground">{noProbability}% • {formatKES(getDisplaySharePriceKes(market, noProbability, "No"))}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                                                <div className="h-full bg-red-400" style={{width: `${noProbability}%`}}></div>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {/* Market Odds Chart - Polymarket Style */}
-                                    <div className="bg-background rounded-2xl border border-border overflow-hidden">
-                                        {/* Chart Header */}
-                                        <div className={isMobile ? "px-4 py-3 border-b border-border" : "px-6 py-4 border-b border-border"}>
-                                            <div className="flex items-center justify-between">
-                                                <h3 className={isMobile ? "text-xs font-bold text-foreground" : "text-sm font-bold text-foreground"}>Market Odds</h3>
-                                                <div className={isMobile ? "flex gap-0.5" : "flex gap-1"}>
-                                                    {(["1H", "6H", "1D", "1W", "1M", "ALL"] as const).map((period) => (
-                                                        <button
-                                                            key={period}
-                                                            onClick={() => setTimePeriod(period)}
-                                                            className={`${isMobile ? "px-1.5 py-0.5 text-xs" : "px-3 py-1.5 text-xs"} font-bold rounded transition-all ${
-                                                                timePeriod === period
-                                                                    ? "bg-foreground text-background"
-                                                                    : "hover:bg-border text-muted-foreground hover:text-foreground bg-muted/50"
-                                                            }`}
-                                                        >
-                                                            {period}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Price History Chart - Using Recharts */}
-                                        <div className={isMobile ? "px-3 py-4" : "px-6 py-4"}>
-                                            <MarketChart
-                                                data={chartData}
-                                                loading={loadingChart}
-                                                isMobile={isMobile}
-                                                timePeriod={timePeriod}
-                                            />
-                                        </div>
-
-                                        {/* Chart Footer Info */}
-                                        <div className={isMobile ? "px-4 py-3 border-t border-border bg-muted/50 flex items-center justify-between gap-2 flex-wrap text-xs" : "px-6 py-4 border-t border-border bg-muted/50 flex items-center justify-between"}>
-                                            <div className={isMobile ? "flex items-center gap-2" : "flex items-center gap-6"}>
-                                                <div className="flex items-center gap-1">
-                                                    <TrendingUp className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                                                    <span className={isMobile ? "text-xs font-semibold" : "text-sm font-semibold"}>{market.volume}</span>
-                                                    <span className="text-xs text-muted-foreground">Vol.</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                                                    <span className="text-xs text-muted-foreground">{formatDate(market.end_date)}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                {market.market_type === 'BINARY' ? (
-                                                    <>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                                            <span className="text-sm font-bold text-foreground">{market.yes_probability}%</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                                                            <span className="text-sm font-bold text-foreground">{noProbability}%</span>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    market.options?.map((option: any, index: number) => {
-                                                        const colors = [
-                                                            "bg-blue-500",
-                                                            "bg-orange-500",
-                                                            "bg-green-500",
-                                                            "bg-red-500",
-                                                            "bg-purple-500",
-                                                        ];
-                                                        const bgColor = colors[index % colors.length];
-                                                        return (
-                                                            <div key={option.id} className="flex items-center gap-2">
-                                                                <div className={`w-3 h-3 rounded-full ${bgColor}`}></div>
-                                                                <span className="text-sm font-bold text-foreground">{option.yes_probability}%</span>
-                                                            </div>
-                                                        );
-                                                    })
-                                                )}
-                                            </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                                            {noProbability}% No
                                         </div>
                                     </div>
                                 </div>
-                            )}
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] items-start">
+                                    <div className="flex flex-wrap gap-2 text-xs">
+                                        {(["1H", "6H", "1D", "1W", "1M", "ALL"] as const).map((period) => (
+                                            <button
+                                                key={period}
+                                                onClick={() => setTimePeriod(period)}
+                                                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                                                    timePeriod === period
+                                                        ? "bg-foreground text-background"
+                                                        : "bg-border text-muted-foreground hover:bg-border/80"
+                                                }`}
+                                            >
+                                                {period}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="text-right text-xs text-muted-foreground">
+                                        {formatDate(market.end_date)}
+                                    </div>
+                                </div>
+
+                                <MarketChart
+                                    data={chartData}
+                                    loading={loadingChart}
+                                    isMobile={isMobile}
+                                />
+
+                                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                        <TrendingUp className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                                        {market.volume}
+                                    </div>
+                                    <div className="hidden sm:flex items-center gap-2">
+                                        <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                                        {market.end_date ? formatDate(market.end_date) : "Closing soon"}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Options List for OPTION_LIST */}

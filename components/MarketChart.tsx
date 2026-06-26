@@ -38,11 +38,30 @@ const MarketChart: React.FC<MarketChartProps> = ({
 
         return data.map((point) => ({
             timestamp: point.timestamp,
-            yes: Math.round(point.yes * 100) / 100, // Round to 2 decimals
+            yes: Math.round(point.yes * 100) / 100,
             no: Math.round(point.no * 100) / 100,
             date: point.date || new Date(point.timestamp * 1000).toLocaleString(),
         }));
     }, [data]);
+
+    const formatXAxisLabel = useCallback(
+        (value: number) => {
+            const date = new Date(value * 1000);
+            if (isMobile) {
+                if (timePeriod === '1H' || timePeriod === '6H' || timePeriod === '1D') {
+                    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                }
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            if (timePeriod === 'ALL') {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        },
+        [isMobile, timePeriod]
+    );
 
     // Custom tooltip
     const CustomTooltip = useCallback(
@@ -97,16 +116,10 @@ const MarketChart: React.FC<MarketChartProps> = ({
                         className="text-border opacity-30"
                     />
                     <XAxis
-                        dataKey={(entry) =>
-                            new Date(entry.timestamp * 1000).toLocaleTimeString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                            })
-                        }
+                        dataKey="timestamp"
+                        tickFormatter={formatXAxisLabel}
                         tick={{ fontSize: isMobile ? 10 : 12, className: 'fill-muted-foreground' }}
-                        interval={Math.floor(chartData.length / (isMobile ? 3 : 6))}
+                        interval={Math.max(0, Math.floor(chartData.length / (isMobile ? 2 : 4)))}
                     />
                     <YAxis
                         label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft' }}
