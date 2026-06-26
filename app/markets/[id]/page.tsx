@@ -160,10 +160,32 @@ export default function BrokerageMarketDetailPage() {
 
         const data = await response.json();
         const markets = Array.isArray(data) ? data : data.results || [];
-        const found = markets.find((item: BrokerageMarket) => {
+        
+        console.log('[Market Load] Searching for market:', { marketIdParam, totalMarketsInFeed: markets.length });
+        
+        let found = markets.find((item: BrokerageMarket) => {
           const id = String(item.id);
           return id === String(marketIdParam) || id === String(item.external_id || "");
         });
+
+        // If not found in the feed, try fetching directly by ID
+        if (!found) {
+          console.log('[Market Load] Market not found in feed, trying direct fetch');
+          try {
+            const directResponse = await fetchWithAuth(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/markets/${marketIdParam}/`
+            );
+            if (directResponse.ok) {
+              const directData = await directResponse.json();
+              if (directData && (directData.id || directData.external_id)) {
+                found = directData;
+                console.log('[Market Load] Found market via direct fetch');
+              }
+            }
+          } catch (err) {
+            console.log('[Market Load] Direct fetch failed:', err);
+          }
+        }
 
         if (!found) {
           throw new Error("This market was not found in the brokerage feed.");
