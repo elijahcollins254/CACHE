@@ -399,6 +399,7 @@ export default function MarketDetail() {
     const [probabilityViewMode, setProbabilityViewMode] = useState<"percentage" | "graph">("graph");
     const [timePeriod, setTimePeriod] = useState<"1H" | "6H" | "1D" | "1W" | "1M" | "ALL">("ALL");
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+    const [priceHistory, setPriceHistory] = useState<Record<string, { yes: number[]; no: number[] }>>({});
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [limitPrice, setLimitPrice] = useState<number>(50); // Default to 50% probability
@@ -612,7 +613,7 @@ export default function MarketDetail() {
         return () => clearInterval(pollInterval);
     }, [market, dispatch]);
 
-    const fetchPriceHistory = async () => {
+    const fetchPriceHistory = useCallback(async () => {
         setLoadingChart(true);
         try {
             // For Polymarket data, fetch CLOB price history by outcome token.
@@ -781,7 +782,7 @@ export default function MarketDetail() {
         } finally {
             setLoadingChart(false);
         }
-    };
+    }, [market, timePeriod, marketId]);
 
     useEffect(() => {
         if (market && market.id) {
