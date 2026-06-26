@@ -1499,7 +1499,6 @@ export default function MarketDetail() {
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div>
                                         <h3 className="text-sm font-bold text-foreground">Market Odds</h3>
-                                        <p className="text-xs text-muted-foreground mt-1">Latest probability and trend</p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                                         <div className="flex items-center gap-2">
@@ -1529,9 +1528,7 @@ export default function MarketDetail() {
                                             </button>
                                         ))}
                                     </div>
-                                    <div className="text-right text-xs text-muted-foreground">
-                                        {formatDate(market.end_date)}
-                                    </div>
+
                                 </div>
 
                                 <MarketChart
