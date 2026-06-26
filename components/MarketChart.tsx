@@ -130,9 +130,10 @@ const MarketChart: React.FC<MarketChartProps> = ({
                     <Legend
                         wrapperStyle={{ paddingTop: '20px' }}
                         iconType="line"
-                        formatter={(value) =>
-                            value === 'yes' ? 'Yes Probability' : 'No Probability'
-                        }
+                        formatter={(value) => {
+                            const label = String(value || '').toLowerCase();
+                            return label === 'yes' ? 'Yes Probability' : 'No Probability';
+                        }}
                     />
                     <Line
                         type="monotone"
