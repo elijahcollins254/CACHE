@@ -77,6 +77,23 @@ function getCurrentSharePrice(
   return price;
 }
 
+/**
+ * Calculate multiplier (payout / cost ratio)
+ * Multiplier shows how much you get back relative to your bet
+ */
+function calculateMultiplier(sharePriceKes: number): number {
+  if (sharePriceKes <= 0) return 1;
+  const multiplier = PAYOUT_PER_SHARE / sharePriceKes;
+  return Math.max(1, Math.round(multiplier * 100) / 100);
+}
+
+/**
+ * Format multiplier for display (e.g., "x2.50")
+ */
+function formatMultiplier(multiplier: number): string {
+  return `x${multiplier.toFixed(2)}`;
+}
+
 interface MarketCardProps {
   market: {
     id: number;
@@ -160,6 +177,9 @@ export default function MarketCard({ market }: MarketCardProps) {
   const noPriceKes = isPolymarket
     ? polymarketProbabilityToKES(noProbability)
     : getCurrentSharePrice(yesProbability, "No");
+  
+  const yesMultiplier = calculateMultiplier(yesPriceKes);
+  const noMultiplier = calculateMultiplier(noPriceKes);
 
   const isOptionMarket = market.market_type === "OPTION_LIST" && market.options && market.options.length > 0;
 
@@ -173,6 +193,7 @@ export default function MarketCard({ market }: MarketCardProps) {
               const optionPriceKes = isPolymarket
                 ? polymarketProbabilityToKES(optionYesProb)
                 : getCurrentSharePrice(optionYesProb, "Yes");
+              const optionMultiplier = calculateMultiplier(optionPriceKes);
               return (
                 <div
                   key={option.id}
@@ -186,7 +207,7 @@ export default function MarketCard({ market }: MarketCardProps) {
                       {optionYesProb}%
                     </div>
                     <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
-                      {formatKES(optionPriceKes)}
+                      {formatMultiplier(optionMultiplier)}
                     </div>
                   </div>
                 </div>
@@ -206,7 +227,7 @@ export default function MarketCard({ market }: MarketCardProps) {
             <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
               {yesProbability}%
             </div>
-            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">{formatKES(yesPriceKes)}</span>
+            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">{formatMultiplier(yesMultiplier)}</span>
           </div>
         </div>
 
@@ -216,7 +237,7 @@ export default function MarketCard({ market }: MarketCardProps) {
             <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
               {noProbability}%
             </div>
-            <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">{formatKES(noPriceKes)}</span>
+            <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">{formatMultiplier(noMultiplier)}</span>
           </div>
         </div>
       </div>

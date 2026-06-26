@@ -218,6 +218,33 @@ function getDisplaySharePriceKes(market: any, probability: number, outcome: stri
         return market?.source === "polymarket" ? USD_TO_KES : PAYOUT_PER_SHARE;
     }
 
+    /**
+     * Calculate multiplier (payout / cost ratio)
+     * Multiplier shows how much you get back relative to your bet
+     */
+    function calculateMultiplier(sharePriceKes: number, payoutPerShare: number): number {
+        if (sharePriceKes <= 0) return 1;
+        const multiplier = payoutPerShare / sharePriceKes;
+        return Math.max(1, Math.round(multiplier * 100) / 100);
+    }
+
+    /**
+     * Format multiplier for display (e.g., "x2.50")
+     */
+    function formatMultiplier(multiplier: number): string {
+        return `x${multiplier.toFixed(2)}`;
+    }
+
+    /**
+     * Get display multiplier for outcome
+     */
+    function getDisplayMultiplier(market: any, probability: number, outcome: string): string {
+        const priceKes = getDisplaySharePriceKes(market, probability, outcome);
+        const payoutPerShare = getPayoutPerShareKes(market);
+        const multiplier = calculateMultiplier(priceKes, payoutPerShare);
+        return formatMultiplier(multiplier);
+    }
+
 function getPolymarketTokenId(market: any, outcome: "Yes" | "No" = "Yes"): string | null {
     const tokenIds = market?.clobTokenIds;
     let parsedTokenIds: string[] = [];
@@ -1570,7 +1597,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                     }`}
                                                 >
-                                                    Yes ({option.yes_probability}%) {formatKES(getDisplaySharePriceKes(market, option.yes_probability, "Yes"))}
+                                                    Yes ({option.yes_probability}%) {getDisplayMultiplier(market, option.yes_probability, "Yes")}
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -1583,7 +1610,7 @@ export default function MarketDetail() {
                                                             : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                     }`}
                                                 >
-                                                    No ({100 - option.yes_probability}%) {formatKES(getDisplaySharePriceKes(market, 100 - option.yes_probability, "No"))}
+                                                    No ({100 - option.yes_probability}%) {getDisplayMultiplier(market, 100 - option.yes_probability, "No")}
                                                 </button>
                                             </div>
                                         </div>
@@ -1661,7 +1688,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                                         }`}
                                                     >
-                                                        Yes ({yesProbability}%) {formatKES(yesPriceKes)}
+                                                        Yes ({yesProbability}%) {getDisplayMultiplier(market, yesProbability, "Yes")}
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOutcome("No")}
@@ -1671,7 +1698,7 @@ export default function MarketDetail() {
                                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                                         }`}
                                                     >
-                                                        No ({noProbability}%) {formatKES(noPriceKes)}
+                                                        No ({noProbability}%) {getDisplayMultiplier(market, noProbability, "No")}
                                                     </button>
                                                 </>
                                             );
@@ -1690,7 +1717,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes <span className="text-xs font-bold ml-1">({market.yes_probability}%) {formatKES(getDisplaySharePriceKes(market, market.yes_probability, "Yes"))}</span>
+                                        Yes <span className="text-xs font-bold ml-1">({market.yes_probability}%) {getDisplayMultiplier(market, market.yes_probability, "Yes")}</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
@@ -1700,7 +1727,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                                         }`}
                                     >
-                                        No <span className="text-xs font-bold ml-1">({noProbability}%) {formatKES(getDisplaySharePriceKes(market, noProbability, "No"))}</span>
+                                        No <span className="text-xs font-bold ml-1">({noProbability}%) {getDisplayMultiplier(market, noProbability, "No")}</span>
                                     </button>
                                 </div>
                             )}
