@@ -344,10 +344,15 @@ function transformHistoryToChartData(
     const points: ChartDataPoint[] = [];
     const totalPoints = Math.min(yesValues.length, noValues.length);
     const intervalSeconds = totalPoints > 1 ? 300 : 0; // 5-minute intervals
+    
+    // Validate startTime - if it's too small, use current time
+    const now = Date.now() / 1000;
+    const validStartTime = startTime < 1000000000 ? now : startTime;
 
     for (let i = 0; i < totalPoints; i++) {
         points.push({
-            timestamp: startTime + i * intervalSeconds,
+            // Generate timestamps going backwards from now (historical data)
+            timestamp: validStartTime - ((totalPoints - 1 - i) * intervalSeconds),
             yes: yesValues[i],
             no: noValues[i],
         });
@@ -375,12 +380,21 @@ function transformPolymarketHistory(
         ];
     }
 
-    return rawHistory.map((point: any) => {
+    const now = Date.now() / 1000;
+    const intervalSeconds = 300; // 5-minute intervals
+    
+    return rawHistory.map((point: any, index: number) => {
         const rawPrice = point?.p ?? point?.price ?? point?.value ?? 0.5;
         const price = typeof rawPrice === "string" ? parseFloat(rawPrice) : rawPrice;
         const yesProb = price <= 1 ? price * 100 : price;
         const noProb = 100 - yesProb;
-        const timestamp = (point?.t ?? point?.timestamp ?? Date.now()) / 1000;
+        
+        // Validate timestamp - if < 1000000000, it's invalid (pre-2001)
+        let timestamp = (point?.t ?? point?.timestamp ?? 0) / 1000;
+        if (timestamp < 1000000000) {
+            // Invalid timestamp - generate based on current date going backwards
+            timestamp = now - ((rawHistory.length - 1 - index) * intervalSeconds);
+        }
 
         return {
             timestamp,
@@ -781,11 +795,24 @@ export default function MarketDetail() {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.data && data.data.length > 0) {
-                        const points = data.data.map((d: any) => ({
-                            timestamp: d.timestamp || Date.now() / 1000,
-                            yes: d.yes_probability || d.probability || 50,
-                            no: d.no_probability || (100 - (d.probability || 50)),
-                        }));
+                        // Generate valid timestamps - timestamps < 1000000000 are invalid (pre-2001)
+                        const now = Date.now() / 1000;
+                        const intervalSeconds = 300; // 5-minute intervals
+                        
+                        const points = data.data.map((d: any, index: number) => {
+                            // Use provided timestamp only if it's reasonable (after year 2001)
+                            let timestamp = d.timestamp;
+                            if (!timestamp || timestamp < 1000000000) {
+                                // Invalid timestamp - generate based on current date going backwards
+                                const pointsCount = data.data.length;
+                                timestamp = now - ((pointsCount - 1 - index) * intervalSeconds);
+                            }
+                            return {
+                                timestamp,
+                                yes: d.yes_probability || d.probability || 50,
+                                no: d.no_probability || (100 - (d.probability || 50)),
+                            };
+                        });
                         setChartData(points);
                     } else {
                         const currentProb = market.yes_probability || 50;

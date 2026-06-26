@@ -69,10 +69,18 @@ const MarketChart: React.FC<MarketChartProps> = ({
             const { active, payload, label } = props;
             if (active && payload && payload.length) {
                 const data = payload[0]?.payload;
+                let displayDate = 'Unknown date';
+                
+                if (data?.timestamp) {
+                    // Validate timestamp - if it's too small, it's invalid
+                    const timestamp = data.timestamp < 1000000000 ? Date.now() / 1000 : data.timestamp;
+                    displayDate = new Date(timestamp * 1000).toLocaleString();
+                }
+                
                 return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
                         <p className="text-xs text-muted-foreground mb-1">
-                            {new Date(data?.timestamp * 1000).toLocaleString()}
+                            {displayDate}
                         </p>
                         {payload.map((entry: any, index: number) => (
                             <p key={index} style={{ color: entry.color }} className="text-sm font-semibold">
