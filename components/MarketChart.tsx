@@ -98,7 +98,13 @@ const MarketChart: React.FC<MarketChartProps> = ({
     if (loading) {
         return (
             <div className="w-full h-80 flex items-center justify-center bg-muted/30 rounded-lg border border-border">
-                <div className="text-muted-foreground text-sm font-medium">Loading chart...</div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-12 h-12">
+                        <div className="absolute inset-0 rounded-full border-4 border-muted"></div>
+                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-apple-blue animate-spin"></div>
+                    </div>
+                    <p className="text-muted-foreground text-sm font-medium">Loading chart...</p>
+                </div>
             </div>
         );
     }
