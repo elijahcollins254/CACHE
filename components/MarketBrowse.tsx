@@ -32,19 +32,27 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
   const routeCategory = categorySlug ? categoryBySlug.get(categorySlug) || formatSlug(categorySlug) : null;
   const isSpecialCategory = categorySlug ? specialCategorySlugs.has(categorySlug) : false;
 
+  const categoryMarkets = useMemo(() => {
+    if (!routeCategory || isSpecialCategory || !categorySlug) return [];
+
+    return allMarkets.filter(
+      (market) => market.category_slug === categorySlug && market.status !== "RESOLVED"
+    );
+  }, [allMarkets, routeCategory, isSpecialCategory, categorySlug]);
+
   const subcategoryOptions = useMemo(() => {
-    if (!routeCategory || isSpecialCategory) return [];
+    if (categoryMarkets.length === 0) return [];
 
     const counts = new Map<string, number>();
-    allMarkets.forEach((market) => {
-      if (market.category_slug !== categorySlug || !market.subcategory || market.status === "RESOLVED") return;
+    categoryMarkets.forEach((market) => {
+      if (!market.subcategory) return;
       counts.set(market.subcategory, (counts.get(market.subcategory) || 0) + 1);
     });
 
     return Array.from(counts.entries())
       .map(([label, count]) => ({ label, count, slug: toSlug(label) }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-  }, [allMarkets, categorySlug, isSpecialCategory, routeCategory]);
+  }, [categoryMarkets]);
 
   const activeSubcategory = subcategorySlug
     ? subcategoryOptions.find((item) => item.slug === subcategorySlug)?.label || formatSlug(subcategorySlug)
@@ -53,24 +61,18 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
   const activeCategoryLabel = routeCategory || (categorySlug ? formatSlug(categorySlug) : null);
 
   const leagueOptions = useMemo(() => {
-    if (!routeCategory || isSpecialCategory || !subcategorySlug) return [];
+    if (categoryMarkets.length === 0 || !subcategorySlug) return [];
 
     const counts = new Map<string, number>();
-    allMarkets.forEach((market) => {
-      if (
-        market.category_slug !== categorySlug ||
-        market.subcategory_slug !== subcategorySlug ||
-        !market.league ||
-        market.status === "RESOLVED"
-      ) return;
-
+    categoryMarkets.forEach((market) => {
+      if (market.subcategory_slug !== subcategorySlug || !market.league) return;
       counts.set(market.league, (counts.get(market.league) || 0) + 1);
     });
 
     return Array.from(counts.entries())
       .map(([label, count]) => ({ label, count, slug: toSlug(label) }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-  }, [allMarkets, categorySlug, isSpecialCategory, routeCategory, subcategorySlug]);
+  }, [categoryMarkets, subcategorySlug]);
 
   const activeLeague = leagueSlug
     ? leagueOptions.find((item) => item.slug === leagueSlug)?.label || formatSlug(leagueSlug)

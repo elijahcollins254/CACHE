@@ -15,8 +15,9 @@ const categorySlug = (value: string) => value.toLowerCase().replace(/&/g, "and")
 const categoryBySlug = new Map(categories.map((category) => [categorySlug(category), category]));
 
 const getCategoryFromPath = (pathname: string, fallback: string | null) => {
-    if (pathname.startsWith("/category")) {
-        const [, , slug] = pathname.split("/");
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments[0] === "category") {
+        const slug = segments[1];
         return slug ? categoryBySlug.get(slug) || "Trending" : "Trending";
     }
 
