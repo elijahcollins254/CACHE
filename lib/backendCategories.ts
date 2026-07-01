@@ -58,7 +58,7 @@ export async function fetchBackendCategories(): Promise<BackendCategory[]> {
         slug: category.slug || toSlug(category.name),
         order: category.order,
         subcategories: Array.isArray(category.subcategories)
-          ? category.subcategories.map((subcategory) => ({
+          ? category.subcategories.map((subcategory: any) => ({
               id: subcategory.id,
               name: subcategory.name,
               slug: subcategory.slug || toSlug(subcategory.name),
