@@ -100,15 +100,17 @@ export default function Home() {
           </div>
         ) : (
           <div className="transition-opacity duration-300">
-            {categories.map((cat) => (
-              <CategorySection
-                key={cat}
-                title={cat}
-                markets={organizedMarkets.byCategory[cat] || []}
-                parentMarketIds={organizedMarkets.parentMarketIds}
-                parentGroups={organizedMarkets.parentGroups}
-              />
-            ))}
+            {categories
+              .filter((cat) => (organizedMarkets.byCategory[cat] || []).length > 0)
+              .map((cat) => (
+                <CategorySection
+                  key={cat}
+                  title={cat}
+                  markets={organizedMarkets.byCategory[cat] || []}
+                  parentMarketIds={organizedMarkets.parentMarketIds}
+                  parentGroups={organizedMarkets.parentGroups}
+                />
+              ))}
           </div>
         )}
       </main>
