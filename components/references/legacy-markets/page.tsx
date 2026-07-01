@@ -819,190 +819,108 @@ export default function MarketDetail() {
     };
 
     const handleBet = async (outcome: "Yes" | "No") => {
-        // Check if user is logged in first
         const user = localStorage.getItem("poly_user");
         if (!user) {
             setMessage("Please log in to enter a position");
             return;
         }
 
-        // For option-list markets, require option selection
         if (market.market_type === 'OPTION_LIST' && !selectedOptionId) {
             setMessage("Please select an option");
             return;
         }
 
-        // Validate inputs based on order type
-        if (orderType === "market") {
-            if (!betAmount || isNaN(Number(betAmount))) {
-                setMessage("Please enter a valid amount");
-                return;
-            }
-        } else {
-            if (limitPrice <= 0 || shares <= 0) {
-                setMessage("Please enter valid limit price and shares");
-                return;
-            }
+        if (!betAmount || isNaN(Number(betAmount))) {
+            setMessage("Please enter a valid amount");
+            return;
         }
 
         setPlacingBet(true);
         setMessage("");
 
         try {
-            // Determine if this is a Polymarket order
             const isPolymarket = market.source === 'polymarket';
-            
-            let response;
-            
-            if (isPolymarket) {
-                // ============================================
-                // POLYMARKET ORDER PLACEMENT
-                // ============================================
-                
-                // Map outcome to side: "Yes" → "BUY", "No" → "SELL"
-                const side = outcome === "Yes" ? "BUY" : "SELL";
-                
-                // Get token ID from market data
-                let tokenId: string;
-                try {
-                    console.log("Market data for token IDs:", {
-                        clobTokenIds: market.clobTokenIds,
-                        clobTokenIdsType: typeof market.clobTokenIds,
-                        external_id: market.external_id,
-                    });
-
-                    let clobTokenIds = market.clobTokenIds;
-                    
-                    // Handle if it's already an array
-                    if (Array.isArray(clobTokenIds)) {
-                        tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
-                    } else if (typeof clobTokenIds === 'string') {
-                        // Try to parse if it's a JSON string
-                        clobTokenIds = JSON.parse(clobTokenIds);
-                        tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
-                    } else {
-                        throw new Error("clobTokenIds not found or in unexpected format");
-                    }
-                } catch (e) {
-                    console.error("Token ID parsing error:", e);
-                    console.error("Full market object:", market);
-                    setMessage(`Invalid market configuration: ${e instanceof Error ? e.message : 'missing token IDs'}`);
-                    setPlacingBet(false);
-                    return;
-                }
-                
-                if (!tokenId) {
-                    console.error("Token ID is empty or undefined");
-                    setMessage("Invalid market configuration (missing token ID)");
-                    setPlacingBet(false);
-                    return;
-                }
-                
-                // For market orders, calculate shares from KES amount
-                let size: number;
-                let price: number;
-                
-                if (orderType === "market") {
-                    // Convert KES to USD for Polymarket.
-                    const kesAmount = Number(betAmount);
-                    const usdAmount = kesAmount / USD_TO_KES;
-                    
-                    // Round size to 8 decimal places (Polymarket requirement)
-                    size = Math.round(usdAmount * 100000000) / 100000000;
-                    
-                    // Price is not used for market orders, but we send market probability as reference
-                    price = market.yes_probability / 100;
-                } else {
-                    // For limit orders, use shares and limit_price directly
-                    // Round to 8 decimal places
-                    size = Math.round(shares * 100000000) / 100000000;
-                    // Convert limit_price from percentage (0-100) to decimal (0-1)
-                    price = Math.max(0.001, Math.min(0.999, limitPrice / 100));
-                }
-                
-                const polyPayload = {
-                    market_id: market.external_id,  // Use Polymarket external_id
-                    token_id: tokenId,               // Token ID for py-clob-client
-                    side: side,
-                    size: size,
-                    price: price,
-                    order_type: orderType,          // 'market' or 'limit'
-                };
-                
-                console.log("Placing Polymarket order:", polyPayload);
-                
-                response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/orders/place/`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(polyPayload),
-                    }
-                );
-            } else {
-                // Local /api/markets betting flow is disabled. Brokerage orders are used instead.
-                setMessage("Local market trading is disabled while this page uses brokerage data only.");
+            if (!isPolymarket) {
+                setMessage("Only Polymarket trading is supported");
                 setPlacingBet(false);
                 return;
             }
 
+            const side = outcome === "Yes" ? "BUY" : "SELL";
+            let tokenId: string;
+
+            try {
+                let clobTokenIds = market.clobTokenIds;
+
+                if (Array.isArray(clobTokenIds)) {
+                    tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
+                } else if (typeof clobTokenIds === 'string') {
+                    clobTokenIds = JSON.parse(clobTokenIds);
+                    tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
+                } else {
+                    throw new Error("clobTokenIds not found or in unexpected format");
+                }
+            } catch (e) {
+                setMessage(`Invalid market configuration: ${e instanceof Error ? e.message : 'missing token IDs'}`);
+                setPlacingBet(false);
+                return;
+            }
+
+            if (!tokenId) {
+                setMessage("Invalid market configuration (missing token ID)");
+                setPlacingBet(false);
+                return;
+            }
+
+            const kesAmount = Number(betAmount);
+            const usdAmount = kesAmount / USD_TO_KES;
+            const size = Math.round(usdAmount * 100000000) / 100000000;
+            const price = market.yes_probability / 100;
+
+            const polyPayload = {
+                market_id: market.external_id,
+                token_id: tokenId,
+                side,
+                size,
+                price,
+                order_type: "market",
+            };
+
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brokerage/orders/place/`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(polyPayload),
+                }
+            );
+
             const data = await response.json();
             if (response.ok) {
-                // Store bet details for receipt
                 const userStr = localStorage.getItem("poly_user");
                 const userData = userStr ? JSON.parse(userStr) : {};
-                
-                let lastBetData: any = {
+
+                const probabilityValue = getSelectedOutcomeProbability();
+                const priceKes = polymarketProbabilityToKES(probabilityValue);
+                const actualShares = priceKes > 0 ? Number(betAmount) / priceKes : 0;
+                const potentialWinnings = actualShares * getPayoutPerShareKes(market);
+
+                setLastBet({
                     id: Math.random().toString(36).substr(2, 9),
                     market: market.question,
                     outcome,
-                    action: activeTab,
+                    amount: betAmount,
+                    probability: probabilityValue,
+                    potentialWinnings,
                     phoneNumber: userData.phone_number,
                     timestamp: new Date(),
-                    isPolymarket: isPolymarket,
-                };
+                    isPolymarket,
+                });
 
-                if (orderType === "market") {
-                    const amountValue = Number(betAmount);
-                    const probabilityValue = getSelectedOutcomeProbability();
-                    let potentialWinnings = 0;
-
-                    if (isPolymarket) {
-                        const priceKes = polymarketProbabilityToKES(probabilityValue);
-                        const actualShares = priceKes > 0 ? amountValue / priceKes : 0;
-                        potentialWinnings = actualShares * getPayoutPerShareKes(market);
-                    } else {
-                        // Use LMSR to calculate actual shares bought and potential winnings.
-                        const b = market.b || LMSR_B;
-                        const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
-                        const actualShares = estimateSharesFromKES(amountValue, q_yes, q_no, selectedOutcome, b);
-                        potentialWinnings = actualShares * PAYOUT_PER_SHARE;
-                    }
-                    
-                    lastBetData = {
-                        ...lastBetData,
-                        amount: betAmount,
-                        probability: probabilityValue,
-                        potentialWinnings: potentialWinnings,
-                    };
-                } else {
-                    // Limit order
-                    lastBetData = {
-                        ...lastBetData,
-                        limitPrice: limitPrice,
-                        shares: shares,
-                        totalCost: limitStats.totalCost,
-                        toWin: limitStats.toWin,
-                        orderType: "limit",
-                    };
-                }
-                
-                setLastBet(lastBetData);
                 setShowReceipt(true);
                 setBetAmount("");
                 setMessage("");
-                
-                // Update market state immediately from response if available
+
                 if (data.market) {
                     setMarket((prev: any) => ({
                         ...prev,
@@ -1011,8 +929,7 @@ export default function MarketDetail() {
                         yes_probability: data.market.yes_probability,
                     }));
                 }
-                
-                // Refresh market detail data and balance
+
                 window.dispatchEvent(new Event("poly_balance_updated"));
                 await fetchMarketDetails();
                 await fetchPriceHistory();
@@ -1540,237 +1457,77 @@ export default function MarketDetail() {
                             )}
                         </div>
 
-                        {/* Buy/Sell Tabs */}
-                        <div className="flex gap-2 mb-3 border-b border-border">
-                            <button
-                                onClick={() => setActiveTab("buy")}
-                                className={`flex-1 py-2 font-bold text-sm transition-colors ${
-                                    activeTab === "buy"
-                                        ? "text-foreground border-b-2 border-foreground -mb-[2px]"
-                                        : "text-muted-foreground"
-                                }`}
-                            >
-                                Buy
-                            </button>
-                            <button
-                                onClick={() => setActiveTab("sell")}
-                                className={`flex-1 py-2 font-bold text-sm transition-colors ${
-                                    activeTab === "sell"
-                                        ? "text-foreground border-b-2 border-foreground -mb-[2px]"
-                                        : "text-muted-foreground"
-                                }`}
-                            >
-                                Sell
-                            </button>
-                        </div>
-
-                        {/* Order Type Toggle */}
-                        <div className="mb-3 flex gap-2 border-b border-border pb-2">
-                            <button
-                                onClick={() => setOrderType("market")}
-                                className={`flex-1 py-2 font-bold text-xs transition-colors rounded ${
-                                    orderType === "market"
-                                        ? "bg-foreground text-background"
-                                        : "text-muted-foreground hover:text-foreground"
-                                }`}
-                            >
-                                Market
-                            </button>
-                            <button
-                                onClick={() => setOrderType("limit")}
-                                className={`flex-1 py-2 font-bold text-xs transition-colors rounded ${
-                                    orderType === "limit"
-                                        ? "bg-foreground text-background"
-                                        : "text-muted-foreground hover:text-foreground"
-                                }`}
-                            >
-                                Limit
-                            </button>
-                        </div>
-
-                        {orderType === "limit" ? (
-                            <>
-                                {/* Limit Price Input */}
-                                <div className="mb-3">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Limit Price</label>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => setLimitPrice(Math.max(1, limitPrice - 1))}
-                                            className="w-10 h-10 rounded-lg bg-border text-foreground hover:bg-border/80 transition font-bold"
-                                        >
-                                            −
-                                        </button>
-                                        <div className="flex-1 text-2xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground">
-                                            {limitPrice}%
-                                        </div>
-                                        <button
-                                            onClick={() => setLimitPrice(Math.min(100, limitPrice + 1))}
-                                            className="w-10 h-10 rounded-lg bg-border text-foreground hover:bg-border/80 transition font-bold"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
+                        <div className="space-y-3">
+                            <div className="rounded-lg border border-border bg-background/70 p-3">
+                                <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Odds</div>
+                                <div className="mt-2 text-sm font-semibold text-foreground">
+                                    Yes {market.yes_probability}% · No {noProbability}%
                                 </div>
+                            </div>
 
-                                {/* Shares Input */}
-                                <div className="mb-3">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-2">Shares (Fractional OK)</label>
-                                    <div className="relative mb-3">
-                                        <input
-                                            type="number"
-                                            placeholder="0"
-                                            step="0.01"
-                                            value={formatSharesForDisplay(shares)}
-                                            onChange={(e) => setShares(Math.max(0.01, parseFloat(e.target.value) || 0.01))}
-                                            className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
-                                        />
-                                    </div>
-                                    
-                                    {/* Quick Select Buttons for Shares */}
-                                    <div className="grid grid-cols-4 gap-2">
-                                        <button onClick={() => setShares(Math.max(0.01, shares - 100))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−100</button>
-                                        <button onClick={() => setShares(Math.max(0.01, shares - 10))} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">−10</button>
-                                        <button onClick={() => setShares(shares + 10)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10</button>
-                                        <button onClick={() => setShares(shares + 100)} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
-                                    </div>
+                            <div className="mb-3">
+                                <label className="mb-1 block text-xs font-bold uppercase text-muted-foreground">Amount</label>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={betAmount}
+                                    onChange={(e) => setBetAmount(e.target.value)}
+                                    className="w-full rounded-lg border border-border bg-background p-3 text-right text-3xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                />
+                            </div>
 
-                                    {/* Auto-Load Share Message (for Sell tab) */}
-                                    {activeTab === "sell" && shareLoadMessage && (
-                                        <div className={`mt-2 p-2 rounded-md text-xs font-medium ${
-                                            availableShares && availableShares > 0
-                                                ? "bg-blue-950/40 text-blue-300 border border-blue-900/40"
-                                                : "bg-yellow-950/40 text-yellow-300 border border-yellow-900/40"
-                                        }`}>
-                                            {loadingAvailableShares ? "Loading your shares..." : shareLoadMessage}
+                            <div className="mb-3 grid grid-cols-5 gap-2">
+                                {[100, 500, 1000, 5000, 10000].map((amount) => (
+                                    <button
+                                        key={amount}
+                                        onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + amount).toString())}
+                                        className="rounded-md border border-border bg-background p-2 text-xs font-bold transition-colors hover:bg-muted"
+                                    >
+                                        +{amount > 999 ? `${amount / 1000}K` : amount}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
+                                <>
+                                    <div className="rounded-lg border border-green-900/40 bg-gradient-to-r from-green-950/40 to-blue-950/40 p-4">
+                                        <div className="text-xs font-bold uppercase text-muted-foreground">If correct: you get</div>
+                                        <div className="mt-2 text-3xl font-bold text-green-400">
+                                            KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
                                         </div>
-                                    )}
-                                </div>
-
-                                {/* Total and To Win Display */}
-                                <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-3 mb-3 border border-green-900/40">
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs font-bold text-muted-foreground uppercase">{activeTab === "sell" ? "Proceeds" : "Total"}</span>
-                                            <span className="text-2xl font-bold text-green-400">KES {Number.isFinite(limitStats.totalCost) ? limitStats.totalCost.toFixed(2) : "0.00"}</span>
+                                        <div className="mt-1 text-xs text-muted-foreground">
+                                            at {selectedOutcome === "Yes" ? market.yes_probability : noProbability}% odds
                                         </div>
-                                        {activeTab === "buy" && (
-                                            <div className="flex justify-between items-center pt-2 border-t border-green-900/40">
-                                                <span className="text-xs text-muted-foreground">Total Return</span>
-                                                <span className="text-lg font-bold text-green-300">KES {Number.isFinite(limitStats.totalCost + limitStats.toWin) ? (limitStats.totalCost + limitStats.toWin).toFixed(2) : "0.00"} <span className="text-xs text-green-400">({Number.isFinite(limitStats.totalCost) ? limitStats.totalCost.toFixed(2) : "0.00"} + {Number.isFinite(limitStats.toWin) ? limitStats.toWin.toFixed(2) : "0.00"})</span></span>
-                                            </div>
-                                        )}
                                     </div>
-                                </div>
 
-                                {/* Fee Display for Limit Orders */}
-                                {activeTab === "buy" && (
-                                    (() => {
-                                        const limitOrderCost = market.source === "polymarket"
-                                            ? shares * polymarketProbabilityToKES(limitPrice)
-                                            : shares * (limitPrice / 100) * PAYOUT_PER_SHARE;
-                                        const feeInfo = calculateTradingFee(limitOrderCost);
+                                    {(() => {
+                                        const feeInfo = calculateTradingFee(Number(betAmount));
                                         return (
-                                            <div className="bg-amber-950/30 rounded-lg p-3 mb-3 border border-amber-900/40">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-xs text-muted-foreground">Order Cost</span>
-                                                    <span className="text-sm font-semibold text-foreground">KES {(feeInfo.totalCost - feeInfo.fee).toFixed(2)}</span>
+                                            <div className="rounded-lg border border-amber-900/40 bg-amber-950/30 p-3">
+                                                <div className="mb-2 flex items-center justify-between">
+                                                    <span className="text-xs text-muted-foreground">Bet Amount</span>
+                                                    <span className="text-sm font-semibold text-foreground">KES {(feeInfo.totalCost - feeInfo.fee).toFixed(0)}</span>
                                                 </div>
-                                                <div className="flex justify-between items-center pb-2 border-b border-amber-900/40 mb-2">
-                                                    <span className="text-xs text-muted-foreground">Trading Fee ({TRADING_FEE_PERCENT}%)</span>
-                                                    <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee.toFixed(2)}</span>
+                                                <div className="mb-2 flex items-center justify-between border-b border-amber-900/40 pb-2">
+                                                    <span className="text-xs text-muted-foreground">Fee ({TRADING_FEE_PERCENT}%)</span>
+                                                    <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee.toFixed(0)}</span>
                                                 </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs font-bold text-foreground">Total Cost</span>
-                                                    <span className="text-sm font-bold text-foreground">KES {feeInfo.totalCost.toFixed(2)}</span>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-foreground">Total</span>
+                                                    <span className="text-lg font-bold text-foreground">KES {feeInfo.totalCost.toFixed(0)}</span>
                                                 </div>
                                             </div>
                                         );
-                                    })()
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                {/* Market Order - Amount Input */}
-                                <div className="mb-3">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Amount</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            placeholder="0"
-                                            value={betAmount}
-                                            onChange={(e) => setBetAmount(e.target.value)}
-                                            className="w-full text-3xl font-bold text-right p-3 border border-border rounded-lg bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
-                                        />
-                                    </div>
-                                </div>
+                                    })()}
+                                </>
+                            )}
+                        </div>
 
-                                {/* Quick Select Buttons */}
-                                <div className="mb-3">
-                                    <div className="grid grid-cols-5 gap-2">
-                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 100).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+100</button>
-                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 500).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+500</button>
-                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 1000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+1K</button>
-                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 5000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+5K</button>
-                                        <button onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + 10000).toString())} className="text-xs font-bold border border-border rounded-md p-2 bg-muted/50 hover:bg-muted hover:border-foreground/40 transition-colors cursor-pointer">+10K</button>
-                                    </div>
-                                </div>
-
-                                {/* Estimated Winnings */}
-                                {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                                    <>
-                                        <div className="bg-gradient-to-r from-green-950/40 to-blue-950/40 rounded-lg p-4 mb-4 border border-green-900/40">
-                                            <span className="text-xs font-bold text-muted-foreground uppercase block mb-2">
-                                                {activeTab === "sell" ? "You'll receive" : "If correct: you get"}
-                                            </span>
-                                            <div className="text-3xl font-bold text-green-400">
-                                                KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(2) : "0.00"}
-                                            </div>
-                                            <span className="text-xs text-muted-foreground mt-1 block">
-                                                @ {(() => {
-                                                    if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                                                        const option = market.options?.find((o: any) => o.id === selectedOptionId);
-                                                        const prob = selectedOutcome === "Yes" ? (option ? option.yes_probability : market.yes_probability) : (option ? (100 - option.yes_probability) : noProbability);
-                                                        return `${prob}%`;
-                                                    } else {
-                                                        const prob = selectedOutcome === "Yes" ? market.yes_probability : noProbability;
-                                                        return `${prob}%`;
-                                                    }
-                                                })()}
-                                            </span>
-                                        </div>
-
-                                        {/* Fee Breakdown */}
-                                        {(() => {
-                                            const feeInfo = calculateTradingFee(Number(betAmount));
-                                            return (
-                                                <div className="bg-amber-950/30 rounded-lg p-3 mb-4 border border-amber-900/40">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-xs text-muted-foreground">Bet Amount</span>
-                                                        <span className="text-sm font-semibold text-foreground">KES {feeInfo.totalCost - feeInfo.fee}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center pb-2 border-b border-amber-900/40 mb-2">
-                                                        <span className="text-xs text-muted-foreground">Trading Fee ({TRADING_FEE_PERCENT}%)</span>
-                                                        <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-xs font-bold text-foreground">Total Cost</span>
-                                                        <span className="text-lg font-bold text-foreground">KES {feeInfo.totalCost}</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-                                    </>
-                                )}
-
-                            </>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="space-y-3">
+                        <div className="mt-4 space-y-3">
                             {market.status === 'CLOSED' ? (
                                 <button
                                     disabled
-                                    className="w-full text-white font-bold py-3 rounded-lg transition-all opacity-50 bg-muted cursor-not-allowed"
+                                    className="w-full cursor-not-allowed rounded-lg bg-muted py-3 font-bold text-white opacity-50"
                                 >
                                     Trading Closed
                                 </button>
@@ -1778,13 +1535,13 @@ export default function MarketDetail() {
                                 <button
                                     onClick={() => handleBet(selectedOutcome)}
                                     disabled={placingBet}
-                                    className={`w-full text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 ${
+                                    className={`w-full rounded-lg py-3 font-bold text-white transition-all disabled:opacity-50 ${
                                         selectedOutcome === "Yes"
                                             ? "bg-green-500 hover:opacity-90"
                                             : "bg-red-500 hover:opacity-90"
                                     }`}
                                 >
-                                    {activeTab === "buy" ? "Buy " : "Sell "} {selectedOutcome}
+                                    {placingBet ? "Placing..." : `Buy ${selectedOutcome}`}
                                 </button>
                             )}
                         </div>
