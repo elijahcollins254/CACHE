@@ -8,7 +8,7 @@ import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
 import BitcoinCard from "@/components/BitcoinCard";
-import CategorySection from "@/components/CategorySection";
+import CategorySection from "./components/CategorySection";
 
 const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Mentions", "Saved", "Resolved"];
 
