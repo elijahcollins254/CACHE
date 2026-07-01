@@ -20,9 +20,10 @@ const formatSlug = (slug: string) => slug.split("-").filter(Boolean).map((part) 
 type MarketBrowseProps = {
   categorySlug?: string;
   subcategorySlug?: string;
+  leagueSlug?: string;
 };
 
-export default function MarketBrowse({ categorySlug, subcategorySlug }: MarketBrowseProps) {
+export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug }: MarketBrowseProps) {
   const dispatch = useAppDispatch();
   const allMarkets = useAppSelector(selectAllMarkets);
   const filteredMarkets = useAppSelector(selectFilteredMarkets);
@@ -36,7 +37,7 @@ export default function MarketBrowse({ categorySlug, subcategorySlug }: MarketBr
 
     const counts = new Map<string, number>();
     allMarkets.forEach((market) => {
-      if (toSlug(market.category || "") !== categorySlug || !market.subcategory || market.status === "RESOLVED") return;
+      if (market.category_slug !== categorySlug || !market.subcategory || market.status === "RESOLVED") return;
       counts.set(market.subcategory, (counts.get(market.subcategory) || 0) + 1);
     });
 
@@ -49,19 +50,49 @@ export default function MarketBrowse({ categorySlug, subcategorySlug }: MarketBr
     ? subcategoryOptions.find((item) => item.slug === subcategorySlug)?.label || formatSlug(subcategorySlug)
     : null;
 
+  const activeCategoryLabel = routeCategory || (categorySlug ? formatSlug(categorySlug) : null);
+
+  const leagueOptions = useMemo(() => {
+    if (!routeCategory || isSpecialCategory || !subcategorySlug) return [];
+
+    const counts = new Map<string, number>();
+    allMarkets.forEach((market) => {
+      if (
+        market.category_slug !== categorySlug ||
+        market.subcategory_slug !== subcategorySlug ||
+        !market.league ||
+        market.status === "RESOLVED"
+      ) return;
+
+      counts.set(market.league, (counts.get(market.league) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .map(([label, count]) => ({ label, count, slug: toSlug(label) }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  }, [allMarkets, categorySlug, isSpecialCategory, routeCategory, subcategorySlug]);
+
+  const activeLeague = leagueSlug
+    ? leagueOptions.find((item) => item.slug === leagueSlug)?.label || formatSlug(leagueSlug)
+    : null;
+
   const routeMarkets = useMemo(() => {
     let markets = filteredMarkets;
 
     if (routeCategory && !isSpecialCategory) {
-      markets = markets.filter((market) => toSlug(market.category || "") === categorySlug);
+      markets = markets.filter((market) => market.category_slug === categorySlug);
     }
 
     if (subcategorySlug) {
-      markets = markets.filter((market) => toSlug(market.subcategory || "") === subcategorySlug);
+      markets = markets.filter((market) => market.subcategory_slug === subcategorySlug);
+    }
+
+    if (leagueSlug) {
+      markets = markets.filter((market) => toSlug(market.league || "") === leagueSlug);
     }
 
     return markets;
-  }, [categorySlug, filteredMarkets, isSpecialCategory, routeCategory, subcategorySlug]);
+  }, [categorySlug, filteredMarkets, isSpecialCategory, routeCategory, subcategorySlug, leagueSlug]);
 
   const organizedMarkets = useMemo(() => {
     const parentMarketIds = new Set<number>();
@@ -102,11 +133,13 @@ export default function MarketBrowse({ categorySlug, subcategorySlug }: MarketBr
     dispatch(fetchMarkets());
   }, [dispatch]);
 
-  const heading = activeSubcategory
-    ? `${activeSubcategory} Markets`
-    : routeCategory
-      ? routeCategory === "Trending" ? "Browse Markets" : `${routeCategory} Markets`
-      : "Browse Markets";
+  const heading = activeLeague
+    ? `${activeLeague} Markets`
+    : activeSubcategory
+      ? `${activeSubcategory} Markets`
+      : routeCategory
+        ? routeCategory === "Trending" ? "Browse Markets" : `${routeCategory} Markets`
+        : "Browse Markets";
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased text-foreground">
@@ -129,7 +162,15 @@ export default function MarketBrowse({ categorySlug, subcategorySlug }: MarketBr
             {activeSubcategory && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 flex-none" />
-                <span className="truncate text-foreground">{activeSubcategory}</span>
+                <Link href={`/category/${categorySlug}/${subcategorySlug}`} className="truncate hover:text-foreground">
+                  {activeSubcategory}
+                </Link>
+              </>
+            )}
+            {activeLeague && (
+              <>
+                <ChevronRight className="h-3.5 w-3.5 flex-none" />
+                <span className="truncate text-foreground">{activeLeague}</span>
               </>
             )}
           </nav>
@@ -157,6 +198,30 @@ export default function MarketBrowse({ categorySlug, subcategorySlug }: MarketBr
                   href={`/category/${categorySlug}/${item.slug}`}
                   className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     subcategorySlug === item.slug ? "bg-gray-900 text-white" : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {subcategorySlug && leagueOptions.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pt-1">
+              <Link
+                href={`/category/${categorySlug}/${subcategorySlug}`}
+                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  !leagueSlug ? "bg-gray-900 text-white" : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                All {activeSubcategory || "Markets"}
+              </Link>
+              {leagueOptions.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/category/${categorySlug}/${subcategorySlug}/${item.slug}`}
+                  className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    leagueSlug === item.slug ? "bg-gray-900 text-white" : "bg-muted text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {item.label}

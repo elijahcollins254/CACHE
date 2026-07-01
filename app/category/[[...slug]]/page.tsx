@@ -8,7 +8,7 @@ type CategoryPageProps = {
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug = [] } = await params;
-  const [categorySlug, subcategorySlug] = slug;
+  const [categorySlug, subcategorySlug, leagueSlug] = slug;
 
-  return <MarketBrowse categorySlug={categorySlug} subcategorySlug={subcategorySlug} />;
+  return <MarketBrowse categorySlug={categorySlug} subcategorySlug={subcategorySlug} leagueSlug={leagueSlug} />;
 }

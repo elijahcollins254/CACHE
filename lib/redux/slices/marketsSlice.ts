@@ -102,6 +102,8 @@ const transformPolymarketData = (polymarket: any): Market => {
     // Get category - prioritize database category if available, fallback to electionType or General
     const category = polymarket.category || metadata.electionType || 'Other';
     const subcategory = polymarket.subcategory || metadata.subcategory || null;
+    const category_slug = polymarket.category_slug || (category ? category.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
+    const subcategory_slug = polymarket.subcategory_slug || (subcategory ? subcategory.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
 
     // Extract parent event information if available
     // Polymarket markets can have a parent event (e.g., "What will happen before GTA VI?")
@@ -120,6 +122,8 @@ const transformPolymarketData = (polymarket: any): Market => {
         description: metadata.description || polymarket.description,
         category: category,
         subcategory,
+        category_slug,
+        subcategory_slug,
         yes_probability: yesProbability,
         volume: volumeKES,
         status,
