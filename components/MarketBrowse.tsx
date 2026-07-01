@@ -10,9 +10,6 @@ import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
 import { fetchBackendCategories, specialCategoryOptions, specialCategorySlugs, type BackendCategory, formatSlug, toSlug } from "@/lib/backendCategories";
 
-const categoryLabels = [...specialCategoryOptions.map((category) => category.name)];
-const categoryBySlug = new Map(categoryLabels.map((category) => [toSlug(category), category]));
-
 type MarketBrowseProps = {
   categorySlug?: string;
   subcategorySlug?: string;
@@ -26,8 +23,17 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
   const loading = useAppSelector(selectMarketsLoading);
   const [backendCategories, setBackendCategories] = useState<BackendCategory[]>(specialCategoryOptions);
 
-  const routeCategory = categorySlug ? categoryBySlug.get(categorySlug) || formatSlug(categorySlug) : null;
+  const categoryMap = useMemo(
+    () => new Map(backendCategories.map((category) => [category.slug, category.name])),
+    [backendCategories]
+  );
+
+  const routeCategory = categorySlug ? categoryMap.get(categorySlug) || formatSlug(categorySlug) : null;
   const isSpecialCategory = categorySlug ? specialCategorySlugs.has(categorySlug) : false;
+  const activeBackendCategory = useMemo(
+    () => backendCategories.find((category) => category.slug === categorySlug),
+    [backendCategories, categorySlug]
+  );
 
   const categoryMarkets = useMemo(() => {
     if (!routeCategory || isSpecialCategory || !categorySlug) return [];
@@ -46,10 +52,20 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
       counts.set(market.subcategory, (counts.get(market.subcategory) || 0) + 1);
     });
 
-    return Array.from(counts.entries())
-      .map(([label, count]) => ({ label, count, slug: toSlug(label) }))
-      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-  }, [categoryMarkets]);
+    const backendSubcategories = activeBackendCategory?.subcategories?.map((subcategory) => ({
+      label: subcategory.name,
+      slug: subcategory.slug || toSlug(subcategory.name),
+      count: counts.get(subcategory.name) || 0,
+      order: subcategory.order ?? 0,
+    })) ?? [];
+
+    const dynamicSubcategories = Array.from(counts.entries())
+      .filter(([label]) => !backendSubcategories.some((item) => item.slug === toSlug(label)))
+      .map(([label, count]) => ({ label, count, slug: toSlug(label), order: 9999 }));
+
+    return [...backendSubcategories, ...dynamicSubcategories]
+      .sort((a, b) => (a.order || 0) - (b.order || 0) || b.count - a.count || a.label.localeCompare(b.label));
+  }, [categoryMarkets, activeBackendCategory]);
 
   const activeSubcategory = subcategorySlug
     ? subcategoryOptions.find((item) => item.slug === subcategorySlug)?.label || formatSlug(subcategorySlug)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense, useMemo } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Image from "next/image";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
 import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
@@ -9,16 +9,33 @@ import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
 import BitcoinCard from "@/components/BitcoinCard";
 import CategorySection from "./components/CategorySection";
+import { fetchBackendCategories, specialCategoryOptions, type BackendCategory } from "@/lib/backendCategories";
 
-const categories = ["Trending", "Breaking", "New", "Politics", "Sports", "Mentions", "Saved", "Resolved"];
+const defaultCategories: BackendCategory[] = [...specialCategoryOptions];
 
 export default function Home() {
   const dispatch = useAppDispatch();
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[]>(defaultCategories);
   
   // Redux state
   const allMarkets = useAppSelector(selectAllMarkets);
   const filteredMarkets = useAppSelector(selectFilteredMarkets);
   const loading = useAppSelector(selectMarketsLoading);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchBackendCategories().then((categories) => {
+      if (!isMounted) return;
+      setBackendCategories(categories);
+    }).catch(() => {
+      setBackendCategories(defaultCategories);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Organize markets into parent/child structure and compute categories
   const organizedMarkets = useMemo(() => {
@@ -37,9 +54,9 @@ export default function Home() {
     // Only show top-level markets (parents or standalone)
     const topLevel = filteredMarkets.filter((market) => parentMarketIds.has(market.id) || !childMarketIds.has(market.id));
 
-    // Compute markets by category (using `categories` array as keys)
+    // Compute markets by category (using `backendCategories` array as keys)
     const byCategory: { [key: string]: any[] } = {};
-    categories.forEach((c) => (byCategory[c] = []));
+    backendCategories.forEach((category) => (byCategory[category.name] = []));
 
     topLevel.forEach((m) => {
       const mCats = m.category ? [m.category] : [];
@@ -100,13 +117,14 @@ export default function Home() {
           </div>
         ) : (
           <div className="transition-opacity duration-300">
-            {categories
-              .filter((cat) => (organizedMarkets.byCategory[cat] || []).length > 0)
+            {backendCategories
+              .filter((cat) => (organizedMarkets.byCategory[cat.name] || []).length > 0)
               .map((cat) => (
                 <CategorySection
-                  key={cat}
-                  title={cat}
-                  markets={organizedMarkets.byCategory[cat] || []}
+                  key={cat.slug}
+                  title={cat.name}
+                  slug={cat.slug}
+                  markets={organizedMarkets.byCategory[cat.name] || []}
                   parentMarketIds={organizedMarkets.parentMarketIds}
                   parentGroups={organizedMarkets.parentGroups}
                 />

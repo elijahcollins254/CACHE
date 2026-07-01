@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
 
 type Props = {
   title: string;
+  slug: string;
   markets: any[];
   parentMarketIds?: Set<any>;
   parentGroups?: { [key: string]: any[] };
 };
 
-export default function CategorySection({ title, markets, parentMarketIds, parentGroups }: Props) {
+export default function CategorySection({ title, slug, markets, parentMarketIds, parentGroups }: Props) {
   const display = markets.slice(0, 8);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showNav, setShowNav] = useState(false);
@@ -36,7 +38,7 @@ export default function CategorySection({ title, markets, parentMarketIds, paren
     <section className="mb-8 relative">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <a className="text-sm text-primary hover:underline">See all</a>
+        <Link href={`/category/${slug}`} className="text-sm text-primary hover:underline">See all</Link>
       </div>
 
       <div className="relative">
