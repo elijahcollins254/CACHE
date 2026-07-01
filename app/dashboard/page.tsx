@@ -125,32 +125,23 @@ export default function DashboardHub() {
     const sections = [
         {
             title: "Portfolio",
-            description: "View your active positions and market holdings",
             icon: TrendingUp,
             href: "/dashboard/portfolio",
-            color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
-            iconColor: "text-amber-700 dark:text-amber-400",
             stat: activePositions,
-            statLabel: "active positions",
+            statLabel: "open positions",
         },
         {
-            title: "Profits & Losses",
-            description: "Track your earnings and performance over time",
+            title: "P&L",
             icon: History,
             href: "/dashboard/profits-losses",
-            color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/40",
-            iconColor: "text-orange-700 dark:text-orange-400",
             stat: `${netPnL >= 0 ? '+' : ''}KES ${netPnL.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-            statLabel: "net P&L",
+            statLabel: "net result",
             statColor: netPnL >= 0 ? "text-emerald-600" : "text-red-600",
         },
         {
-            title: "Notifications",
-            description: "Stay updated with market alerts and updates",
+            title: "Alerts",
             icon: Bell,
             href: "/dashboard/notifications",
-            color: "bg-stone-50 dark:bg-stone-950/20 border-stone-200 dark:border-stone-900/40",
-            iconColor: "text-stone-700 dark:text-stone-400",
             stat: unreadCount,
             statLabel: "unread",
         },
@@ -180,70 +171,58 @@ export default function DashboardHub() {
                     </button>
                 </div>
 
-                <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="rounded-2xl border bg-card p-5 shadow-sm">
+                    <div className="mb-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground">Your trading snapshot</p>
-                            <h2 className="text-2xl font-semibold">Here’s what matters right now</h2>
-                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                                Track your cash, active positions, and recent activity without digging through several screens.
-                            </p>
+                            <p className="text-sm text-muted-foreground">Overview</p>
+                            <h2 className="text-xl font-semibold">Your account at a glance</h2>
                         </div>
-                        <div className={`rounded-xl border px-4 py-3 text-sm ${netPnL >= 0 ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-400" : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400"}`}>
-                            <p className="font-semibold">
-                                {netPnL >= 0 ? "You’re up" : "You’re down"} {Math.abs(netPnL).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            </p>
-                            <p className="text-xs opacity-80">Net P&amp;L across completed bets</p>
+                        <div className={`rounded-lg border px-3 py-2 text-sm ${netPnL >= 0 ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-400" : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400"}`}>
+                            {netPnL >= 0 ? "+" : ""}{netPnL.toLocaleString(undefined, { maximumFractionDigits: 0 })} P&amp;L
                         </div>
                     </div>
 
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         {quickStats.map((stat) => {
                             const Icon = stat.icon;
                             return (
-                                <div key={stat.label} className="rounded-xl border bg-background/70 p-4">
-                                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                                        <Icon className="h-5 w-5 text-foreground" />
+                                <div key={stat.label} className="rounded-xl border bg-background/70 p-3">
+                                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                                        <Icon className="h-4 w-4 text-foreground" />
                                     </div>
-                                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                                    <p className="mt-1 text-lg font-semibold text-foreground">{stat.value}</p>
-                                    <p className="mt-1 text-xs text-muted-foreground">{stat.description}</p>
+                                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                                    <p className="mt-1 text-base font-semibold text-foreground">{stat.value}</p>
                                 </div>
                             );
                         })}
                     </div>
                 </div>
 
-                <div className="mt-8 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                    <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                        <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold">Quick actions</h3>
-                                <p className="text-sm text-muted-foreground">Jump back into the parts of your account that need attention.</p>
-                            </div>
+                <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+                        <div className="mb-3 flex items-center justify-between">
+                            <h3 className="text-base font-semibold">Quick view</h3>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid gap-2 sm:grid-cols-3">
                             {sections.map((section) => {
                                 const Icon = section.icon;
                                 return (
                                     <Link
                                         key={section.href}
                                         href={section.href}
-                                        className={`group rounded-xl border p-4 transition-all hover:shadow-md active:scale-95 ${section.color}`}
+                                        className="flex items-center justify-between rounded-xl border bg-background/70 p-3 transition hover:bg-muted"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${section.iconColor}`}>
-                                                    <Icon className="h-5 w-5" />
-                                                </div>
-                                                <h4 className="font-semibold text-foreground">{section.title}</h4>
-                                                <p className="mt-1 text-sm text-muted-foreground">{section.description}</p>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                                                <Icon className="h-4 w-4" />
                                             </div>
-                                            <ChevronRight className="mt-1 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium">{section.title}</p>
+                                                <p className="text-xs text-muted-foreground">{section.statLabel}</p>
+                                            </div>
                                         </div>
-                                        <div className="mt-4 flex items-center justify-between text-sm">
-                                            <span className={`font-semibold ${section.statColor || "text-foreground"}`}>{section.stat ?? "—"}</span>
-                                            <span className="text-muted-foreground">{section.statLabel}</span>
+                                        <div className={`text-sm font-semibold ${section.statColor || "text-foreground"}`}>
+                                            {section.stat ?? "—"}
                                         </div>
                                     </Link>
                                 );
@@ -251,21 +230,18 @@ export default function DashboardHub() {
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                        <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold">Recent activity</h3>
-                                <p className="text-sm text-muted-foreground">Your latest bets and updates.</p>
-                            </div>
+                    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+                        <div className="mb-3">
+                            <h3 className="text-base font-semibold">Recent activity</h3>
                         </div>
                         {recentActivity.length > 0 ? (
                             <ul className="space-y-3">
                                 {recentActivity.map((bet: any, index: number) => (
-                                    <li key={bet.id || `${bet.market_id}-${index}`} className="flex items-center justify-between rounded-lg border p-3">
+                                    <li key={bet.id || `${bet.market_id}-${index}`} className="flex items-center justify-between rounded-lg border bg-background/70 p-3">
                                         <div>
-                                            <p className="font-medium text-foreground">{bet.market_name || bet.market_id || "Market"}</p>
+                                            <p className="text-sm font-medium text-foreground">{bet.market_name || bet.market_id || "Market"}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {bet.outcome || "Outcome"} • {bet.action || "Bet"} • {bet.result || "Pending"}
+                                                {bet.outcome || "Outcome"} • {bet.action || "Bet"}
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -278,8 +254,8 @@ export default function DashboardHub() {
                                 ))}
                             </ul>
                         ) : (
-                            <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-                                No activity yet. Start with a small position to see your recent bets here.
+                            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                No activity yet.
                             </div>
                         )}
                     </div>
