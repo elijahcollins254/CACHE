@@ -48,7 +48,7 @@ export const fetchDashboardData = createAsyncThunk(
     'portfolio/fetchDashboardData',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/dashboard/`, {
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/dashboard/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -74,7 +74,7 @@ export const fetchTransactionHistory = createAsyncThunk(
     'portfolio/fetchTransactionHistory',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/history/`, {
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/history/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
