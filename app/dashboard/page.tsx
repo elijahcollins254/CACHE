@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/useAuth";
-import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
+import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut, ChevronRight } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
 
@@ -58,6 +58,46 @@ export default function DashboardHub() {
     const totalWinnings = wins.reduce((sum, b) => sum + (parseFloat(b.payout || "0") - parseFloat(b.amount)), 0);
     const totalLosses = losses.reduce((sum, b) => sum + parseFloat(b.amount), 0);
     const netPnL = totalWinnings - totalLosses;
+
+    const formatCurrency = (value: string | number | undefined) => {
+        const amount = Number(value || 0);
+        return `KES ${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    };
+
+    const recentActivity = [...bets]
+        .sort((a: any, b: any) => {
+            const aTime = new Date(a.created_at || a.updated_at || a.timestamp || 0).getTime();
+            const bTime = new Date(b.created_at || b.updated_at || b.timestamp || 0).getTime();
+            return bTime - aTime;
+        })
+        .slice(0, 4);
+
+    const quickStats = [
+        {
+            label: "Wallet balance",
+            value: formatCurrency(balance),
+            description: "Available funds ready to use",
+            icon: Wallet,
+        },
+        {
+            label: "Portfolio value",
+            value: formatCurrency(portfolioValue),
+            description: "Estimated value of your holdings",
+            icon: TrendingUp,
+        },
+        {
+            label: "Open positions",
+            value: activePositions.toString(),
+            description: "Markets currently exposed",
+            icon: History,
+        },
+        {
+            label: "Unread alerts",
+            value: unreadCount.toString(),
+            description: "Notifications and market updates",
+            icon: Bell,
+        },
+    ];
 
     if (authLoading) {
         return (
@@ -117,62 +157,133 @@ export default function DashboardHub() {
     ];
 
     return (
-        <div className="min-h-screen bg-background pb-12">            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <Link href="/" className="p-2 hover:bg-muted rounded-lg transition">
-                                <ArrowLeft className="h-5 w-5" />
-                            </Link>
-                            <div>
-                                <h1 className="text-4xl font-bold">Dashboard</h1>
-                                <p className="text-muted-foreground text-sm">Welcome back, {authUser?.username ? `@${authUser.username}` : authUser?.full_name || "User"}</p>
-                            </div>
+        <div className="min-h-screen bg-background pb-12">
+            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
+                <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href="/" className="rounded-lg p-2 transition hover:bg-muted">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Link>
+                        <div>
+                            <h1 className="text-4xl font-bold">Dashboard</h1>
+                            <p className="text-sm text-muted-foreground">
+                                Welcome back, {authUser?.username ? `@${authUser.username}` : authUser?.full_name || "User"}
+                            </p>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm font-medium"
-                        >
-                            <LogOut className="h-4 w-4" />
-                            Logout
-                        </button>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                    </button>
+                </div>
+
+                <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Your trading snapshot</p>
+                            <h2 className="text-2xl font-semibold">Here’s what matters right now</h2>
+                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                                Track your cash, active positions, and recent activity without digging through several screens.
+                            </p>
+                        </div>
+                        <div className={`rounded-xl border px-4 py-3 text-sm ${netPnL >= 0 ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-400" : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400"}`}>
+                            <p className="font-semibold">
+                                {netPnL >= 0 ? "You’re up" : "You’re down"} {Math.abs(netPnL).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </p>
+                            <p className="text-xs opacity-80">Net P&amp;L across completed bets</p>
+                        </div>
                     </div>
 
-                </div>
-
-                {/* Navigation Cards Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {sections.map((section) => {
-                        const Icon = section.icon;
-                        return (
-                            <Link
-                                key={section.href}
-                                href={section.href}
-                                className={`group rounded-xl border p-4 transition-all hover:shadow-lg active:scale-95 cursor-pointer ${section.color}`}
-                            >
-                                <div className="flex flex-col h-full">
-                                    <div className={`mb-3 p-2 rounded-lg w-fit group-hover:scale-110 transition-transform`}>
-                                        <Icon className={`h-5 w-5 ${section.iconColor}`} />
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        {quickStats.map((stat) => {
+                            const Icon = stat.icon;
+                            return (
+                                <div key={stat.label} className="rounded-xl border bg-background/70 p-4">
+                                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                                        <Icon className="h-5 w-5 text-foreground" />
                                     </div>
-                                    <h3 className="font-bold text-foreground text-sm md:text-base mb-3">{section.title}</h3>
-                                    
-                                    {/* Summary Stat */}
-                                    <div className="mb-3">
-                                        <p className={`text-sm md:text-base font-bold ${section.statColor || 'text-foreground'} truncate`}>
-                                            {section.stat ?? '—'}
-                                        </p>
-                                    </div>
-                                    
-                                    <button className="mt-auto text-apple-blue font-semibold text-xs md:text-sm hover:underline text-left">
-                                        See more →
-                                    </button>
+                                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                                    <p className="mt-1 text-lg font-semibold text-foreground">{stat.value}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{stat.description}</p>
                                 </div>
-                            </Link>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
 
+                <div className="mt-8 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                    <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold">Quick actions</h3>
+                                <p className="text-sm text-muted-foreground">Jump back into the parts of your account that need attention.</p>
+                            </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {sections.map((section) => {
+                                const Icon = section.icon;
+                                return (
+                                    <Link
+                                        key={section.href}
+                                        href={section.href}
+                                        className={`group rounded-xl border p-4 transition-all hover:shadow-md active:scale-95 ${section.color}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${section.iconColor}`}>
+                                                    <Icon className="h-5 w-5" />
+                                                </div>
+                                                <h4 className="font-semibold text-foreground">{section.title}</h4>
+                                                <p className="mt-1 text-sm text-muted-foreground">{section.description}</p>
+                                            </div>
+                                            <ChevronRight className="mt-1 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5" />
+                                        </div>
+                                        <div className="mt-4 flex items-center justify-between text-sm">
+                                            <span className={`font-semibold ${section.statColor || "text-foreground"}`}>{section.stat ?? "—"}</span>
+                                            <span className="text-muted-foreground">{section.statLabel}</span>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold">Recent activity</h3>
+                                <p className="text-sm text-muted-foreground">Your latest bets and updates.</p>
+                            </div>
+                        </div>
+                        {recentActivity.length > 0 ? (
+                            <ul className="space-y-3">
+                                {recentActivity.map((bet: any, index: number) => (
+                                    <li key={bet.id || `${bet.market_id}-${index}`} className="flex items-center justify-between rounded-lg border p-3">
+                                        <div>
+                                            <p className="font-medium text-foreground">{bet.market_name || bet.market_id || "Market"}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {bet.outcome || "Outcome"} • {bet.action || "Bet"} • {bet.result || "Pending"}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-semibold text-foreground">{formatCurrency(bet.amount || 0)}</p>
+                                            <p className={`text-xs ${bet.result === "WON" ? "text-emerald-600" : bet.result === "LOST" ? "text-red-600" : "text-muted-foreground"}`}>
+                                                {bet.result || "Pending"}
+                                            </p>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                                No activity yet. Start with a small position to see your recent bets here.
+                            </div>
+                        )}
+                    </div>
+                </div>
             </main>
         </div>
     );
