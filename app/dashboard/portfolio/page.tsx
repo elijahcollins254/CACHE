@@ -276,7 +276,7 @@ export default function PortfolioPage() {
                         {activeTab === "history" && (
                             <div className="py-12 text-center">
                                 <p className="text-muted-foreground">Transaction history - visit Deposits & Withdrawals</p>
-                                <Link href="/dashboard/deposits-withdrawals" className="text-apple-blue hover:underline mt-4 inline-block">
+                                <Link href="/wallet" className="text-apple-blue hover:underline mt-4 inline-block">
                                     View all transactions
                                 </Link>
                             </div>

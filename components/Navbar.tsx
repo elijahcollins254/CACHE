@@ -11,7 +11,6 @@ import { fetchNotifications, markAllNotificationsRead } from "@/lib/redux/slices
 import { Search, Command, LogOut, Wallet, Home, BarChart3, Settings, ChevronDown, DollarSign, User, TrendingUp, Bell, Gift, HelpCircle, Trophy, MessageCircle, Droplet } from "lucide-react";
 import { generateMarketSlug } from "@/lib/slugify";
 import { parseVolume } from "@/lib/volume";
-import DepositModal from "./DepositModal";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
@@ -31,7 +30,6 @@ export default function Navbar() {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [mobileSearchQuery, setMobileSearchQuery] = useState("");
     const [mobileActiveCategory, setMobileActiveCategory] = useState("Trending");
@@ -220,13 +218,13 @@ export default function Navbar() {
                                 <BarChart3 className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">Dashboard</span>
                             </Link>
-                            <button
-                                onClick={() => setIsDepositModalOpen(true)}
+                            <Link
+                                href="/wallet"
                                 className="hidden sm:flex items-center gap-0.5 px-1.5 md:px-2 py-1.5 rounded-md bg-apple-green text-white text-[11px] md:text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
                             >
                                 <Wallet className="h-3.5 w-3.5" />
-                                <span className="hidden md:inline">Deposit</span>
-                            </button>
+                                <span className="hidden md:inline">Wallet</span>
+                            </Link>
 
                             {/* Notification Icon - Mobile & Desktop */}
                             <div className="relative notification-menu">
@@ -488,20 +486,14 @@ export default function Navbar() {
                     <span className="text-[10px] font-semibold">Search</span>
                 </button>
 
-                {/* Deposit */}
-                <button
-                    onClick={() => {
-                        if (user) {
-                            setIsDepositModalOpen(true);
-                        } else {
-                            router.push("/login");
-                        }
-                    }}
+                {/* Wallet */}
+                <Link
+                    href={user ? "/wallet" : "/login"}
                     className="flex flex-col items-center justify-center gap-1 w-14 h-16 rounded-lg text-muted-foreground hover:text-apple-green transition-colors"
                 >
                     <DollarSign className="h-6 w-6" />
-                    <span className="text-[10px] font-semibold">Deposit</span>
-                </button>
+                    <span className="text-[10px] font-semibold">Wallet</span>
+                </Link>
 
                 {/* Dashboard */}
                 <Link
@@ -514,12 +506,6 @@ export default function Navbar() {
             </div>
         </div>
 
-        {/* Deposit Modal */}
-        <DepositModal
-            isOpen={isDepositModalOpen}
-            onClose={() => setIsDepositModalOpen(false)}
-            balance={balance}
-        />
 
         {/* Mobile Search Modal - Bottom Sheet */}
         {isMobileSearchOpen && (

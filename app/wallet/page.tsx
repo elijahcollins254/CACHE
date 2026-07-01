@@ -10,8 +10,8 @@ import WithdrawModal from "@/components/WithdrawModal";
 import { useAuth } from "@/lib/useAuth";
 import { ArrowLeft, Wallet, CreditCard, TrendingUp } from "lucide-react";
 
-export default function DepositsWithdrawalsPage() {
-    const { user: authUser, loading: authLoading } = useAuth("/dashboard/deposits-withdrawals");
+export default function WalletPage() {
+    const { user: authUser, loading: authLoading } = useAuth("/wallet");
     const dispatch = useAppDispatch();
     const fetchAttemptedRef = useRef(false);
 
@@ -89,9 +89,9 @@ export default function DepositsWithdrawalsPage() {
                     <div>
                         <h1 className="text-3xl font-bold flex items-center gap-2">
                             <Wallet className="h-8 w-8" />
-                            Deposits & Withdrawals
+                            Wallet
                         </h1>
-                        <p className="text-muted-foreground text-sm">Manage your account balance</p>
+                        <p className="text-muted-foreground text-sm">Manage your account balance and transaction history</p>
                     </div>
                 </div>
 
@@ -145,14 +145,14 @@ export default function DepositsWithdrawalsPage() {
                     {/* Filter Tabs */}
                     <div className="border-b border-border p-6">
                         <div className="flex gap-6">
-                            {["all", "deposits", "withdrawals"].map((tab) => (
+                            {['all', 'deposits', 'withdrawals'].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setFilter(tab as any)}
                                     className={`pb-2 font-semibold text-sm transition-colors border-b-2 ${
                                         filter === tab
-                                            ? "border-black text-black dark:border-white dark:text-white"
-                                            : "border-transparent text-muted-foreground hover:text-black dark:hover:text-white"
+                                            ? 'border-black text-black dark:border-white dark:text-white'
+                                            : 'border-transparent text-muted-foreground hover:text-black dark:hover:text-white'
                                     }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}

@@ -6,8 +6,6 @@ import { useAuth } from "@/lib/useAuth";
 import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
-import DepositModal from "@/components/DepositModal";
-import WithdrawModal from "@/components/WithdrawModal";
 
 export default function DashboardHub() {
     const { user: authUser, loading: authLoading } = useAuth("/dashboard");
@@ -20,8 +18,6 @@ export default function DashboardHub() {
     const unreadCount = useAppSelector(selectUnreadCount);
     
     const [error, setError] = useState("");
-    const [depositModalOpen, setDepositModalOpen] = useState(false);
-    const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !authUser) {
@@ -98,10 +94,10 @@ export default function DashboardHub() {
             statLabel: "active positions",
         },
         {
-            title: "Deposits & Withdrawals",
-            description: "Manage your account balance and transaction history",
+            title: "Wallet",
+            description: "Manage your balance, deposits, and withdrawals",
             icon: Wallet,
-            href: "/dashboard/deposits-withdrawals",
+            href: "/wallet",
             color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
             iconColor: "text-emerald-700 dark:text-emerald-400",
             stat: `KES ${parseFloat(balance).toLocaleString()}`,
@@ -153,20 +149,14 @@ export default function DashboardHub() {
                         </button>
                     </div>
 
-                    {/* Deposit and Withdraw Buttons */}
+                    {/* Wallet Button */}
                     <div className="flex gap-3">
-                        <button 
-                            onClick={() => setDepositModalOpen(true)}
+                        <Link
+                            href="/wallet"
                             className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition text-center"
                         >
-                            + Deposit
-                        </button>
-                        <button 
-                            onClick={() => setWithdrawalModalOpen(true)}
-                            className="flex-1 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition text-center"
-                        >
-                            Withdraw
-                        </button>
+                            Wallet
+                        </Link>
                     </div>
                 </div>
 
@@ -202,20 +192,6 @@ export default function DashboardHub() {
                     })}
                 </div>
 
-                {/* Deposit Modal */}
-                <DepositModal 
-                    isOpen={depositModalOpen} 
-                    onClose={() => setDepositModalOpen(false)}
-                    balance={balance}
-                />
-
-                {/* Withdrawal Modal */}
-                <WithdrawModal 
-                    isOpen={withdrawalModalOpen} 
-                    onClose={() => setWithdrawalModalOpen(false)}
-                    balance={balance}
-                    phoneNumber={authUser?.phone_number || ""}
-                />
             </main>
         </div>
     );
