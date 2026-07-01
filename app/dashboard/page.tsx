@@ -94,16 +94,6 @@ export default function DashboardHub() {
             statLabel: "active positions",
         },
         {
-            title: "Wallet",
-            description: "Manage your balance, deposits, and withdrawals",
-            icon: Wallet,
-            href: "/wallet",
-            color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
-            iconColor: "text-emerald-700 dark:text-emerald-400",
-            stat: `KES ${parseFloat(balance).toLocaleString()}`,
-            statLabel: "available",
-        },
-        {
             title: "Profits & Losses",
             description: "Track your earnings and performance over time",
             icon: History,
@@ -149,15 +139,6 @@ export default function DashboardHub() {
                         </button>
                     </div>
 
-                    {/* Wallet Button */}
-                    <div className="flex gap-3">
-                        <Link
-                            href="/wallet"
-                            className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition text-center"
-                        >
-                            Wallet
-                        </Link>
-                    </div>
                 </div>
 
                 {/* Navigation Cards Grid */}
