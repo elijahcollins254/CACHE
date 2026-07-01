@@ -42,8 +42,8 @@ export default function Home() {
     categories.forEach((c) => (byCategory[c] = []));
 
     topLevel.forEach((m) => {
-      const mCats = m.categories || (m.tag ? [m.tag] : []);
-      if (mCats && mCats.length > 0) {
+      const mCats = m.category ? [m.category] : [];
+      if (mCats.length > 0) {
         mCats.forEach((c: string) => {
           if (!byCategory[c]) byCategory[c] = [];
           byCategory[c].push(m);
