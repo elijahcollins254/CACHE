@@ -11,6 +11,7 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { ArrowLeft, Bookmark } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
+import RecommendedMarkets from "@/components/RecommendedMarkets";
 
 export const dynamic = 'force-dynamic';
 
@@ -81,6 +82,7 @@ export default function MarketDetail() {
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [loadingChart, setLoadingChart] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [recommendedMarkets, setRecommendedMarkets] = useState<any[]>([]);
 
     // Detect mobile on mount and resize
     useEffect(() => {
@@ -131,10 +133,37 @@ export default function MarketDetail() {
 
             if (foundMarket) {
                 setMarket(foundMarket);
+
+                const currentMarketId = String(marketId);
+                const relatedMarkets = brokerageMarkets
+                    .filter((item: any) => {
+                        const itemId = String(item?.id ?? "");
+                        const externalId = String(item?.external_id ?? "");
+                        const sameAsCurrent = itemId === currentMarketId || externalId === currentMarketId;
+                        return !sameAsCurrent && Boolean(item?.question);
+                    })
+                    .sort((a: any, b: any) => {
+                        const volumeDelta = Number(b?.volume || 0) - Number(a?.volume || 0);
+                        if (volumeDelta !== 0) return volumeDelta;
+                        return Number(b?.yes_probability || 0) - Number(a?.yes_probability || 0);
+                    });
+
+                const fallbackCategory = foundMarket?.category || foundMarket?.subcategory;
+                const sameCategoryMarkets = fallbackCategory
+                    ? relatedMarkets.filter((item: any) => {
+                        const itemCategory = String(item?.category ?? "");
+                        const itemSubcategory = String(item?.subcategory ?? "");
+                        return itemCategory === String(fallbackCategory) || itemSubcategory === String(fallbackCategory);
+                    })
+                    : [];
+
+                setRecommendedMarkets((sameCategoryMarkets.length > 0 ? sameCategoryMarkets : relatedMarkets).slice(0, 4));
+
                 const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
                 setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
             } else {
                 setMarket(null);
+                setRecommendedMarkets([]);
             }
         } catch (err) {
             console.error("Error fetching brokerage market:", err);
@@ -489,6 +518,11 @@ export default function MarketDetail() {
                                 <div className="text-sm text-muted-foreground whitespace-pre-wrap">{market.description}</div>
                             </div>
                         )}
+
+                        <RecommendedMarkets
+                            markets={recommendedMarkets}
+                            currentMarketId={market?.id ?? marketId}
+                        />
                     </div>
 
                     {/* Right Column - Trading */}
