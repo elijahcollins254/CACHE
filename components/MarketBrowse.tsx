@@ -157,9 +157,15 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
     };
   }, []);
 
+  // Only fetch markets if they haven't been loaded yet or if cache is older than 5 minutes
   useEffect(() => {
-    dispatch(fetchMarkets());
-  }, [dispatch]);
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    
+    if (allMarkets.length === 0 || (now - (loading ? 0 : Date.now())) > CACHE_DURATION) {
+      dispatch(fetchMarkets());
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   const heading = activeLeague
     ? `${activeLeague} Markets`

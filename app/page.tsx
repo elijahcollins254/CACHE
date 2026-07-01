@@ -97,10 +97,12 @@ export default function Home() {
     }
   }, [dispatch]);
 
-  // Fetch markets on mount
+  // Fetch markets on mount only, not on every render
   useEffect(() => {
-    dispatch(fetchMarkets());
-  }, [dispatch]);
+    if (allMarkets.length === 0) {
+      dispatch(fetchMarkets());
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased text-foreground">
