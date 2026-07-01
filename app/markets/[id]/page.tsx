@@ -2,8 +2,8 @@
 
 import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
-import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
+// import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
+// import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { useMarketWebSocket } from "@/lib/useMarketWebSocket";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import MarketChart, { ChartDataPoint } from "@/components/MarketChart";
@@ -407,14 +407,15 @@ function transformPolymarketHistory(
 export default function MarketDetail() {
     const { id: paramId } = useParams();
     const marketId = extractMarketId(paramId);
-    const dispatch = useAppDispatch();
+    // const dispatch = useAppDispatch();
     
-    // Redux state
-    const allMarkets = useAppSelector(selectAllMarkets);
-    const loading = useAppSelector(selectMarketsLoading);
-    const savedMarketIds = useAppSelector(selectSavedMarketIds);
+    // Redux state is intentionally disabled so this page uses brokerage market data only.
+    // const allMarkets = useAppSelector(selectAllMarkets);
+    // const loading = useAppSelector(selectMarketsLoading);
+    // const savedMarketIds = useAppSelector(selectSavedMarketIds);
     
     const [market, setMarket] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const [betAmount, setBetAmount] = useState("");
     const [selectedOutcome, setSelectedOutcome] = useState<"Yes" | "No">("Yes");
     const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
@@ -484,12 +485,53 @@ export default function MarketDetail() {
         }
     }, []);
 
-    // Fetch markets if not already loaded
-    useEffect(() => {
-        if (allMarkets.length === 0) {
-            dispatch(fetchMarkets());
+    const fetchBrokerageMarket = useCallback(async () => {
+        if (!marketId) {
+            setLoading(false);
+            return;
         }
-    }, [dispatch, allMarkets.length]);
+
+        setLoading(true);
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            const response = await fetch(`${baseUrl}/api/brokerage/markets/?ts=${Date.now()}`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch brokerage market");
+            }
+
+            const brokerageData = await response.json();
+            const brokerageMarkets = Array.isArray(brokerageData)
+                ? brokerageData
+                : brokerageData.results || [];
+
+            const foundMarket = brokerageMarkets.find((item: any) => {
+                const itemId = String(item?.id ?? "");
+                const externalId = String(item?.external_id ?? "");
+                return itemId === String(marketId) || externalId === String(marketId);
+            });
+
+            if (foundMarket) {
+                setMarket(foundMarket);
+                const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
+                setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
+            } else {
+                setMarket(null);
+            }
+        } catch (err) {
+            console.error("Error fetching brokerage market:", err);
+            setMarket(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [marketId]);
+
+    useEffect(() => {
+        fetchBrokerageMarket();
+    }, [fetchBrokerageMarket]);
 
     // Auto-close receipt modal after 3 seconds
     useEffect(() => {
@@ -498,15 +540,6 @@ export default function MarketDetail() {
             return () => clearTimeout(timer);
         }
     }, [showReceipt]);
-
-    // Set market from Redux data and update saved status
-    useEffect(() => {
-        if (allMarkets.length > 0 && marketId) {
-            const found = allMarkets.find((m: any) => m.id === marketId);
-            setMarket(found);
-            setIsSaved(savedMarketIds.includes(marketId));
-        }
-    }, [allMarkets, marketId, savedMarketIds]);
 
     // WebSocket hook for real-time price updates
     const onPriceUpdate = useCallback((update: any) => {
@@ -552,52 +585,15 @@ export default function MarketDetail() {
     useEffect(() => {
         if (activeTab === "sell" && market && selectedOutcome) {
             setLoadingAvailableShares(true);
-            const queryParams = new URLSearchParams({
-                outcome: selectedOutcome,
-            });
-            if (selectedOptionId) {
-                queryParams.append('option_id', selectedOptionId.toString());
-            }
-            
-            fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${market.id}/available-shares/?${queryParams}`,
-                {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" },
-                }
-            )
-            .then((response) => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error("Failed to fetch available shares");
-            })
-            .then((data) => {
-                const available = data.available_quantity || 0;
-                setAvailableShares(available);
-                // Auto-populate shares field if user has shares to sell
-                if (available > 0) {
-                    setShares(available);
-                    setShareLoadMessage(`You own ${available} shares. We've auto-loaded this amount!`);
-                } else {
-                    setShares(1);
-                    setShareLoadMessage("You don't own any shares of this outcome to sell.");
-                }
-            })
-            .catch((err) => {
-                console.error("Error fetching available shares:", err);
-                setAvailableShares(0);
-                setShareLoadMessage("Could not load available shares");
-            })
-            .finally(() => {
-                setLoadingAvailableShares(false);
-            });
+            setAvailableShares(0);
+            setShareLoadMessage("Available shares are disabled while using brokerage market data.");
+            setLoadingAvailableShares(false);
         }
     }, [activeTab, market, selectedOutcome, selectedOptionId]);
 
     useEffect(() => {
         if (market?.id) {
-            fetchMarketDetails();
+            // fetchMarketDetails();
             fetchPriceHistory();
         }
     }, [market?.id]);
@@ -651,7 +647,7 @@ export default function MarketDetail() {
         }, 5000); // Poll every 5 seconds
 
         return () => clearInterval(pollInterval);
-    }, [market, dispatch]);
+    }, [market]);
 
     const fetchPriceHistory = useCallback(async (showLoading: boolean = true) => {
         if (showLoading) {
@@ -725,112 +721,13 @@ export default function MarketDetail() {
                 return;
             }
 
-            if (market.market_type === 'OPTION_LIST' && market.options) {
-                const histories: {[key: string]: {yes: number[]; no: number[]}} = {};
-                for (const option of market.options) {
-                    const response = await fetchWithAuth(
-                        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/price-history/?period=${timePeriod}&option_id=${option.id}`,
-                        {
-                            method: "GET",
-                            headers: { "Content-Type": "application/json" },
-                        }
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.data && data.data.length > 0) {
-                            const yesProbs = data.data.map((d: any) => d.yes_probability);
-                            const noProbs = data.data.map((d: any) => d.no_probability);
-                            
-                            if (yesProbs.length < 8) {
-                                while (yesProbs.length < 8) {
-                                    yesProbs.unshift(yesProbs[0]);
-                                    noProbs.unshift(noProbs[0]);
-                                }
-                            } else if (yesProbs.length > 8) {
-                                const step = Math.floor(yesProbs.length / 8);
-                                const sampledYes = [];
-                                const sampledNo = [];
-                                for (let i = 0; i < 8; i++) {
-                                    const index = i * step;
-                                    sampledYes.push(yesProbs[index]);
-                                    sampledNo.push(noProbs[index]);
-                                }
-                                yesProbs.splice(0, yesProbs.length, ...sampledYes);
-                                noProbs.splice(0, noProbs.length, ...sampledNo);
-                            }
-                            
-                            histories[`option_${option.id}`] = {
-                                yes: yesProbs,
-                                no: noProbs,
-                            };
-                        } else {
-                            // No history, use current
-                            const yesProb = option.yes_probability;
-                            const noProb = option.no_probability;
-                            histories[`option_${option.id}`] = {
-                                yes: Array(8).fill(yesProb),
-                                no: Array(8).fill(noProb),
-                            };
-                        }
-                    } else {
-                        // Fallback
-                        const yesProb = option.yes_probability;
-                        const noProb = option.no_probability;
-                        histories[`option_${option.id}`] = {
-                            yes: Array(8).fill(yesProb),
-                            no: Array(8).fill(noProb),
-                        };
-                    }
-                }
-                setPriceHistory(histories);
-            } else {
-                // BINARY market
-                const response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/price-history/?period=${timePeriod}`,
-                    {
-                        method: "GET",
-                        headers: { "Content-Type": "application/json" },
-                    }
-                );
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.data && data.data.length > 0) {
-                        // Generate valid timestamps - timestamps < 1000000000 are invalid (pre-2001)
-                        const now = Date.now() / 1000;
-                        const intervalSeconds = 300; // 5-minute intervals
-                        
-                        const points = data.data.map((d: any, index: number) => {
-                            // Use provided timestamp only if it's reasonable (after year 2001)
-                            let timestamp = d.timestamp;
-                            if (!timestamp || timestamp < 1000000000) {
-                                // Invalid timestamp - generate based on current date going backwards
-                                const pointsCount = data.data.length;
-                                timestamp = now - ((pointsCount - 1 - index) * intervalSeconds);
-                            }
-                            return {
-                                timestamp,
-                                yes: d.yes_probability || d.probability || 50,
-                                no: d.no_probability || (100 - (d.probability || 50)),
-                            };
-                        });
-                        setChartData(points);
-                    } else {
-                        const currentProb = market.yes_probability || 50;
-                        setChartData([{
-                            timestamp: Date.now() / 1000,
-                            yes: currentProb,
-                            no: 100 - currentProb,
-                        }]);
-                    }
-                } else {
-                    const currentProb = market.yes_probability || 50;
-                    setChartData([{
-                        timestamp: Date.now() / 1000,
-                        yes: currentProb,
-                        no: 100 - currentProb,
-                    }]);
-                }
-            }
+            // Local /api/markets price-history flow is disabled. This page now relies on brokerage market data only.
+            const currentProb = market?.yes_probability || 50;
+            setChartData([{
+                timestamp: Date.now() / 1000,
+                yes: currentProb,
+                no: 100 - currentProb,
+            }]);
         } catch (err) {
             console.error("Error fetching price history:", err);
             const currentProb = market?.yes_probability || 50;
@@ -873,45 +770,12 @@ export default function MarketDetail() {
     const fetchMarketDetails = async () => {
         setChatLoading(true);
         setChatError("");
-
-        try {
-            // Skip details fetch for Polymarket markets - they don't have the same endpoints
-            if (market.source === 'polymarket') {
-                console.log("Skipping details fetch for Polymarket market");
-                setChatLoading(false);
-                return;
-            }
-
-            const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/details/`,
-                {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                setChatMessages(data.comments || []);
-                setMarketPositions(data.positions || []);
-                setTopHolders(data.top_holders || { yes: [], no: [] });
-                setMarketActivity(data.activity || []);
-                setRelatedMarkets(data.related_markets || []);  // Set related markets with same question
-                
-                // Update market with description if provided
-                if (data.description) {
-                    setMarket((prev: any) => ({ ...prev, description: data.description }));
-                }
-            } else {
-                const data = await response.json();
-                setChatError(data.error || "Unable to load market details");
-            }
-        } catch (err) {
-            console.error(err);
-            setChatError("Connection error while loading market details");
-        } finally {
-            setChatLoading(false);
-        }
+        setChatMessages([]);
+        setMarketPositions([]);
+        setTopHolders({ yes: [], no: [] });
+        setMarketActivity([]);
+        setRelatedMarkets([]);
+        setChatLoading(false);
     };
 
     const handleSendChat = async () => {
@@ -922,36 +786,8 @@ export default function MarketDetail() {
 
         setSendingChat(true);
         setChatError("");
-
-        try {
-            // Use external_id for Polymarket, local marketId for local markets
-            const chatMarketId = market?.source === 'polymarket' ? market.external_id : marketId;
-            
-            const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${chatMarketId}/chat/`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message: newChatMessage.trim(),
-                        reply_to: replyingToId,
-                    }),
-                }
-            );
-
-            const data = await response.json();
-            if (response.ok) {
-                setChatMessages((prev) => [...prev, data.message]);
-                setNewChatMessage("");
-            } else {
-                setChatError(data.error || "Failed to send message");
-            }
-        } catch (err) {
-            console.error(err);
-            setChatError("Connection error while sending message");
-        } finally {
-            setSendingChat(false);
-        }
+        setChatError("Chat is disabled while this page is using brokerage market data only.");
+        setSendingChat(false);
     };
 
     const getRepliesForMessage = (messageId: number) => {
@@ -1104,45 +940,10 @@ export default function MarketDetail() {
                     }
                 );
             } else {
-                // ============================================
-                // LOCAL MARKET ORDER PLACEMENT
-                // ============================================
-                
-                const payload: any = {
-                    market_id: marketId,
-                    outcome,
-                    action: activeTab,
-                    order_type: orderType,
-                };
-
-                // Build payload based on order type and action
-                if (orderType === "market") {
-                    if (activeTab === "sell") {
-                        // For SELL market orders, amount is shares
-                        payload.amount = shares;
-                    } else {
-                        // For BUY market orders, amount is KES
-                        payload.amount = betAmount;
-                    }
-                } else {
-                    // For limit orders, amount is always shares, not KES
-                    payload.amount = shares;
-                    payload.limit_price = limitPrice;
-                }
-
-                // Add option_id for option-list markets
-                if (market.market_type === 'OPTION_LIST' && selectedOptionId) {
-                    payload.option_id = selectedOptionId;
-                }
-
-                response = await fetchWithAuth(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/bet/`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
-                    }
-                );
+                // Local /api/markets betting flow is disabled. Brokerage orders are used instead.
+                setMessage("Local market trading is disabled while this page uses brokerage data only.");
+                setPlacingBet(false);
+                return;
             }
 
             const data = await response.json();
@@ -1212,7 +1013,6 @@ export default function MarketDetail() {
                 }
                 
                 // Refresh market detail data and balance
-                dispatch(fetchMarkets());
                 window.dispatchEvent(new Event("poly_balance_updated"));
                 await fetchMarketDetails();
                 await fetchPriceHistory();
@@ -1416,18 +1216,19 @@ export default function MarketDetail() {
     const handleSaveToggle = () => {
         if (!marketId) return;
         
-        dispatch(toggleSaveMarket(marketId));
-        setIsSaved(!isSaved);
-        
-        // Update localStorage
-        const savedIds = [...savedMarketIds];
+        const savedIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
+        const nextSavedIds = Array.isArray(savedIds) ? [...savedIds] : [];
+        const idValue = String(marketId);
+
         if (isSaved) {
-            const index = savedIds.indexOf(marketId);
-            if (index > -1) savedIds.splice(index, 1);
+            const index = nextSavedIds.indexOf(idValue);
+            if (index > -1) nextSavedIds.splice(index, 1);
         } else {
-            savedIds.push(marketId);
+            nextSavedIds.push(idValue);
         }
-        localStorage.setItem("poly_saved_markets", JSON.stringify(savedIds));
+
+        localStorage.setItem("poly_saved_markets", JSON.stringify(nextSavedIds));
+        setIsSaved(!isSaved);
     };
 
     /**
@@ -1438,28 +1239,7 @@ export default function MarketDetail() {
      * 3. Trending markets (by volume)
      */
     const getRecommendedMarkets = () => {
-        // First priority: use relatedMarkets from backend (markets with same parent question)
-        if (relatedMarkets && relatedMarkets.length > 0) {
-            return relatedMarkets.filter(m => m.id !== marketId).slice(0, 3);
-        }
-        
-        // Fallback: markets in same category
-        const sameCategory = allMarkets.filter(
-            m => m.category === market?.category && m.id !== marketId
-        );
-        if (sameCategory.length > 0) {
-            return sameCategory.slice(0, 3);
-        }
-        
-        // Last resort: trending markets (sorted by volume, highest first)
-        return allMarkets
-            .filter(m => m.id !== marketId)
-            .sort((a, b) => {
-                const volA = parseInt(a.volume?.replace(/[^\d]/g, '') || '0');
-                const volB = parseInt(b.volume?.replace(/[^\d]/g, '') || '0');
-                return volB - volA;
-            })
-            .slice(0, 3);
+        return [];
     };
 
     return (
@@ -2352,8 +2132,7 @@ export default function MarketDetail() {
                     marketId={marketId}
                     marketQuestion={market?.question || ""}
                     onSuccess={() => {
-                        dispatch(fetchMarkets());
-                        fetchMarketDetails();
+                        fetchBrokerageMarket();
                     }}
                 />
             )}
