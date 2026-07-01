@@ -488,7 +488,7 @@ export default function SearchFilterBar() {
                 <div className="flex gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar max-w-full sm:max-w-3xl mx-auto">
                     {categories.map((cat, index) => (
                         <button
-                            key={cat}
+                            key={cat.slug}
                             onClick={() => {
                                 const href = cat.slug === "trending" ? "/category" : `/category/${cat.slug}`;
 
