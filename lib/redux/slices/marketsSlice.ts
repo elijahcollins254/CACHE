@@ -6,6 +6,11 @@ export interface Market {
     question: string;
     category: string;
     subcategory?: string | null;
+    // Canonical slugs supplied by the API
+    category_slug?: string | null;
+    subcategory_slug?: string | null;
+    // Optional league/league slug for sports
+    league?: string | null;
     yes_probability: number;
     volume: string;
     status: string;
