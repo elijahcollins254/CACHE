@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
@@ -8,14 +8,10 @@ import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/ma
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
+import { fetchBackendCategories, specialCategoryOptions, specialCategorySlugs, type BackendCategory, formatSlug, toSlug } from "@/lib/backendCategories";
 
-const categoryLabels = ["Trending", "New", "Politics", "Sports", "Economy", "Crypto", "Technology", "Geopolitics", "Environment", "Closing Soon", "Saved", "Resolved"];
-const specialCategorySlugs = new Set(["trending", "new", "closing-soon", "saved", "resolved"]);
-
-const toSlug = (value: string) => value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const categoryLabels = [...specialCategoryOptions.map((category) => category.name)];
 const categoryBySlug = new Map(categoryLabels.map((category) => [toSlug(category), category]));
-
-const formatSlug = (slug: string) => slug.split("-").filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 
 type MarketBrowseProps = {
   categorySlug?: string;
@@ -28,6 +24,7 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
   const allMarkets = useAppSelector(selectAllMarkets);
   const filteredMarkets = useAppSelector(selectFilteredMarkets);
   const loading = useAppSelector(selectMarketsLoading);
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[]>(specialCategoryOptions);
 
   const routeCategory = categorySlug ? categoryBySlug.get(categorySlug) || formatSlug(categorySlug) : null;
   const isSpecialCategory = categorySlug ? specialCategorySlugs.has(categorySlug) : false;
@@ -130,6 +127,19 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
       }
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchBackendCategories().then((categories) => {
+      if (!isMounted) return;
+      setBackendCategories(categories);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     dispatch(fetchMarkets());

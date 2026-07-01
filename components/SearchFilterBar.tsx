@@ -7,18 +7,22 @@ import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets
 import { setFilteredMarkets } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
 import { parseVolume } from "@/lib/volume";
+import { fetchBackendCategories, specialCategoryOptions, type BackendCategory, toSlug } from "@/lib/backendCategories";
 import { Search, Sliders, TrendingUp } from "lucide-react";
 
-const categories = ["Trending", "New", "Politics", "Sports", "Economy", "Crypto", "Technology", "Geopolitics", "Environment", "Closing Soon", "Saved", "Resolved"];
+const fallbackCategories = [...specialCategoryOptions];
+const categoryBySlug = new Map(fallbackCategories.map((category) => [toSlug(category.name), category.name]));
 
-const categorySlug = (value: string) => value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const categoryBySlug = new Map(categories.map((category) => [categorySlug(category), category]));
-
-const getCategoryFromPath = (pathname: string, fallback: string | null) => {
+const getCategoryFromPath = (pathname: string, fallback: string | null, categories: BackendCategory[]) => {
     const segments = pathname.split("/").filter(Boolean);
     if (segments[0] === "category") {
         const slug = segments[1];
-        return slug ? categoryBySlug.get(slug) || "Trending" : "Trending";
+        if (!slug) return "Trending";
+
+        const directMatch = categories.find((category) => category.slug === slug || toSlug(category.name) === slug);
+        if (directMatch) return directMatch.name;
+
+        return categoryBySlug.get(slug) || "Trending";
     }
 
     return fallback || "Trending";
@@ -33,12 +37,13 @@ export default function SearchFilterBar() {
     const isMarketPage = pathname.includes("/markets/");
     const [navbarHeight, setNavbarHeight] = useState(72); // Default mobile height
     const [isDesktop, setIsDesktop] = useState(false);
+    const [categories, setCategories] = useState<BackendCategory[]>(fallbackCategories);
     
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState(() => {
-        return getCategoryFromPath(pathname, searchParams.get("category"));
+        return getCategoryFromPath(pathname, searchParams.get("category"), fallbackCategories);
     });
     const [searchTab, setSearchTab] = useState<"markets" | "profiles">("markets");
     const [minProbability, setMinProbability] = useState(0);
@@ -48,6 +53,19 @@ export default function SearchFilterBar() {
     const [filterMode, setFilterMode] = useState<"yes" | "no">("yes");
     const filterBoxRef = useRef<HTMLDivElement>(null);
     const searchBoxRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        fetchBackendCategories().then((backendCategories) => {
+            if (!isMounted) return;
+            setCategories(backendCategories);
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Detect navbar height and desktop status from window width for responsive sizing
     useEffect(() => {
@@ -91,8 +109,8 @@ export default function SearchFilterBar() {
     // Update activeCategory when URL params change
     useEffect(() => {
         const categoryParam = searchParams.get("category");
-        setActiveCategory(getCategoryFromPath(pathname, categoryParam));
-    }, [pathname, searchParams]);
+        setActiveCategory(getCategoryFromPath(pathname, categoryParam, categories));
+    }, [pathname, searchParams, categories]);
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -472,16 +490,16 @@ export default function SearchFilterBar() {
                         <button
                             key={cat}
                             onClick={() => {
-                                const href = cat === "Trending" ? "/category" : `/category/${categorySlug(cat)}`;
+                                const href = cat.slug === "trending" ? "/category" : `/category/${cat.slug}`;
 
                                 if (pathname === "/") {
-                                    setActiveCategory(cat);
+                                    setActiveCategory(cat.name);
                                 }
 
                                 router.push(href);
                             }}
                             className={`category-tab-item px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-medium whitespace-nowrap rounded-lg transition-all duration-300 relative ${
-                                activeCategory === cat
+                                activeCategory === cat.name
                                     ? "bg-gray-900 text-white shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                             }`}
@@ -489,7 +507,7 @@ export default function SearchFilterBar() {
                                 animationDelay: `${index * 50}ms`
                             }}
                         >
-                            {cat}
+                            {cat.name}
                         </button>
                     ))}
                 </div>
