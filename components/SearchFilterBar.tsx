@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets } from "@/lib/redux/hooks";
 import { setFilteredMarkets } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
-import { parseVolume } from "@/lib/volume";
+import { parseVolume, formatVolume } from "@/lib/volume";
 import { fetchBackendCategories, specialCategoryOptions, type BackendCategory, toSlug } from "@/lib/backendCategories";
 import { Search, Sliders, TrendingUp } from "lucide-react";
 
@@ -292,7 +292,7 @@ export default function SearchFilterBar() {
                                                             <div className="flex items-center gap-1.5 flex-shrink-0 transition-all duration-200 group-hover:text-purple-400">
                                                                 <TrendingUp className="h-3.5 w-3.5" />
                                                                 <span className="text-xs font-semibold whitespace-nowrap">
-                                                                    {market.volume}
+                                                                    {formatVolume(market.volume)}
                                                                 </span>
                                                             </div>
                                                         </Link>

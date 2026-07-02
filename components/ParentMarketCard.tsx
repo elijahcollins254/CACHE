@@ -7,6 +7,7 @@ import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
 import { formatKES, polymarketProbabilityToKES } from "@/lib/currency";
 import ShareButton from "./ShareButton";
+import { formatVolume } from "@/lib/volume";
 import MarketCard from "./MarketCard";
 import { useEffect, useState } from "react";
 
@@ -305,7 +306,7 @@ export default function ParentMarketCard({ parentMarket, childMarkets }: ParentM
             <div className="flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-muted-foreground" />
               <span className="font-medium text-foreground text-[11px]">
-                {parentMarket.volume || "KES 0"}
+                {formatVolume(parentMarket.volume)}
               </span>
             </div>
 

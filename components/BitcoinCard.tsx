@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector, selectSavedMarketIds } from "@/lib/redu
 import { toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
 import { generateMarketSlug } from "@/lib/slugify";
 import ShareButton from "./ShareButton";
+import { formatVolume } from "@/lib/volume";
 import { useEffect, useState } from "react";
 
 interface MarketCardProps {
@@ -262,10 +263,10 @@ export default function MarketCard({ market: propMarket }: MarketCardProps) {
         {renderProbabilities()}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3 text-muted-foreground" />
             <span className="font-medium text-foreground text-[11px]">
-              {market.volume || "KES 0"}
+              {formatVolume(market.volume)}
             </span>
           </div>
 

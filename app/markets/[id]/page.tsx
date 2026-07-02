@@ -10,6 +10,7 @@ import MarketChart, { ChartDataPoint } from "@/components/MarketChart";
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import { USD_TO_KES, convertUSDVolumeToKES, formatKES, polymarketProbabilityToKES } from "@/lib/currency";
 import SearchFilterBar from "@/components/SearchFilterBar";
+import { formatVolume } from "@/lib/volume";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -1066,7 +1067,7 @@ export default function MarketDetail() {
                                                     </div>
                                                 </div>
                                                 <div className="text-xs text-muted-foreground pt-1 border-t border-border">
-                                                    {relatedMarket.volume || 'KES 0'} • {relatedMarket.end_date}
+                                                    {formatVolume(relatedMarket.volume)} • {relatedMarket.end_date}
                                                 </div>
                                             </div>
                                         </Link>
@@ -1119,10 +1120,10 @@ export default function MarketDetail() {
                                 />
 
                                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingUp className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                                        {market.volume}
-                                    </div>
+                                        <div className="flex items-center gap-2">
+                                            <TrendingUp className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                                            {formatVolume(market.volume)}
+                                        </div>
                                     <div className="hidden sm:flex items-center gap-2">
                                         <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
                                         {market.end_date ? formatDate(market.end_date) : "Closing soon"}
@@ -1177,7 +1178,7 @@ export default function MarketDetail() {
                         <div className="grid grid-cols-3 gap-3">
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Volume</span>
-                                <div className="text-xl font-bold text-foreground mt-1">{market.volume || 'KES 0'}</div>
+                                <div className="text-xl font-bold text-foreground mt-1">{formatVolume(market.volume)}</div>
                             </div>
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Closes</span>

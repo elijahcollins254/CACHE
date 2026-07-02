@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAppSelector, selectAllMarkets } from "@/lib/redux/hooks";
+import { formatVolume } from "@/lib/volume";
 import { generateMarketSlug } from "@/lib/slugify";
 import { Search, TrendingUp } from "lucide-react";
 
@@ -90,7 +91,7 @@ export default function GlobalSearch() {
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
                                             <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
                                             <span className="text-xs font-semibold text-foreground whitespace-nowrap">
-                                                {market.volume}
+                                                {formatVolume(market.volume)}
                                             </span>
                                         </div>
                                     </Link>

@@ -1236,7 +1236,7 @@ export default function MarketDetail() {
                                                     </div>
                                                 </div>
                                                 <div className="text-xs text-muted-foreground pt-1 border-t border-border">
-                                                    {relatedMarket.volume || 'KES 0'} • {relatedMarket.end_date}
+                                                    {formatVolume(relatedMarket.volume)} • {relatedMarket.end_date}
                                                 </div>
                                             </div>
                                         </Link>

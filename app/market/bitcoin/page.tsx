@@ -1545,7 +1545,7 @@ export default function MarketDetail() {
                         <div className="grid grid-cols-3 gap-3">
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Volume</span>
-                                <div className="text-xl font-bold text-foreground mt-1">{market.volume || 'KES 0'}</div>
+                                <div className="text-xl font-bold text-foreground mt-1">{formatVolume(market.volume)}</div>
                             </div>
                             <div className="bg-muted rounded-lg p-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Closes</span>
