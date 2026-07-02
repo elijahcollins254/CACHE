@@ -239,10 +239,6 @@ export default function MarketDetail() {
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastBet, setLastBet] = useState<any>(null);
     const [chatMessages, setChatMessages] = useState<any[]>([]);
-    const [marketPositions, setMarketPositions] = useState<any[]>([]);
-    const [topHolders, setTopHolders] = useState<{yes:any[]; no:any[]}>({yes: [], no: []});
-    const [marketActivity, setMarketActivity] = useState<any[]>([]);
-    const [marketTab, setMarketTab] = useState<"comments" | "topHolders" | "positions" | "activity">("comments");
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
     const [replyingToName, setReplyingToName] = useState("");
     const [newChatMessage, setNewChatMessage] = useState("");
@@ -530,15 +526,43 @@ export default function MarketDetail() {
     }, [market, timePeriod]);
 
     const fetchMarketDetails = async () => {
+        if (!market?.id) {
+            setChatMessages([]);
+            return;
+        }
+
         setChatLoading(true);
         setChatError("");
-        setChatMessages([]);
-        setMarketPositions([]);
-        setTopHolders({ yes: [], no: [] });
-        setMarketActivity([]);
-        setRelatedMarkets([]);
-        setChatLoading(false);
+
+        try {
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/markets/${market.id}/chat/`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch market comments");
+            }
+
+            const data = await response.json();
+            const comments = Array.isArray(data?.comments) ? data.comments : [];
+            setChatMessages(comments);
+        } catch (err) {
+            console.error("Error loading market comments:", err);
+            setChatError("Unable to load comments right now.");
+        } finally {
+            setChatLoading(false);
+        }
     };
+
+    useEffect(() => {
+        if (market?.id) {
+            fetchMarketDetails();
+        }
+    }, [market?.id]);
 
     const handleSendChat = async () => {
         if (!newChatMessage.trim()) {
@@ -546,14 +570,61 @@ export default function MarketDetail() {
             return;
         }
 
+        if (!market?.id) {
+            setChatError("This market is not ready for comments yet.");
+            return;
+        }
+
+        const storedUser = localStorage.getItem("poly_user");
+        if (!storedUser) {
+            setChatError("Please log in to leave a comment.");
+            return;
+        }
+
         setSendingChat(true);
         setChatError("");
-        setChatError("Chat is disabled while this page is using brokerage market data only.");
-        setSendingChat(false);
+
+        try {
+            const payload: Record<string, unknown> = {
+                message: newChatMessage.trim(),
+            };
+
+            if (replyingToId) {
+                payload.reply_to = replyingToId;
+            }
+
+            const response = await fetchWithAuth(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/markets/${market.id}/chat/`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.error || data?.detail || "Failed to save comment");
+            }
+
+            const savedComment = data?.message;
+            if (savedComment) {
+                setChatMessages((prev: any[]) => [...prev, savedComment]);
+            }
+
+            setNewChatMessage("");
+            setReplyingToId(null);
+            setReplyingToName("");
+        } catch (err) {
+            console.error("Error saving market comment:", err);
+            setChatError(err instanceof Error ? err.message : "Unable to save comment right now.");
+        } finally {
+            setSendingChat(false);
+        }
     };
 
     const getRepliesForMessage = (messageId: number) => {
-        return chatMessages.filter((msg) => msg.parent_id === messageId);
+        return chatMessages.filter((msg: any) => msg.parent_id === messageId);
     };
 
     const handleStartReply = (messageId: number, userName: string) => {
@@ -845,7 +916,7 @@ export default function MarketDetail() {
         return (Math.round(value * 100) / 100).toString();
     };
 
-    const topLevelChatMessages = chatMessages.filter((msg) => !msg.parent_id);
+    const topLevelChatMessages = chatMessages.filter((msg: any) => !msg.parent_id);
 
     const handleSaveToggle = () => {
         if (!marketId) return;
@@ -1301,7 +1372,6 @@ export default function MarketDetail() {
 
                     {/* Market Chat */}
                     <div className="md:col-span-2 space-y-3 order-3 md:order-none">
-                        {/* Market Description */}
                         {market.description && (
                             <div className="bg-muted rounded-2xl p-4 border border-border">
                                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Description</h3>
@@ -1312,170 +1382,39 @@ export default function MarketDetail() {
                         <div className="bg-muted rounded-2xl p-4 border border-border">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Market Chat</h3>
-                                    <p className="text-sm text-muted-foreground">Talk about this market with others.</p>
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Comments</h3>
+                                    <p className="text-sm text-muted-foreground">Share your view on this market and reply to others.</p>
                                 </div>
                                 {chatLoading && <InlineSpinner />}
                             </div>
 
-                                <div className="mb-6 border-b border-border pb-4">
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm font-semibold">
-                                    <button
-                                        onClick={() => setMarketTab("comments")}
-                                        className={`rounded-full px-4 py-2 transition ${marketTab === "comments" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
-                                    >
-                                        Comments ({chatMessages.length})
-                                    </button>
-                                    <button
-                                        onClick={() => setMarketTab("topHolders")}
-                                        className={`rounded-full px-4 py-2 transition ${marketTab === "topHolders" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
-                                    >
-                                        Top Holders
-                                    </button>
-                                    <button
-                                        onClick={() => setMarketTab("positions")}
-                                        className={`rounded-full px-4 py-2 transition ${marketTab === "positions" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
-                                    >
-                                        Positions
-                                    </button>
-                                    <button
-                                        onClick={() => setMarketTab("activity")}
-                                        className={`rounded-full px-4 py-2 transition ${marketTab === "activity" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-border"}`}
-                                    >
-                                        Activity
-                                    </button>
-                                </div>
-                                <p className="mt-3 text-sm text-muted-foreground">
-                                    {marketTab === "comments" && "See the latest trader discussion and replies below."}
-                                    {marketTab === "topHolders" && "Top holders are displayed here once market holdings data is available."}
-                                    {marketTab === "positions" && "Your current and historical positions for this market will appear here."}
-                                    {marketTab === "activity" && "Recent market activity and trade history will show here."}
-                                </p>
+                            <div className="mb-4 rounded-xl border border-border bg-background/70 px-3 py-2 text-sm text-muted-foreground">
+                                {chatMessages.length} comment{chatMessages.length === 1 ? "" : "s"}
                             </div>
 
-                            {marketTab !== "comments" ? (
-                                <div className="rounded-2xl border border-border bg-background/80 p-6 space-y-6">
-                                    {marketTab === "topHolders" && (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            <div className="p-4 rounded-2xl bg-muted border border-border">
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <div>
-                                                        <h4 className="text-sm font-semibold text-foreground">Yes holders</h4>
-                                                        <p className="text-xs text-muted-foreground">Largest positions supporting Yes</p>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-3">
-                                                    {topHolders.yes.length === 0 ? (
-                                                        <p className="text-sm text-muted-foreground">No Yes holders yet.</p>
-                                                    ) : (
-                                                        topHolders.yes.map((holder) => (
-                                                            <div key={`${holder.user_id}-yes`} className="flex items-center justify-between gap-3">
-                                                                <div>
-                                                                    <p className="font-semibold text-foreground">{holder.user_name}</p>
-                                                                    <p className="text-xs text-muted-foreground">Avg {holder.average_price}</p>
-                                                                </div>
-                                                                <span className="font-semibold text-green-400">{holder.shares.toLocaleString()}</span>
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="p-4 rounded-2xl bg-muted border border-border">
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <div>
-                                                        <h4 className="text-sm font-semibold text-foreground">No holders</h4>
-                                                        <p className="text-xs text-muted-foreground">Largest positions supporting No</p>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-3">
-                                                    {topHolders.no.length === 0 ? (
-                                                        <p className="text-sm text-muted-foreground">No No holders yet.</p>
-                                                    ) : (
-                                                        topHolders.no.map((holder) => (
-                                                            <div key={`${holder.user_id}-no`} className="flex items-center justify-between gap-3">
-                                                                <div>
-                                                                    <p className="font-semibold text-foreground">{holder.user_name}</p>
-                                                                    <p className="text-xs text-muted-foreground">Avg {holder.average_price}</p>
-                                                                </div>
-                                                                <span className="font-semibold text-red-400">{holder.shares.toLocaleString()}</span>
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {marketTab === "positions" && (
-                                        <div className="space-y-4">
-                                            {marketPositions.length === 0 ? (
-                                                <div className="rounded-2xl border border-border p-6 bg-muted">
-                                                    <p className="text-sm text-muted-foreground">No public positions are available yet.</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {marketPositions.map((position) => (
-                                                        <div key={position.id} className="rounded-2xl border border-border bg-background p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                            <div>
-                                                                <p className="font-semibold text-foreground">{position.user_name}</p>
-                                                                <p className="text-xs text-muted-foreground">{position.outcome} · {position.order_type} · {position.result}</p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="font-semibold text-foreground">{position.quantity} shares</p>
-                                                                <p className="text-xs text-muted-foreground">KES {Number(position.amount).toLocaleString()}</p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    {marketTab === "activity" && (
-                                        <div className="space-y-3">
-                                            {marketActivity.length === 0 ? (
-                                                <div className="rounded-2xl border border-border p-6 bg-muted">
-                                                    <p className="text-sm text-muted-foreground">Activity will appear once positions are taken on this market.</p>
-                                                </div>
-                                            ) : (
-                                                marketActivity.map((item) => (
-                                                    <div key={item.id} className="rounded-2xl border border-border bg-background p-4 flex items-center justify-between gap-3">
-                                                        <div>
-                                                            <p className="font-semibold text-foreground">{item.user_name}</p>
-                                                            <p className="text-xs text-muted-foreground">{item.action}</p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-xs text-muted-foreground">{formatChatTimestamp(item.timestamp)}</p>
-                                                            <p className="text-sm font-semibold text-foreground">KES {Number(item.amount).toLocaleString()}</p>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    )}
+                            {chatError ? (
+                                <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
+                                    {chatError}
                                 </div>
-                            ) : (
-                                <>
-                                    {chatError ? (
-                                        <div className="rounded-xl bg-red-950/30 border border-red-800 p-3 text-sm text-red-200 mb-4">
-                                            {chatError}
-                                        </div>
-                                    ) : null}
+                            ) : null}
 
-                                    <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
+                            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
                                 {chatMessages.length === 0 ? (
                                     <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
                                         No messages yet. Start the conversation.
                                     </div>
                                 ) : (
-                                    topLevelChatMessages.map((msg) => (
-                                        <div key={msg.id} className={`rounded-2xl border p-4 space-y-3 transition-colors ${
-                                            replyingToId === msg.id 
-                                                ? 'border-apple-blue bg-apple-blue/10 bg-background/80' 
-                                                : 'border-border bg-background/80'
-                                        }`}>
+                                    topLevelChatMessages.map((msg: any) => (
+                                        <div
+                                            key={msg.id}
+                                            className={`rounded-2xl border p-4 space-y-3 transition-colors ${
+                                                replyingToId === msg.id
+                                                    ? 'border-apple-blue bg-apple-blue/10 bg-background/80'
+                                                    : 'border-border bg-background/80'
+                                            }`}
+                                        >
                                             <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                                                <span className="font-semibold text-foreground">
-                                                    {msg.user_name || 'Trader'}
-                                                </span>
+                                                <span className="font-semibold text-foreground">{msg.user_name || 'Trader'}</span>
                                                 <span>{formatChatTimestamp(msg.created_at)}</span>
                                             </div>
                                             <p className="text-sm text-foreground">{msg.message}</p>
@@ -1491,16 +1430,17 @@ export default function MarketDetail() {
                                                 )}
                                             </div>
 
-                                            {getRepliesForMessage(msg.id).map((reply) => (
-                                                <div key={reply.id} className={`ml-5 rounded-2xl border p-4 space-y-3 transition-colors ${
-                                                    replyingToId === reply.id 
-                                                        ? 'border-apple-blue bg-apple-blue/10 bg-muted' 
-                                                        : 'border-border bg-muted'
-                                                }`}>
+                                            {getRepliesForMessage(msg.id).map((reply: any) => (
+                                                <div
+                                                    key={reply.id}
+                                                    className={`ml-5 rounded-2xl border p-4 space-y-3 transition-colors ${
+                                                        replyingToId === reply.id
+                                                            ? 'border-apple-blue bg-apple-blue/10 bg-muted'
+                                                            : 'border-border bg-muted'
+                                                    }`}
+                                                >
                                                     <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                                                        <span className="font-semibold text-foreground">
-                                                            {reply.user_name || 'Trader'}
-                                                        </span>
+                                                        <span className="font-semibold text-foreground">{reply.user_name || 'Trader'}</span>
                                                         <span>{formatChatTimestamp(reply.created_at)}</span>
                                                     </div>
                                                     <p className="text-sm text-foreground">
@@ -1518,16 +1458,17 @@ export default function MarketDetail() {
                                                             <span>{getRepliesForMessage(reply.id).length} repl{getRepliesForMessage(reply.id).length === 1 ? 'y' : 'ies'}</span>
                                                         )}
                                                     </div>
-                                                    {getRepliesForMessage(reply.id).map((nestedReply) => (
-                                                        <div key={nestedReply.id} className={`ml-5 rounded-2xl border p-4 space-y-3 transition-colors ${
-                                                            replyingToId === nestedReply.id 
-                                                                ? 'border-apple-blue bg-apple-blue/10 bg-background' 
-                                                                : 'border-border bg-background'
-                                                        }`}>
+                                                    {getRepliesForMessage(reply.id).map((nestedReply: any) => (
+                                                        <div
+                                                            key={nestedReply.id}
+                                                            className={`ml-5 rounded-2xl border p-4 space-y-3 transition-colors ${
+                                                                replyingToId === nestedReply.id
+                                                                    ? 'border-apple-blue bg-apple-blue/10 bg-background'
+                                                                    : 'border-border bg-background'
+                                                            }`}
+                                                        >
                                                             <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                                                                <span className="font-semibold text-foreground">
-                                                                    {nestedReply.user_name || 'Trader'}
-                                                                </span>
+                                                                <span className="font-semibold text-foreground">{nestedReply.user_name || 'Trader'}</span>
                                                                 <span>{formatChatTimestamp(nestedReply.created_at)}</span>
                                                             </div>
                                                             <p className="text-sm text-foreground">
@@ -1551,43 +1492,39 @@ export default function MarketDetail() {
                                 )}
                             </div>
 
-                                    {/* Chat Input */}
-                                    <div ref={chatInputRef} className="mt-4 pt-4 border-t border-border">
-                                        {replyingToId && (
-                                            <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
-                                                <span>Replying to {replyingToName}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={cancelReply}
-                                                    className="text-xs font-bold text-apple-blue hover:underline"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        )}
-                                        <div className="flex gap-2 items-end">
-                                            <textarea
-                                                value={newChatMessage}
-                                                onChange={(e) => setNewChatMessage(e.target.value)}
-                                                placeholder="Add a comment..."
-                                                className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background/60 p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground resize-none"
-                                            />
-                                            <button
-                                                onClick={handleSendChat}
-                                                disabled={sendingChat}
-                                                className="bg-red-500 hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
-                                            >
-                                                <Send className="h-4 w-4" />
-                                            </button>
-                                        </div>
+                            <div ref={chatInputRef} className="mt-4 pt-4 border-t border-border">
+                                {replyingToId && (
+                                    <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
+                                        <span>Replying to {replyingToName}</span>
+                                        <button
+                                            type="button"
+                                            onClick={cancelReply}
+                                            className="text-xs font-bold text-apple-blue hover:underline"
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
-
-                        </>
-                    )}
+                                )}
+                                <div className="flex gap-2 items-end">
+                                    <textarea
+                                        value={newChatMessage}
+                                        onChange={(e) => setNewChatMessage(e.target.value)}
+                                        placeholder="Add a comment..."
+                                        className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background/60 p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground resize-none"
+                                    />
+                                    <button
+                                        onClick={handleSendChat}
+                                        disabled={sendingChat}
+                                        className="bg-red-500 hover:opacity-90 text-white font-bold py-2.5 px-3 rounded-lg transition disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
 
             {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
