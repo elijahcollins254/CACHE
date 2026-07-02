@@ -13,10 +13,9 @@ import SearchFilterBar from "@/components/SearchFilterBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send, Droplet } from "lucide-react";
+import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
-import AddLiquidityModal from "@/components/AddLiquidityModal";
 
 // Ensure this page is rendered dynamically (never prerendered)
 export const dynamic = 'force-dynamic';
@@ -238,7 +237,6 @@ export default function MarketDetail() {
     const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
     const [isSaved, setIsSaved] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
-    const [showLiquidityModal, setShowLiquidityModal] = useState(false);
     const [lastBet, setLastBet] = useState<any>(null);
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [marketPositions, setMarketPositions] = useState<any[]>([]);
@@ -1086,17 +1084,6 @@ export default function MarketDetail() {
                             </div>
                         </div>
 
-                        {/* Add Liquidity Button */}
-                        {market.source !== 'polymarket' && (
-                            <button
-                                onClick={() => setShowLiquidityModal(true)}
-                                disabled={market.status === 'CLOSED' || market.status === 'RESOLVED'}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-bold rounded-lg border border-blue-600/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Droplet className="h-5 w-5" />
-                                Add Liquidity
-                            </button>
-                        )}
                     </div>
 
                     {/* Right Column - Position Interface */}
@@ -1601,19 +1588,6 @@ export default function MarketDetail() {
                 </div>
             </div>
         </main>
-
-            {/* Add Liquidity Modal */}
-            {marketId !== null && (
-                <AddLiquidityModal
-                    isOpen={showLiquidityModal}
-                    onClose={() => setShowLiquidityModal(false)}
-                    marketId={marketId}
-                    marketQuestion={market?.question || ""}
-                    onSuccess={() => {
-                        fetchBrokerageMarket();
-                    }}
-                />
-            )}
 
             {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
