@@ -303,6 +303,7 @@ export default function MarketDetail() {
     const [loadingAvailableShares, setLoadingAvailableShares] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [relatedMarkets, setRelatedMarkets] = useState<any[]>([]);  // Markets with same question
+    const [allMarkets, setAllMarkets] = useState<any[]>([]);
     const chatInputRef = useRef<HTMLDivElement>(null);
 
     // Scroll to chat input when replying
@@ -360,18 +361,29 @@ export default function MarketDetail() {
                 ? brokerageData
                 : brokerageData.results || [];
 
-            const foundMarket = brokerageMarkets.find((item: any) => {
+            const normalizedMarkets = brokerageMarkets.map(normalizeBrokerageMarketData);
+            setAllMarkets(normalizedMarkets);
+
+            const foundMarket = normalizedMarkets.find((item: any) => {
                 const itemId = String(item?.id ?? "");
                 const externalId = String(item?.external_id ?? "");
                 return itemId === String(marketId) || externalId === String(marketId);
             });
 
             if (foundMarket) {
-                setMarket(normalizeBrokerageMarketData(foundMarket));
+                setMarket(foundMarket);
+                setRelatedMarkets(
+                    normalizedMarkets.filter((item: any) =>
+                        item.external_id !== foundMarket.external_id &&
+                        item.question === foundMarket.question
+                    )
+                );
+
                 const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
                 setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
             } else {
                 setMarket(null);
+                setRelatedMarkets([]);
             }
         } catch (err) {
             console.error("Error fetching brokerage market:", err);
@@ -987,7 +999,27 @@ export default function MarketDetail() {
      * 3. Trending markets (by volume)
      */
     const getRecommendedMarkets = () => {
-        return [];
+        if (!market || allMarkets.length === 0) return [];
+
+        if (relatedMarkets.length > 0) {
+            return relatedMarkets.slice(0, 3);
+        }
+
+        const categoryMatches = allMarkets
+            .filter((item: any) =>
+                item.external_id !== market.external_id &&
+                item.category?.toLowerCase?.() === market.category?.toLowerCase?.()
+            )
+            .sort((a: any, b: any) => (Number(b.volume) || 0) - (Number(a.volume) || 0));
+
+        if (categoryMatches.length > 0) {
+            return categoryMatches.slice(0, 3);
+        }
+
+        return allMarkets
+            .filter((item: any) => item.external_id !== market.external_id)
+            .sort((a: any, b: any) => (Number(b.volume) || 0) - (Number(a.volume) || 0))
+            .slice(0, 3);
     };
 
     return (
