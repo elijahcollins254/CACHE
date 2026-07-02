@@ -77,6 +77,50 @@ function getPolymarketTokenId(market: any, outcome: "Yes" | "No" = "Yes"): strin
     return tokenId ? String(tokenId) : null;
 }
 
+function parseJsonArray(value: any): any[] {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+    return [];
+}
+
+function normalizeBrokerageMarketData(rawMarket: any): any {
+    if (!rawMarket) return rawMarket;
+
+    const normalized: any = { ...rawMarket };
+    const outcomePrices = parseJsonArray(rawMarket.outcomePrices).map((price: any) => Number(price)).filter(Number.isFinite);
+    const yesProbabilityFromPrices = outcomePrices.length > 0 ? outcomePrices[0] * 100 : undefined;
+    const yesProbability = Number.isFinite(yesProbabilityFromPrices as number)
+        ? Math.round((yesProbabilityFromPrices as number) * 100) / 100
+        : Number.isFinite(rawMarket.yes_probability)
+        ? rawMarket.yes_probability
+        : Number.isFinite(rawMarket.lastTradePrice)
+        ? Math.round(rawMarket.lastTradePrice * 100)
+        : 50;
+
+    normalized.yes_probability = yesProbability;
+    normalized.no_probability = Math.round((100 - yesProbability) * 100) / 100;
+    normalized.end_date = rawMarket.endDate || rawMarket.end_date || rawMarket.endDateIso || rawMarket.end_date_iso || rawMarket.end_date;
+    normalized.image_url = rawMarket.image || rawMarket.icon || rawMarket.image_url || rawMarket.imageUrl || "";
+    normalized.volume = rawMarket.volume != null ? rawMarket.volume : rawMarket.volumeNum || "";
+    normalized.category = rawMarket.category || rawMarket.category_slug || "Other";
+    normalized.status = rawMarket.closed ? "CLOSED" : rawMarket.resolved ? "RESOLVED" : rawMarket.active === false ? "CLOSED" : "OPEN";
+    normalized.source = rawMarket.source || (rawMarket.clobTokenIds || rawMarket.conditionId || rawMarket.outcomePrices ? "polymarket" : rawMarket.source);
+    normalized.external_id = String(rawMarket.external_id || rawMarket.id || rawMarket.market_id || rawMarket.conditionId || "");
+
+    return normalized;
+}
+
+function getMarketProbability(market: any): number {
+    return Number.isFinite(market?.yes_probability) ? market.yes_probability : 50;
+}
+
 function normalizePolymarketHistory(data: any, currentProbability: number): { yes: number[]; no: number[] } {
     const history = Array.isArray(data?.history) ? data.history : [];
     const yes = history
@@ -322,7 +366,7 @@ export default function MarketDetail() {
             });
 
             if (foundMarket) {
-                setMarket(foundMarket);
+                setMarket(normalizeBrokerageMarketData(foundMarket));
                 const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
                 setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
             } else {
@@ -370,7 +414,7 @@ export default function MarketDetail() {
             }
 
             const latestData = await response.json();
-            setMarket((prev: any) => ({
+            setMarket((prev: any) => normalizeBrokerageMarketData({
                 ...prev,
                 ...latestData,
             }));
@@ -445,7 +489,7 @@ export default function MarketDetail() {
                     
                     if (response.ok) {
                         const data = await response.json();
-                        const normalized = transformPolymarketHistory(data?.history || [], market.yes_probability || 50);
+                        const normalized = transformPolymarketHistory(data?.history || [], getMarketProbability(market));
 
                         console.log("Polymarket chart data:", { points: normalized.length, first: normalized[0], last: normalized[normalized.length - 1] });
                         setChartData(normalized);
@@ -456,7 +500,7 @@ export default function MarketDetail() {
                     }
                     
                     console.log("No price history found, using current probability");
-                    const currentProb = market.yes_probability || 50;
+                    const currentProb = getMarketProbability(market);
                     setChartData([{
                         timestamp: Date.now() / 1000,
                         yes: currentProb,
@@ -465,7 +509,7 @@ export default function MarketDetail() {
                 } catch (err) {
                     console.warn("Error fetching Polymarket price history, using current probability:", err);
                     // Fallback to current probability
-                    const currentProb = market.yes_probability || 50;
+                    const currentProb = getMarketProbability(market);
                     setChartData([{
                         timestamp: Date.now() / 1000,
                         yes: currentProb,
@@ -480,7 +524,7 @@ export default function MarketDetail() {
             }
 
             // Local /api/markets price-history flow is disabled. This page now relies on brokerage market data only.
-            const currentProb = market?.yes_probability || 50;
+            const currentProb = getMarketProbability(market);
             setChartData([{
                 timestamp: Date.now() / 1000,
                 yes: currentProb,
@@ -488,7 +532,7 @@ export default function MarketDetail() {
             }]);
         } catch (err) {
             console.error("Error fetching price history:", err);
-            const currentProb = market?.yes_probability || 50;
+            const currentProb = getMarketProbability(market);
             setChartData([{
                 timestamp: Date.now() / 1000,
                 yes: currentProb,
@@ -708,7 +752,7 @@ export default function MarketDetail() {
             const kesAmount = Number(betAmount);
             const usdAmount = kesAmount / USD_TO_KES;
             const size = Math.round(usdAmount * 100000000) / 100000000;
-            const price = market.yes_probability / 100;
+            const price = getMarketProbability(market) / 100;
 
             const polyPayload = {
                 market_id: market.external_id,
@@ -755,11 +799,9 @@ export default function MarketDetail() {
                 setMessage("");
 
                 if (data.market) {
-                    setMarket((prev: any) => ({
+                    setMarket((prev: any) => normalizeBrokerageMarketData({
                         ...prev,
-                        q_yes: data.market.q_yes,
-                        q_no: data.market.q_no,
-                        yes_probability: data.market.yes_probability,
+                        ...data.market,
                     }));
                 }
 
@@ -794,7 +836,7 @@ export default function MarketDetail() {
         );
     }
 
-    const noProbability = 100 - market.yes_probability;
+    const noProbability = 100 - getMarketProbability(market);
 
     // Trading fee constant
     const TRADING_FEE_PERCENT = 2.0; // 2.0% fee
@@ -811,7 +853,7 @@ export default function MarketDetail() {
     // Generate historical price data based on time period
     const generateHistoricalPrices = () => {
         const numPoints = 8;
-        const yesProb = market.yes_probability;
+        const yesProb = getMarketProbability(market);
         const noProb = noProbability;
         
         // Create slight variations for realistic historical data
@@ -844,7 +886,7 @@ export default function MarketDetail() {
             }
         }
 
-        return selectedOutcome === "Yes" ? market.yes_probability : noProbability;
+        return selectedOutcome === "Yes" ? getMarketProbability(market) : noProbability;
     };
 
     const calculateEstimatedReturn = () => {
@@ -1042,7 +1084,7 @@ export default function MarketDetail() {
                                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                                         <div className="flex items-center gap-2">
                                             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                            {market.yes_probability}% Yes
+                                            {getMarketProbability(market)}% Yes
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="w-2 h-2 rounded-full bg-orange-500"></span>
@@ -1220,7 +1262,7 @@ export default function MarketDetail() {
                                                 : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                                         }`}
                                     >
-                                        Yes <span className="text-xs font-bold ml-1">({market.yes_probability}%) {getDisplayMultiplier(market, market.yes_probability, "Yes")}</span>
+                                        Yes <span className="text-xs font-bold ml-1">({getMarketProbability(market)}%) {getDisplayMultiplier(market, getMarketProbability(market), "Yes")}</span>
                                     </button>
                                     <button
                                         onClick={() => setSelectedOutcome("No")}
@@ -1240,7 +1282,7 @@ export default function MarketDetail() {
                             <div className="rounded-lg border border-border bg-background/70 p-3">
                                 <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Odds</div>
                                 <div className="mt-2 text-sm font-semibold text-foreground">
-                                    Yes {market.yes_probability}% · No {noProbability}%
+                                    Yes {getMarketProbability(market)}% · No {noProbability}%
                                 </div>
                             </div>
 
@@ -1275,7 +1317,7 @@ export default function MarketDetail() {
                                             KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
                                         </div>
                                         <div className="mt-1 text-xs text-muted-foreground">
-                                            at {selectedOutcome === "Yes" ? market.yes_probability : noProbability}% odds
+                                            at {selectedOutcome === "Yes" ? getMarketProbability(market) : noProbability}% odds
                                         </div>
                                     </div>
 
