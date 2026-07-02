@@ -7,6 +7,7 @@ import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice"
 
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import SearchFilterBar from "@/components/SearchFilterBar";
+import { formatVolume } from "@/lib/volume";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
