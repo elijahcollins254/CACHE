@@ -597,7 +597,7 @@ export default function MarketDetail() {
 
         try {
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/markets/${marketId}/chat/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/${marketId}/chat/`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
