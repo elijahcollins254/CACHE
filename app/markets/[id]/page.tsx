@@ -1428,12 +1428,23 @@ export default function MarketDetail() {
                                         className="block p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
                                     >
                                         <p className="text-xs font-semibold text-foreground truncate">{rec_market.question}</p>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-xs text-muted-foreground">{rec_market.yes_probability}%</span>
-                                            <span className="text-xs font-semibold text-green-400">{rec_market.volume}</span>
+                                        <div className="mt-2 grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
+                                            <div className="rounded-md bg-background/70 px-2 py-1">
+                                                <span className="font-semibold text-foreground">Yes</span>{' '}
+                                                <span>{rec_market.yes_probability}%</span>
+                                            </div>
+                                            <div className="rounded-md bg-background/70 px-2 py-1">
+                                                <span className="font-semibold text-foreground">Volume</span>{' '}
+                                                <span>{formatVolume(rec_market.volume)}</span>
+                                            </div>
                                         </div>
                                     </Link>
                                 ))}
+                                {getRecommendedMarkets().length === 0 && (
+                                    <div className="rounded-lg border border-dashed border-border/50 bg-muted/60 p-4 text-sm text-muted-foreground">
+                                        No recommended markets available right now.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
