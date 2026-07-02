@@ -536,7 +536,7 @@ export default function MarketDetail() {
 
         try {
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/markets/${market.id}/chat/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/${market.id}/chat/`,
                 {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
@@ -594,7 +594,7 @@ export default function MarketDetail() {
             }
 
             const response = await fetchWithAuth(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/markets/${market.id}/chat/`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/brokerage/${market.id}/chat/`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
