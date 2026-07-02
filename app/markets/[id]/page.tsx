@@ -1079,7 +1079,9 @@ export default function MarketDetail() {
                                     market.status === 'RESOLVED' ? 'text-blue-600' : 
                                     'text-green-600'
                                 }`}>
-                                    {market.status.charAt(0).toUpperCase() + market.status.slice(1).toLowerCase()}
+                                    {typeof market.status === 'string' && market.status.length > 0
+                                        ? market.status.charAt(0).toUpperCase() + market.status.slice(1).toLowerCase()
+                                        : 'Unknown'}
                                 </div>
                             </div>
                         </div>
