@@ -10,6 +10,7 @@ import MarketChart, { ChartDataPoint } from "@/components/MarketChart";
 
 import { extractMarketId, generateMarketSlug } from "@/lib/slugify";
 import { USD_TO_KES, convertUSDVolumeToKES, formatKES, polymarketProbabilityToKES } from "@/lib/currency";
+import { formatVolume } from "@/lib/volume";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
