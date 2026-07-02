@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 // import { useAppDispatch, useAppSelector, selectAllMarkets, selectMarketsLoading, selectSavedMarketIds } from "@/lib/redux/hooks";
 // import { fetchMarkets, toggleSaveMarket } from "@/lib/redux/slices/marketsSlice";
-import { useMarketWebSocket } from "@/lib/useMarketWebSocket";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import MarketChart, { ChartDataPoint } from "@/components/MarketChart";
 
@@ -25,197 +24,12 @@ export const dynamic = 'force-dynamic';
 
 // Break this into components for more complex markets
 
-// ============================================================================
-// LMSR (Logarithmic Market Scoring Rule) Utilities
-// ============================================================================
-
-const LMSR_B = 100.0; // Liquidity parameter (default)
-const PAYOUT_PER_SHARE = 100; // KES per share
-
-/**
- * Calculate LMSR cost function: C(q) = b * ln(exp(q_yes/b) + exp(q_no/b))
- */
-function lmsrCost(q_yes: number, q_no: number, b: number = LMSR_B): number {
-    try {
-        // Validate inputs
-        if (!Number.isFinite(q_yes) || !Number.isFinite(q_no) || !Number.isFinite(b)) {
-            console.warn('Invalid LMSR inputs:', { q_yes, q_no, b });
-            return 0;
-        }
-        const exp_yes = Math.exp(q_yes / b);
-        const exp_no = Math.exp(q_no / b);
-        const result = b * Math.log(exp_yes + exp_no);
-        
-        // Return 0 if result is NaN
-        return Number.isFinite(result) ? result : 0;
-    } catch {
-        console.warn('LMSR cost calculation error');
-        return 0;
-    }
-}
-
-/**
- * Calculate cost to buy shares using LMSR
- */
-function calculateLMSRBuyCost(
-    q_yes_before: number,
-    q_no_before: number,
-    shares: number,
-    outcome: string,
-    b: number = LMSR_B
-): number {
-    // Validate inputs
-    if (!Number.isFinite(q_yes_before) || !Number.isFinite(q_no_before) || !Number.isFinite(shares) || shares <= 0) {
-        console.warn('Invalid LMSR buy cost inputs:', { q_yes_before, q_no_before, shares });
-        return 0;
-    }
-    
-    const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before + shares : q_yes_before;
-    const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before + shares;
-    
-    const cost_before = lmsrCost(q_yes_before, q_no_before, b);
-    const cost_after = lmsrCost(q_yes_after, q_no_after, b);
-    
-    const result = (cost_after - cost_before) * PAYOUT_PER_SHARE;
-    
-    // Return 0 if result is NaN or invalid
-    return Number.isFinite(result) && result >= 0 ? result : 0;
-}
-
-/**
- * Calculate payout from selling shares using LMSR
- */
-function calculateLMSRSellPayout(
-    q_yes_before: number,
-    q_no_before: number,
-    shares: number,
-    outcome: string,
-    b: number = LMSR_B
-): number {
-    // Validate inputs
-    if (!Number.isFinite(q_yes_before) || !Number.isFinite(q_no_before) || !Number.isFinite(shares) || shares <= 0) {
-        console.warn('Invalid LMSR sell payout inputs:', { q_yes_before, q_no_before, shares });
-        return 0;
-    }
-    
-    const q_yes_after = outcome.toUpperCase() === 'YES' ? q_yes_before - shares : q_yes_before;
-    const q_no_after = outcome.toUpperCase() === 'YES' ? q_no_before : q_no_before - shares;
-    
-    const cost_before = lmsrCost(q_yes_before, q_no_before, b);
-    const cost_after = lmsrCost(q_yes_after, q_no_after, b);
-    
-    const result = (cost_before - cost_after) * PAYOUT_PER_SHARE;
-    
-    // Return 0 if result is NaN or invalid
-    return Number.isFinite(result) && result >= 0 ? result : 0;
-}
-
-/**
- * Estimate shares received from buying a given KES amount
- */
-function estimateSharesFromKES(
-    amount_kes: number,
-    q_yes: number,
-    q_no: number,
-    outcome: string,
-    b: number = LMSR_B
-): number {
-    // Binary search to find shares that cost approximately amount_kes
-    let low = 0;
-    let high = amount_kes * 2; // Upper bound
-    let result = 0;
-    
-    for (let i = 0; i < 20; i++) {
-        const mid = (low + high) / 2;
-        const cost = calculateLMSRBuyCost(q_yes, q_no, mid, outcome, b);
-        
-        if (cost < amount_kes) {
-            result = mid;
-            low = mid;
-        } else {
-            high = mid;
-        }
-    }
-    
-    return result;
-}
-
-/**
- * Derive q_yes and q_no from market's LMSR state
- * ALWAYS use backend q_yes/q_no if available (they are the source of truth)
- * Only derive from yes_probability as a last resort fallback
- * 
- * IMPORTANT: Backend must return q_yes and q_no to ensure price consistency!
- */
-function deriveQValuesFromMarket(
-    market: any,
-    b: number = LMSR_B
-): { q_yes: number; q_no: number } {
-    // ✅ PRIMARY: Use backend q values if both are provided (source of truth)
-    if (market?.q_yes !== null && market?.q_yes !== undefined && 
-        market?.q_no !== null && market?.q_no !== undefined) {
-        return {
-            q_yes: market.q_yes,
-            q_no: market.q_no
-        };
-    }
-    
-    // ⚠️ FALLBACK: Only if backend doesn't provide q values
-    // Derive from yes_probability with strict validation
-    if (market?.yes_probability !== null && market?.yes_probability !== undefined) {
-        const yes_prob = market.yes_probability / 100;
-        
-        // Clamp probability to valid range to avoid log(0) errors
-        const clampedProb = Math.max(0.01, Math.min(0.99, yes_prob));
-        
-        const p_ratio = clampedProb / (1 - clampedProb);
-        const q_yes = b * Math.log(p_ratio);
-        const q_no = 0;
-        
-        console.warn(
-            `⚠️ LMSR: Backend didn't provide q_yes/q_no. Deriving from yes_probability=${market.yes_probability}%. ` +
-            `q_yes=${q_yes.toFixed(2)}, q_no=${q_no}. ` +
-            `Backend should return q_yes and q_no for price consistency!`
-        );
-        
-        return { q_yes, q_no };
-    }
-    
-    // 🔴 LAST RESORT: Default to 50/50
-    console.error(
-        `❌ LMSR: Backend didn't provide q_yes/q_no or yes_probability. Defaulting to 50/50. ` +
-        `This indicates a backend data issue!`
-    );
-    return { q_yes: 0, q_no: 0 }; // 50/50 (symmetric around 0)
-}
-
-/**
- * Calculate the current share price (cost to buy 1 share)
- * Returns the price in KES for a single share
- */
-function getCurrentSharePrice(
-    market: any,
-    outcome: string,
-    b: number = LMSR_B
-): number {
-    if (!market) return 0;
-    
-    const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
-    const price = calculateLMSRBuyCost(q_yes, q_no, 1, outcome, b);
-    
-    return price;
-}
-
 function getDisplaySharePriceKes(market: any, probability: number, outcome: string): number {
-    if (market?.source === "polymarket") {
-        return polymarketProbabilityToKES(probability);
-    }
-
-    return getCurrentSharePrice(market, outcome);
+    return polymarketProbabilityToKES(probability);
 }
 
     function getPayoutPerShareKes(market: any): number {
-        return market?.source === "polymarket" ? USD_TO_KES : PAYOUT_PER_SHARE;
+        return market?.source === "polymarket" ? USD_TO_KES : 100;
     }
 
     /**
@@ -450,7 +264,6 @@ export default function MarketDetail() {
     const [loadingAvailableShares, setLoadingAvailableShares] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [relatedMarkets, setRelatedMarkets] = useState<any[]>([]);  // Markets with same question
-    const [wsConnected, setWsConnected] = useState(false);
     const chatInputRef = useRef<HTMLDivElement>(null);
 
     // Scroll to chat input when replying
@@ -541,45 +354,46 @@ export default function MarketDetail() {
         }
     }, [showReceipt]);
 
-    // WebSocket hook for real-time price updates
-    const onPriceUpdate = useCallback((update: any) => {
-        console.log('[WebSocket] Price update received:', update);
-        
-        // Add new price point to chart
-        setChartData(prev => {
-            const newData = [...prev];
-            // Find if we have data for this timestamp or add new
-            const lastPoint = newData[newData.length - 1];
-            const now = Date.now() / 1000;
-            
-            if (lastPoint && Math.abs(lastPoint.timestamp - now) < 60) {
-                // Update last point if within 1 minute
-                newData[newData.length - 1] = {
-                    timestamp: now,
-                    yes: update.price ? update.price * 100 : lastPoint.yes,
-                    no: update.price ? (1 - update.price) * 100 : lastPoint.no,
-                };
-            } else {
-                // Add new point
-                newData.push({
-                    timestamp: now,
-                    yes: update.price ? update.price * 100 : 50,
-                    no: update.price ? (1 - update.price) * 100 : 50,
-                });
+    const fetchLatestMarketPrice = useCallback(async () => {
+        if (!market?.external_id) {
+            return;
+        }
+
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+            const response = await fetch(
+                `${baseUrl}/api/brokerage/markets/${encodeURIComponent(market.external_id)}/latest/?ts=${Date.now()}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch latest market price');
             }
-            
-            // Keep only last 100 points to avoid memory issues
-            return newData.slice(-100);
-        });
-    }, []);
 
-    useMarketWebSocket(
-        marketId ? String(marketId) : null,
-        onPriceUpdate,
-        true // enabled
-    );
+            const latestData = await response.json();
+            setMarket((prev: any) => ({
+                ...prev,
+                ...latestData,
+            }));
+        } catch (err) {
+            console.warn('Error fetching latest market price:', err);
+        }
+    }, [market?.external_id]);
 
+    useEffect(() => {
+        if (!market?.external_id) {
+            return;
+        }
 
+        fetchLatestMarketPrice();
+        const interval = setInterval(fetchLatestMarketPrice, 5000);
+        return () => clearInterval(interval);
+    }, [market?.external_id, fetchLatestMarketPrice]);
 
     // Auto-load available shares when switching to sell tab
     useEffect(() => {
@@ -598,56 +412,6 @@ export default function MarketDetail() {
         }
     }, [market?.id]);
 
-    // Auto-refresh Polymarket prices every 5 seconds
-    useEffect(() => {
-        if (!market || market.source !== 'polymarket') {
-            return; // Only poll for Polymarket markets
-        }
-
-        const pollInterval = setInterval(async () => {
-            try {
-                // Re-fetch markets to get updated prices with cache busting
-                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-                const timestamp = Date.now(); // Cache buster
-                
-                const response = await fetch(
-                    `${baseUrl}/api/brokerage/markets/?ts=${timestamp}`,
-                    {
-                        method: 'GET',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                        }
-                    }
-                );
-                
-                if (response.ok) {
-                    const brokerageData = await response.json();
-                    const brokerageMarkets = Array.isArray(brokerageData) ? brokerageData : brokerageData.results || [];
-                    
-                    // Find current market in fresh data
-                    const freshMarket = brokerageMarkets.find((m: any) => {
-                        const freshId = parseInt(m.id);
-                        return freshId === market.id || m.external_id === market.external_id;
-                    });
-                    
-                    if (freshMarket) {
-                        // Update market with fresh data
-                        setMarket((prev: any) => ({
-                            ...prev,
-                            yes_probability: freshMarket.bestBid ? Math.round(freshMarket.bestBid * 100) : freshMarket.yes_probability,
-                            volume: convertUSDVolumeToKES(freshMarket.volume || freshMarket.volumeNum || 0),
-                        }));
-                        
-                        console.log(`✓ Updated market price: ${freshMarket.bestBid ? Math.round(freshMarket.bestBid * 100) : freshMarket.yes_probability}%`);
-                    }
-                }
-            } catch (err) {
-                console.warn("Error polling market updates:", err);
-            }
-        }, 5000); // Poll every 5 seconds
-
-        return () => clearInterval(pollInterval);
-    }, [market]);
 
     const fetchPriceHistory = useCallback(async (showLoading: boolean = true) => {
         if (showLoading) {
@@ -1014,30 +778,17 @@ export default function MarketDetail() {
         return selectedOutcome === "Yes" ? market.yes_probability : noProbability;
     };
 
-    // Calculate estimated payout return using LMSR
     const calculateEstimatedReturn = () => {
         if (!betAmount || isNaN(Number(betAmount))) return 0;
         const amount = Number(betAmount);
-
-        if (market?.source === "polymarket") {
-            const priceKes = polymarketProbabilityToKES(getSelectedOutcomeProbability());
-            if (priceKes <= 0) return 0;
-            const estimatedShares = amount / priceKes;
-            return estimatedShares * getPayoutPerShareKes(market);
-        }
-        
-        const b = market?.b || LMSR_B;
-        const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
-        
-        const estimatedShares = estimateSharesFromKES(amount, q_yes, q_no, selectedOutcome, b);
-        
-        // If you win, you get 100 KES per share
-        return estimatedShares * PAYOUT_PER_SHARE;
+        const priceKes = polymarketProbabilityToKES(getSelectedOutcomeProbability());
+        if (priceKes <= 0) return 0;
+        const estimatedShares = amount / priceKes;
+        return estimatedShares * getPayoutPerShareKes(market);
     };
 
     const estimatedReturn = calculateEstimatedReturn();
 
-    // Limit order calculations using LMSR
     const calculateLimitOrderStats = () => {
         if (!market) {
             return {
@@ -1048,9 +799,7 @@ export default function MarketDetail() {
             };
         }
         
-        // Validate shares is a valid positive number
         const validShares = Number.isFinite(shares) && shares > 0 ? shares : 0;
-        
         if (validShares === 0) {
             return {
                 totalCost: 0,
@@ -1059,42 +808,12 @@ export default function MarketDetail() {
                 winPayout: 0,
             };
         }
-        
-        if (market.source === "polymarket") {
-            const totalCost = validShares * polymarketProbabilityToKES(limitPrice);
-            const maxPayout = validShares * getPayoutPerShareKes(market);
-            const winAmount = maxPayout * (1 - TRADING_FEE_PERCENT / 100);
-            const potentialProfit = winAmount - totalCost;
 
-            return {
-                totalCost: Number.isFinite(totalCost) ? totalCost : 0,
-                toWin: Number.isFinite(maxPayout - totalCost) ? (maxPayout - totalCost) : 0,
-                potentialProfit: Number.isFinite(potentialProfit) ? potentialProfit : 0,
-                winPayout: Number.isFinite(winAmount) ? winAmount : 0,
-            };
-        }
-
-        const b = market.b || LMSR_B;
-        const { q_yes, q_no } = deriveQValuesFromMarket(market, b);
-        
-        // Validate q values
-        if (!Number.isFinite(q_yes) || !Number.isFinite(q_no)) {
-            return {
-                totalCost: 0,
-                toWin: 0,
-                potentialProfit: 0,
-                winPayout: 0,
-            };
-        }
-        
-        // Calculate cost using LMSR: what does it cost to buy 'shares' RIGHT NOW?
-        const totalCost = calculateLMSRBuyCost(q_yes, q_no, validShares, selectedOutcome, b);
-        
-        // In LMSR: max payout is always 100 KES per share if outcome wins
-        const maxPayout = validShares * PAYOUT_PER_SHARE;
+        const totalCost = validShares * polymarketProbabilityToKES(limitPrice);
+        const maxPayout = validShares * getPayoutPerShareKes(market);
         const winAmount = maxPayout * (1 - TRADING_FEE_PERCENT / 100);
         const potentialProfit = winAmount - totalCost;
-        
+
         return {
             totalCost: Number.isFinite(totalCost) ? totalCost : 0,
             toWin: Number.isFinite(maxPayout - totalCost) ? (maxPayout - totalCost) : 0,
