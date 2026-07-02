@@ -2,7 +2,9 @@
  * Convert a market question/title to a URL-friendly slug
  * Example: "Will Bitcoin reach $100k by 2024?" -> "will-bitcoin-reach-100k-by-2024"
  */
-export function generateMarketSlug(title: string): string {
+export function generateMarketSlug(title: string | undefined | null): string {
+  if (!title) return "market";
+  
   return title
     .toLowerCase()
     .trim()
@@ -22,6 +24,7 @@ export function generateMarketSlug(title: string): string {
 export function extractMarketId(param: string | string[] | undefined): number | null {
   if (!param) return null;
   const paramStr = Array.isArray(param) ? param[0] : param;
+  if (!paramStr) return null;
   const id = parseInt(paramStr.split("-")[0], 10);
   return !isNaN(id) ? id : null;
 }
