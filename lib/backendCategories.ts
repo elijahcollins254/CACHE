@@ -50,8 +50,11 @@ export async function fetchBackendCategories(): Promise<BackendCategory[]> {
       return specialCategoryOptions;
     }
 
+    const leadingSpecialCategories = specialCategoryOptions.slice(0, 2);
+    const trailingSpecialCategories = specialCategoryOptions.slice(2);
+
     return [
-      ...specialCategoryOptions,
+      ...leadingSpecialCategories,
       ...data.map((category) => ({
         id: category.id,
         name: category.name,
@@ -66,6 +69,7 @@ export async function fetchBackendCategories(): Promise<BackendCategory[]> {
             }))
           : [],
       })),
+      ...trailingSpecialCategories,
     ];
   } catch (error) {
     console.error("Failed to load categories from backend", error);

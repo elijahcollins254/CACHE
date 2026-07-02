@@ -17,15 +17,15 @@ const getCategoryFromPath = (pathname: string, fallback: string | null, categori
     const segments = pathname.split("/").filter(Boolean);
     if (segments[0] === "category") {
         const slug = segments[1];
-        if (!slug) return "Trending";
+        if (!slug) return null;
 
         const directMatch = categories.find((category) => category.slug === slug || toSlug(category.name) === slug);
         if (directMatch) return directMatch.name;
 
-        return categoryBySlug.get(slug) || "Trending";
+        return categoryBySlug.get(slug) || null;
     }
 
-    return fallback || "Trending";
+    return fallback || null;
 };
 
 export default function SearchFilterBar() {
@@ -42,7 +42,7 @@ export default function SearchFilterBar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [activeCategory, setActiveCategory] = useState(() => {
+    const [activeCategory, setActiveCategory] = useState<string | null>(() => {
         return getCategoryFromPath(pathname, searchParams.get("category"), fallbackCategories);
     });
     const [searchTab, setSearchTab] = useState<"markets" | "profiles">("markets");
@@ -135,7 +135,9 @@ export default function SearchFilterBar() {
         let marketsToFilter = allMarkets;
         
         // Filter by category
-        if (activeCategory === "Saved") {
+        if (!activeCategory) {
+            marketsToFilter = allMarkets.filter(m => m.status !== "RESOLVED");
+        } else if (activeCategory === "Saved") {
             marketsToFilter = allMarkets.filter(m => m.saved && m.status !== "RESOLVED");
         } else if (activeCategory === "Resolved") {
             marketsToFilter = allMarkets.filter(m => m.status === "RESOLVED");
@@ -186,7 +188,7 @@ export default function SearchFilterBar() {
             } else if (activeCategory === "New") {
                 // Sort by ID descending (newer markets have higher IDs)
                 return b.id - a.id;
-            } else if (activeCategory === "Trending" || sortBy === "volume") {
+            } else if (activeCategory === "Trending" || !activeCategory || sortBy === "volume") {
                 // Sort by volume descending
                 const aVol = parseVolume(a.volume);
                 const bVol = parseVolume(b.volume);
@@ -206,7 +208,7 @@ export default function SearchFilterBar() {
         setMaxProbability(100);
         setSortBy("volume");
         setFilterMode("yes");
-        setActiveCategory("Trending");
+        setActiveCategory(null);
         if (!isMarketPage) {
             router.push(pathname.startsWith("/category") ? "/category" : "/");
         }
