@@ -1279,13 +1279,6 @@ export default function MarketDetail() {
                         </div>
 
                         <div className="space-y-3">
-                            <div className="rounded-lg border border-border bg-background/70 p-3">
-                                <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Odds</div>
-                                <div className="mt-2 text-sm font-semibold text-foreground">
-                                    Yes {getMarketProbability(market)}% · No {noProbability}%
-                                </div>
-                            </div>
-
                             <div className="mb-3">
                                 <label className="mb-1 block text-xs font-bold uppercase text-muted-foreground">Amount</label>
                                 <input
