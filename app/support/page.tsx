@@ -206,7 +206,7 @@ export default function Support() {
             case "RESOLVED":
                 return "bg-green-100 text-green-700";
             case "CLOSED":
-                return "bg-gray-100 text-gray-700";
+                return "bg-gray- 100 text-gray-700";
             default:
                 return "bg-gray-100 text-gray-700";
         }
@@ -341,11 +341,26 @@ export default function Support() {
                 {view === "chat" && selectedTicket && (
                     <div className="apple-card overflow-hidden flex flex-col max-h-[calc(100vh-12rem)] sm:max-h-[600px]">
                         {/* Chat Header */}
-                        <div className="bg-background border-b border-border p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 flex-shrink-0">
-                            <div>
-                                <h2 className="font-bold text-foreground">{selectedTicket.ticket_id}</h2>
-                                <p className="text-sm text-muted-foreground">{selectedTicket.subject}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
+                        <div className="bg-background border-b border-border p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 flex-shrink-0">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h2 className="font-bold text-foreground">{selectedTicket.ticket_id}</h2>
+                                        <p className="text-sm text-muted-foreground">{selectedTicket.subject}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setView("list");
+                                            setSelectedTicket(null);
+                                        }}
+                                        className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/80 hover:text-foreground"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                        Back to tickets
+                                    </button>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-3">
                                     Category: <span className="font-semibold text-foreground">{selectedTicket.category.replace("_", " ")}</span>
                                 </p>
                             </div>
