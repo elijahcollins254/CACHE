@@ -8,7 +8,7 @@ import { fetchTransactionHistory } from "@/lib/redux/slices/portfolioSlice";
 import DepositModal from "@/components/DepositModal";
 import WithdrawModal from "@/components/WithdrawModal";
 import { useAuth } from "@/lib/useAuth";
-import { ArrowLeft, Wallet, CreditCard, TrendingUp } from "lucide-react";
+import { ArrowLeft, Wallet, CreditCard, TrendingUp, History, Sparkles } from "lucide-react";
 
 export default function WalletPage() {
     const { user: authUser, loading: authLoading } = useAuth("/wallet");
@@ -42,15 +42,16 @@ export default function WalletPage() {
         if (filter === "all") {
             setFilteredTransactions(transactions);
         } else if (filter === "deposits") {
-            setFilteredTransactions(transactions.filter(t => t.type === "DEPOSIT"));
+            setFilteredTransactions(transactions.filter((t) => t.type === "DEPOSIT"));
         } else {
-            setFilteredTransactions(transactions.filter(t => t.type === "WITHDRAWAL"));
+            setFilteredTransactions(transactions.filter((t) => t.type === "WITHDRAWAL"));
         }
     }, [transactions, filter]);
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[1200px] px-4">
+            <div className="min-h-screen bg-background">
+                <main className="mx-auto pt-24 max-w-[1200px] px-4">
                     <div className="text-center py-12">
                         <div className="h-8 w-8 border-4 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
                     </div>
@@ -61,7 +62,8 @@ export default function WalletPage() {
 
     if (error || !authUser) {
         return (
-            <div className="min-h-screen bg-background">                <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
+            <div className="min-h-screen bg-background">
+                <main className="mx-auto pt-24 max-w-[1200px] px-4 text-center">
                     <p className="text-red-500 mb-4">{error || "Failed to load page"}</p>
                     <Link href="/dashboard" className="text-apple-blue hover:underline">
                         Back to Dashboard
@@ -72,46 +74,84 @@ export default function WalletPage() {
     }
 
     const totalDeposited = transactions
-        .filter(t => t.type === "DEPOSIT" && t.status === "COMPLETED")
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        .filter((t) => t.type === "DEPOSIT" && t.status === "COMPLETED")
+        .reduce((sum, t) => sum + parseFloat(t.amount || "0"), 0);
 
     const totalWithdrawn = transactions
-        .filter(t => t.type === "WITHDRAWAL" && t.status === "COMPLETED")
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        .filter((t) => t.type === "WITHDRAWAL" && t.status === "COMPLETED")
+        .reduce((sum, t) => sum + parseFloat(t.amount || "0"), 0);
+
+    const summaryCards = [
+        {
+            title: "Available Balance",
+            value: `KES ${parseFloat(balance || "0").toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+            description: "Ready to use",
+            icon: Wallet,
+            color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
+            iconColor: "text-amber-700 dark:text-amber-400",
+            accent: "text-foreground",
+        },
+        {
+            title: "Total Deposited",
+            value: `KES ${totalDeposited.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+            description: "Completed deposits",
+            icon: CreditCard,
+            color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
+            iconColor: "text-emerald-700 dark:text-emerald-400",
+            accent: "text-emerald-600",
+        },
+        {
+            title: "Total Withdrawn",
+            value: `KES ${totalWithdrawn.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+            description: "Completed withdrawals",
+            icon: TrendingUp,
+            color: "bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40",
+            iconColor: "text-rose-700 dark:text-rose-400",
+            accent: "text-rose-600",
+        },
+    ];
 
     return (
-        <div className="min-h-screen bg-background pb-20">            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
-                {/* Header */}
-                <div className="mb-8 flex items-center gap-4">
-                    <Link href="/dashboard" className="p-2 hover:bg-muted rounded-lg transition">
-                        <ArrowLeft className="h-5 w-5" />
-                    </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold flex items-center gap-2">
-                            <Wallet className="h-8 w-8" />
-                            Wallet
-                        </h1>
-                        <p className="text-muted-foreground text-sm">Manage your account balance and transaction history</p>
+        <div className="min-h-screen bg-background pb-12">
+            <main className="mx-auto pt-24 max-w-[1200px] px-4 md:px-6">
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <Link href="/dashboard" className="p-2 hover:bg-muted rounded-lg transition">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Link>
+                            <div>
+                                <h1 className="text-4xl font-bold">Wallet</h1>
+                                <p className="text-muted-foreground text-sm">Manage your funds and transaction activity</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Balance & Action Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    {/* Current Balance */}
-                    <div className="bg-background rounded-2xl p-6 border border-border">
-                        <p className="text-muted-foreground text-sm font-medium mb-2">Available Balance</p>
-                        <h2 className="text-3xl font-bold mb-4">KES {parseFloat(balance).toLocaleString()}</h2>
-                        <div className="flex gap-3">
+                <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] mb-6">
+                    <div className="rounded-2xl border border-apple-blue/20 bg-gradient-to-br from-apple-blue/10 via-background to-amber-50/70 p-6 shadow-sm">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-semibold text-apple-blue">Wallet Overview</p>
+                                <h2 className="text-3xl font-bold mt-2">KES {parseFloat(balance || "0").toLocaleString(undefined, { maximumFractionDigits: 0 })}</h2>
+                                <p className="text-sm text-muted-foreground mt-2">Your available balance is ready for deposits, withdrawals, and bets.</p>
+                            </div>
+                            <div className="rounded-2xl border border-apple-blue/20 bg-white/80 p-3 dark:bg-background/80">
+                                <Sparkles className="h-6 w-6 text-apple-blue" />
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-wrap gap-3">
                             <button
                                 onClick={() => setIsDepositModalOpen(true)}
-                                className="flex-1 px-4 py-3 bg-apple-green text-white rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm"
+                                className="flex items-center gap-2 rounded-lg bg-apple-green px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                             >
                                 <CreditCard className="h-4 w-4" />
                                 Deposit
                             </button>
                             <button
                                 onClick={() => setIsWithdrawModalOpen(true)}
-                                className="flex-1 px-4 py-3 bg-apple-blue text-white rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm"
+                                className="flex items-center gap-2 rounded-lg bg-apple-blue px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                             >
                                 <TrendingUp className="h-4 w-4" />
                                 Withdraw
@@ -119,40 +159,54 @@ export default function WalletPage() {
                         </div>
                     </div>
 
-                    {/* Total Deposited */}
-                    <div className="bg-background rounded-2xl p-6 border border-border border-l-4 border-l-apple-green">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-muted-foreground text-sm font-medium">Total Deposited</p>
-                            <CreditCard className="h-5 w-5 text-apple-green" />
+                    <div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <History className="h-5 w-5 text-apple-blue" />
+                            <h3 className="font-semibold text-foreground">Recent activity</h3>
                         </div>
-                        <h2 className="text-3xl font-bold text-apple-green">KES {totalDeposited.toLocaleString()}</h2>
-                        <p className="text-xs text-muted-foreground mt-2">All completed deposits</p>
-                    </div>
-
-                    {/* Total Withdrawn */}
-                    <div className="bg-background rounded-2xl p-6 border border-border border-l-4 border-l-apple-red">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-muted-foreground text-sm font-medium">Total Withdrawn</p>
-                            <Wallet className="h-5 w-5 text-apple-red" />
+                        <div className="space-y-3">
+                            {transactions.slice(0, 3).map((txn) => (
+                                <div key={txn.id} className="flex items-center justify-between rounded-xl border border-border bg-muted/40 px-3 py-3">
+                                    <div>
+                                        <p className="text-sm font-semibold">{txn.description || (txn.type === "DEPOSIT" ? "Deposit" : "Withdrawal")}</p>
+                                        <p className="text-xs text-muted-foreground">{txn.status}</p>
+                                    </div>
+                                    <div className={`text-sm font-semibold ${txn.type === "DEPOSIT" ? "text-apple-green" : "text-apple-red"}`}>
+                                        {txn.type === "DEPOSIT" ? "+" : "-"} KES {parseFloat(txn.amount || "0").toLocaleString()}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <h2 className="text-3xl font-bold text-apple-red">KES {totalWithdrawn.toLocaleString()}</h2>
-                        <p className="text-xs text-muted-foreground mt-2">All completed withdrawals</p>
                     </div>
                 </div>
 
-                {/* Transaction History */}
-                <div className="bg-background rounded-2xl border border-border">
-                    {/* Filter Tabs */}
+                <div className="grid gap-4 md:grid-cols-3 mb-6">
+                    {summaryCards.map((card) => {
+                        const Icon = card.icon;
+                        return (
+                            <div key={card.title} className={`aspect-square rounded-2xl border p-5 shadow-sm ${card.color}`}>
+                                <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-background/70 ${card.iconColor}`}>
+                                    <Icon className="h-5 w-5" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                                <p className={`mt-3 text-xl font-bold ${card.accent}`}>{card.value}</p>
+                                <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="rounded-2xl border border-border bg-background shadow-sm">
                     <div className="border-b border-border p-6">
-                        <div className="flex gap-6">
+                        <div className="flex flex-wrap gap-6">
                             {['all', 'deposits', 'withdrawals'].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setFilter(tab as any)}
-                                    className={`pb-2 font-semibold text-sm transition-colors border-b-2 ${
+                                    className={`border-b-2 pb-2 text-sm font-semibold transition-colors ${
                                         filter === tab
-                                            ? 'border-black text-black dark:border-white dark:text-white'
-                                            : 'border-transparent text-muted-foreground hover:text-black dark:hover:text-white'
+                                            ? "border-black text-black dark:border-white dark:text-white"
+                                            : "border-transparent text-muted-foreground hover:text-black dark:hover:text-white"
                                     }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -161,24 +215,23 @@ export default function WalletPage() {
                         </div>
                     </div>
 
-                    {/* Transaction Table */}
                     <div className="overflow-x-auto">
                         {filteredTransactions.length > 0 ? (
                             <table className="w-full min-w-[700px]">
                                 <thead>
                                     <tr className="border-b border-border">
-                                        <th className="text-left py-4 px-6 font-semibold text-muted-foreground text-sm">Type</th>
-                                        <th className="text-left py-4 px-6 font-semibold text-muted-foreground text-sm">Description</th>
-                                        <th className="text-right py-4 px-6 font-semibold text-muted-foreground text-sm">Amount</th>
-                                        <th className="text-center py-4 px-6 font-semibold text-muted-foreground text-sm">Status</th>
-                                        <th className="text-right py-4 px-6 font-semibold text-muted-foreground text-sm">Date</th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Type</th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Description</th>
+                                        <th className="px-6 py-4 text-right text-sm font-semibold text-muted-foreground">Amount</th>
+                                        <th className="px-6 py-4 text-center text-sm font-semibold text-muted-foreground">Status</th>
+                                        <th className="px-6 py-4 text-right text-sm font-semibold text-muted-foreground">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredTransactions.map((txn) => (
-                                        <tr key={txn.id} className="border-b border-border hover:bg-muted/50 transition">
-                                            <td className="py-4 px-6">
-                                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                                        <tr key={txn.id} className="border-b border-border transition hover:bg-muted/50">
+                                            <td className="px-6 py-4">
+                                                <span className={`rounded-full px-3 py-1 text-xs font-bold ${
                                                     txn.type === "DEPOSIT"
                                                         ? "bg-apple-green/10 text-apple-green"
                                                         : "bg-apple-red/10 text-apple-red"
@@ -186,14 +239,14 @@ export default function WalletPage() {
                                                     {txn.type === "DEPOSIT" ? "DEPOSIT" : "WITHDRAWAL"}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-sm text-foreground max-w-xs truncate">{txn.description}</td>
-                                            <td className="py-4 px-6 text-right text-sm font-bold">
+                                            <td className="max-w-xs truncate px-6 py-4 text-sm text-foreground">{txn.description}</td>
+                                            <td className="px-6 py-4 text-right text-sm font-bold">
                                                 <span className={txn.type === "DEPOSIT" ? "text-apple-green" : "text-apple-red"}>
-                                                    {txn.type === "DEPOSIT" ? "+" : "-"} KES {parseFloat(txn.amount).toLocaleString()}
+                                                    {txn.type === "DEPOSIT" ? "+" : "-"} KES {parseFloat(txn.amount || "0").toLocaleString()}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`rounded-full px-2 py-1 text-xs font-bold ${
                                                     txn.status === "COMPLETED"
                                                         ? "bg-apple-green/10 text-apple-green"
                                                         : txn.status === "PENDING"
@@ -203,7 +256,7 @@ export default function WalletPage() {
                                                     {txn.status}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-right text-sm text-muted-foreground">
+                                            <td className="px-6 py-4 text-right text-sm text-muted-foreground">
                                                 {new Date(txn.created_at).toLocaleDateString("en-US", {
                                                     year: "numeric",
                                                     month: "short",
@@ -216,11 +269,8 @@ export default function WalletPage() {
                             </table>
                         ) : (
                             <div className="p-12 text-center">
-                                <p className="text-muted-foreground mb-4">No {filter === "all" ? "transactions" : filter} yet</p>
-                                <button
-                                    onClick={() => setIsDepositModalOpen(true)}
-                                    className="text-apple-blue hover:underline font-bold"
-                                >
+                                <p className="mb-4 text-muted-foreground">No {filter === "all" ? "transactions" : filter} yet</p>
+                                <button onClick={() => setIsDepositModalOpen(true)} className="font-bold text-apple-blue hover:underline">
                                     Make your first deposit
                                 </button>
                             </div>
@@ -229,14 +279,12 @@ export default function WalletPage() {
                 </div>
             </main>
 
-            {/* Deposit Modal */}
             <DepositModal
                 isOpen={isDepositModalOpen}
                 onClose={() => setIsDepositModalOpen(false)}
                 balance={authUser?.balance || "0.00"}
             />
 
-            {/* Withdraw Modal */}
             <WithdrawModal
                 isOpen={isWithdrawModalOpen}
                 onClose={() => setIsWithdrawModalOpen(false)}

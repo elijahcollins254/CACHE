@@ -7,7 +7,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend,
 } from 'recharts';
 
 export interface ChartDataPoint {
@@ -97,9 +96,9 @@ const MarketChart: React.FC<MarketChartProps> = ({
 
     if (loading) {
         return (
-            <div className="w-full h-80 flex items-center justify-center bg-muted/30 rounded-lg border border-border">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="relative w-12 h-12">
+            <div className="w-full h-56 md:h-64 flex items-center justify-center rounded-xl border border-border bg-muted/20">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="relative w-10 h-10">
                         <div className="absolute inset-0 rounded-full border-4 border-muted"></div>
                         <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-apple-blue animate-spin"></div>
                     </div>
@@ -111,23 +110,23 @@ const MarketChart: React.FC<MarketChartProps> = ({
 
     if (!chartData || chartData.length === 0) {
         return (
-            <div className="w-full h-80 flex items-center justify-center bg-muted/30 rounded-lg border border-border">
+            <div className="w-full h-56 md:h-64 flex items-center justify-center rounded-xl border border-border bg-muted/20">
                 <div className="text-muted-foreground text-sm font-medium">No price history available</div>
             </div>
         );
     }
 
     return (
-        <div className="w-full bg-muted/20 rounded-lg border border-border p-4">
-            <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
+        <div className="w-full rounded-xl border border-border bg-muted/10 p-2 md:p-3">
+            <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                 <LineChart
                     data={chartData}
-                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                    margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
                 >
                     <CartesianGrid
                         strokeDasharray="3 3"
                         stroke="currentColor"
-                        className="text-border opacity-30"
+                        className="text-border opacity-20"
                     />
                     <XAxis
                         dataKey="timestamp"
@@ -136,19 +135,10 @@ const MarketChart: React.FC<MarketChartProps> = ({
                         interval={Math.max(0, Math.floor(chartData.length / (isMobile ? 2 : 4)))}
                     />
                     <YAxis
-                        label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft' }}
                         domain={[0, 100]}
                         tick={{ fontSize: isMobile ? 10 : 12, className: 'fill-muted-foreground' }}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend
-                        wrapperStyle={{ paddingTop: '20px' }}
-                        iconType="line"
-                        formatter={(value) => {
-                            const label = String(value || '').toLowerCase();
-                            return label === 'yes' ? 'Yes Probability' : 'No Probability';
-                        }}
-                    />
                     <Line
                         type="monotone"
                         dataKey="yes"

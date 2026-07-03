@@ -218,7 +218,7 @@ export default function Support() {
                 <SearchFilterBar />
             </Suspense>
 
-            <main className="mx-auto pt-20 md:pt-24 max-w-5xl px-3 sm:px-4 md:px-6 lg:px-8">
+            <main className="mx-auto pt-32 md:pt-36 lg:pt-40 max-w-5xl px-3 sm:px-4 md:px-6 lg:px-8">
                 {/* Back Button */}
                 {view !== "list" && (
                     <button
