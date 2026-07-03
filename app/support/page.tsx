@@ -2,51 +2,9 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
-import { MessageCircle, Send, Mail, Phone, Plus, X, ChevronLeft, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-
-// Helper function to extract CSRF token from cookies
-const getCsrfTokenFromCookie = (): string | null => {
-    if (typeof document === 'undefined') return null;
-    const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-};
-
-// Helper function to get CSRF token (from cookie first, then API endpoint)
-const getCsrfToken = async (): Promise<string | null> => {
-    // First try to get from cookie
-    const cookieToken = getCsrfTokenFromCookie();
-    if (cookieToken) {
-        return cookieToken;
-    }
-    
-    // If not in cookie, try to fetch from API endpoint
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/csrf-token/`, {
-            credentials: 'include',
-        });
-        if (response.ok) {
-            const data = await response.json();
-            return data.csrfToken;
-        }
-    } catch (err) {
-        console.error('Failed to fetch CSRF token:', err);
-    }
-    
-    return null;
-};
+import { MessageCircle, Send, Mail, Phone, Plus, ChevronLeft, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/useAuth";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 interface SupportMessage {
     id: number;
@@ -60,6 +18,7 @@ interface SupportTicket {
     id: number;
     ticket_id: string;
     subject: string;
+    category: string;
     status: string;
     created_at_iso: string;
     message_count: number;
@@ -67,7 +26,7 @@ interface SupportTicket {
 }
 
 export default function Support() {
-    const { data: session } = useSession();
+    const { user, loading: authLoading } = useAuth();
     const [view, setView] = useState<"list" | "chat" | "create">("list");
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -79,6 +38,7 @@ export default function Support() {
     // Form states
     const [newMessage, setNewMessage] = useState("");
     const [newTicketSubject, setNewTicketSubject] = useState("");
+    const [newTicketCategory, setNewTicketCategory] = useState("GENERAL");
     const [newTicketMessage, setNewTicketMessage] = useState("");
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -91,18 +51,18 @@ export default function Support() {
         scrollToBottom();
     }, [selectedTicket?.messages]);
 
-    // Fetch tickets on mount
+    // Fetch tickets when auth is available
     useEffect(() => {
-        if (session?.user) {
+        if (!authLoading && user) {
             fetchTickets();
         }
-    }, [session]);
+    }, [authLoading, user]);
 
     const fetchTickets = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/my-tickets/`, {
-                credentials: 'include',
+            const response = await fetchWithAuth("/api/support/my-tickets/", {
+                method: "GET",
             });
 
             if (response.ok) {
@@ -110,9 +70,11 @@ export default function Support() {
                 setTickets(data);
                 setError("");
             } else {
-                setError("Failed to load tickets");
+                const data = await response.json().catch(() => null);
+                setError(data?.error || "Failed to load tickets");
             }
         } catch (err) {
+            console.error(err);
             setError("Connection error. Please try again.");
         } finally {
             setLoading(false);
@@ -122,8 +84,8 @@ export default function Support() {
     const fetchTicketDetail = async (ticketId: string) => {
         try {
             setLoading(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/tickets/${ticketId}/`, {
-                credentials: 'include',
+            const response = await fetchWithAuth(`/api/support/tickets/${ticketId}/`, {
+                method: "GET",
             });
 
             if (response.ok) {
@@ -132,9 +94,11 @@ export default function Support() {
                 setView("chat");
                 setError("");
             } else {
-                setError("Failed to load ticket details");
+                const data = await response.json().catch(() => null);
+                setError(data?.error || "Failed to load ticket details");
             }
         } catch (err) {
+            console.error(err);
             setError("Connection error. Please try again.");
         } finally {
             setLoading(false);
@@ -148,20 +112,11 @@ export default function Support() {
         setSuccess("");
 
         try {
-            const csrfToken = await getCsrfToken();
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-            };
-            if (csrfToken) {
-                headers["X-CSRFToken"] = csrfToken;
-            }
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/create/`, {
+            const response = await fetchWithAuth("/api/support/create/", {
                 method: "POST",
-                credentials: 'include',
-                headers,
                 body: JSON.stringify({
                     subject: newTicketSubject,
+                    category: newTicketCategory,
                     message: newTicketMessage,
                 }),
             });
@@ -178,9 +133,10 @@ export default function Support() {
                 }, 1500);
             } else {
                 const errorData = await response.json().catch(() => null);
-                setError(errorData?.detail || "Failed to create ticket. Please try again.");
+                setError(errorData?.error || "Failed to create ticket. Please try again.");
             }
         } catch (err) {
+            console.error(err);
             setError("Connection error. Please try again.");
         } finally {
             setSubmitting(false);
@@ -195,20 +151,10 @@ export default function Support() {
         setError("");
 
         try {
-            const csrfToken = await getCsrfToken();
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-            };
-            if (csrfToken) {
-                headers["X-CSRFToken"] = csrfToken;
-            }
-
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/support/tickets/${selectedTicket.ticket_id}/reply/`,
+            const response = await fetchWithAuth(
+                `/api/support/tickets/${selectedTicket.ticket_id}/reply/`,
                 {
                     method: "POST",
-                    credentials: 'include',
-                    headers,
                     body: JSON.stringify({
                         message: newMessage,
                     }),
@@ -217,7 +163,6 @@ export default function Support() {
 
             if (response.ok) {
                 const result = await response.json();
-                // Update selected ticket with new message
                 if (selectedTicket.messages) {
                     setSelectedTicket({
                         ...selectedTicket,
@@ -227,9 +172,10 @@ export default function Support() {
                 setNewMessage("");
             } else {
                 const errorData = await response.json().catch(() => null);
-                setError(errorData?.detail || "Failed to send message. Please try again.");
+                setError(errorData?.error || "Failed to send message. Please try again.");
             }
         } catch (err) {
+            console.error(err);
             setError("Connection error. Please try again.");
         } finally {
             setSubmitting(false);
@@ -393,10 +339,13 @@ export default function Support() {
                 {view === "chat" && selectedTicket && (
                     <div className="bg-muted rounded-lg border border-border overflow-hidden flex flex-col h-[calc(100vh-200px)] md:h-[600px]">
                         {/* Chat Header */}
-                        <div className="bg-background border-b border-border p-4 flex items-center justify-between">
+                        <div className="bg-background border-b border-border p-4 flex items-center justify-between gap-4 flex-wrap">
                             <div>
                                 <h2 className="font-bold text-foreground">{selectedTicket.ticket_id}</h2>
                                 <p className="text-sm text-muted-foreground">{selectedTicket.subject}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Category: <span className="font-semibold text-foreground">{selectedTicket.category.replace("_", " ")}</span>
+                                </p>
                             </div>
                             <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusColor(selectedTicket.status)}`}>
                                 {selectedTicket.status}
@@ -500,50 +449,68 @@ export default function Support() {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Message <span className="text-red-500">*</span>
-                                    </label>
-                                    <textarea
-                                        value={newTicketMessage}
-                                        onChange={(e) => setNewTicketMessage(e.target.value)}
-                                        placeholder="Please describe your issue in detail..."
-                                        required
-                                        rows={6}
-                                        className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
-                                        disabled={submitting}
-                                    />
-                                </div>
+                                    Category <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={newTicketCategory}
+                                    onChange={(e) => setNewTicketCategory(e.target.value)}
+                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                                    disabled={submitting}
+                                >
+                                    <option value="GENERAL">General</option>
+                                    <option value="ACCOUNT">Account</option>
+                                    <option value="PAYMENT">Payment</option>
+                                    <option value="TECHNICAL">Technical</option>
+                                    <option value="FEATURE_REQUEST">Feature Request</option>
+                                </select>
+                            </div>
 
-                                <div className="flex gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setView("list")}
-                                        className="flex-1 bg-background border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted transition-colors font-semibold"
-                                        disabled={submitting}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-1 bg-apple-blue text-white px-4 py-2 rounded-lg hover:bg-apple-blue/90 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                        disabled={submitting}
-                                    >
-                                        {submitting ? (
-                                            <>
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                Creating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Plus className="h-4 w-4" />
-                                                Create Ticket
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-foreground mb-2">
+                                    Message <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={newTicketMessage}
+                                    onChange={(e) => setNewTicketMessage(e.target.value)}
+                                    placeholder="Please describe your issue in detail..."
+                                    required
+                                    rows={6}
+                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
+                                    disabled={submitting}
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setView("list")}
+                                    className="flex-1 bg-background border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted transition-colors font-semibold"
+                                    disabled={submitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-apple-blue text-white px-4 py-2 rounded-lg hover:bg-apple-blue/90 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    disabled={submitting}
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Plus className="h-4 w-4" />
+                                            Create Ticket
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                )}
+                </div>
+            )}
             </main>
         </div>
     );
