@@ -213,11 +213,12 @@ export default function Support() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-20 md:pb-8">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <div className="min-h-screen bg-background pb-20">
+            <Suspense fallback={<div className="h-16 apple-glass animate-pulse" />}>
                 <SearchFilterBar />
             </Suspense>
 
-            <main className="mx-auto pt-20 md:pt-24 max-w-6xl px-4 md:px-6">
+            <main className="mx-auto pt-20 md:pt-24 max-w-5xl px-3 sm:px-4 md:px-6 lg:px-8">
                 {/* Back Button */}
                 {view !== "list" && (
                     <button
@@ -240,41 +241,42 @@ export default function Support() {
                 {view === "list" && (
                     <>
                         {/* Header */}
-                        <div className="mb-8 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="h-12 w-12 bg-apple-blue rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <MessageCircle className="h-6 w-6 text-white" />
+                        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="h-10 w-10 sm:h-12 sm:w-12 bg-apple-blue rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
-                                <div>
-                                    <h1 className="text-3xl md:text-4xl font-bold text-foreground">Support Center</h1>
-                                    <p className="text-muted-foreground">Chat with our support team</p>
+                                <div className="min-w-0">
+                                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight">Support Center</h1>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">Chat with our support team</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setView("create")}
-                                className="flex items-center gap-2 bg-apple-blue text-white px-4 py-2 rounded-lg hover:bg-apple-blue/90 transition-colors"
+                                className="flex items-center justify-center sm:justify-start gap-2 bg-apple-blue text-white px-4 py-2 rounded-lg hover:bg-apple-blue/90 transition-colors font-semibold flex-shrink-0"
                             >
                                 <Plus className="h-4 w-4" />
-                                New Ticket
+                                <span className="hidden sm:inline">New Ticket</span>
+                                <span className="sm:hidden">New</span>
                             </button>
                         </div>
 
                         {/* Quick Contact Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <a href="mailto:support@cache.co.ke" className="bg-muted rounded-2xl p-4 hover:bg-muted/80 transition-colors border border-border">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                            <a href="mailto:support@cache.co.ke" className="apple-card p-3 sm:p-4 hover:shadow-[var(--shadow-apple-hover)] transition-all">
                                 <div className="flex items-center gap-3">
-                                    <Mail className="h-5 w-5 text-apple-blue flex-shrink-0" />
+                                    <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-apple-blue flex-shrink-0" />
                                     <div className="min-w-0">
-                                        <h3 className="font-bold text-foreground text-sm">Email</h3>
-                                        <p className="text-xs text-muted-foreground truncate">support@cache.co.ke</p>
+                                        <h3 className="font-bold text-foreground text-xs sm:text-sm">Email</h3>
+                                        <p className="text-xs text-muted-foreground break-all">support@cache.co.ke</p>
                                     </div>
                                 </div>
                             </a>
-                            <a href="tel:+254718693484" className="bg-muted rounded-2xl p-4 hover:bg-muted/80 transition-colors border border-border">
+                            <a href="tel:+254718693484" className="apple-card p-3 sm:p-4 hover:shadow-[var(--shadow-apple-hover)] transition-all">
                                 <div className="flex items-center gap-3">
-                                    <Phone className="h-5 w-5 text-apple-green flex-shrink-0" />
+                                    <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-apple-green flex-shrink-0" />
                                     <div className="min-w-0">
-                                        <h3 className="font-bold text-foreground text-sm">Call Us</h3>
+                                        <h3 className="font-bold text-foreground text-xs sm:text-sm">Call Us</h3>
                                         <p className="text-xs text-muted-foreground">+254718693484</p>
                                     </div>
                                 </div>
@@ -283,22 +285,22 @@ export default function Support() {
 
                         {/* Tickets List */}
                         <div>
-                            <h2 className="text-lg font-bold text-foreground mb-4">Your Support Tickets</h2>
+                            <h2 className="text-lg font-bold text-foreground mb-3 sm:mb-4">Your Support Tickets</h2>
                             {loading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Loader2 className="h-6 w-6 animate-spin text-apple-blue" />
                                 </div>
                             ) : error ? (
-                                <div className="bg-red-100 border border-red-200 rounded-lg p-4 text-red-700">
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 text-red-800 text-sm">
                                     {error}
                                 </div>
                             ) : tickets.length === 0 ? (
-                                <div className="bg-muted rounded-lg p-8 text-center">
-                                    <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                                <div className="apple-card p-8 text-center">
+                                    <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-60" />
                                     <p className="text-muted-foreground mb-4">No support tickets yet</p>
                                     <button
                                         onClick={() => setView("create")}
-                                        className="bg-apple-blue text-white px-4 py-2 rounded-lg hover:bg-apple-blue/90 transition-colors inline-flex items-center gap-2"
+                                        className="bg-apple-blue text-white px-4 py-2 rounded-lg hover:opacity-95 transition-colors inline-flex items-center gap-2"
                                     >
                                         <Plus className="h-4 w-4" />
                                         Create Your First Ticket
@@ -310,7 +312,7 @@ export default function Support() {
                                         <button
                                             key={ticket.id}
                                             onClick={() => fetchTicketDetail(ticket.ticket_id)}
-                                            className="w-full bg-muted hover:bg-muted/80 rounded-lg p-4 border border-border transition-colors text-left"
+                                            className="w-full apple-card p-3 sm:p-4 transition-colors text-left text-sm sm:text-base"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1 min-w-0">
@@ -337,9 +339,9 @@ export default function Support() {
 
                 {/* Chat View */}
                 {view === "chat" && selectedTicket && (
-                    <div className="bg-muted rounded-lg border border-border overflow-hidden flex flex-col h-[calc(100vh-200px)] md:h-[600px]">
+                    <div className="apple-card overflow-hidden flex flex-col max-h-[calc(100vh-12rem)] sm:max-h-[600px]">
                         {/* Chat Header */}
-                        <div className="bg-background border-b border-border p-4 flex items-center justify-between gap-4 flex-wrap">
+                        <div className="bg-background border-b border-border p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 flex-shrink-0">
                             <div>
                                 <h2 className="font-bold text-foreground">{selectedTicket.ticket_id}</h2>
                                 <p className="text-sm text-muted-foreground">{selectedTicket.subject}</p>
@@ -353,20 +355,20 @@ export default function Support() {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 no-scrollbar">
                             {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
                                 selectedTicket.messages.map((msg, idx) => (
                                     <div
                                         key={idx}
                                         className={`flex ${msg.is_from_user ? "justify-end" : "justify-start"}`}
                                     >
-                                        <div
-                                            className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
-                                                msg.is_from_user
-                                                    ? "bg-apple-blue text-white rounded-br-none"
-                                                    : "bg-background border border-border text-foreground rounded-bl-none"
-                                            }`}
-                                        >
+                                                    <div
+                                                        className={`max-w-xs sm:max-w-sm lg:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm ${
+                                                            msg.is_from_user
+                                                                ? "bg-apple-blue text-white rounded-br-none"
+                                                                : "apple-glass text-foreground rounded-bl-none"
+                                                        }`}
+                                    >
                                             <p className="text-xs font-semibold opacity-75 mb-1">{msg.sender_name}</p>
                                             <p className="text-sm break-words">{msg.message}</p>
                                             <p className={`text-xs mt-2 ${msg.is_from_user ? "opacity-70" : "text-muted-foreground"}`}>
@@ -384,7 +386,7 @@ export default function Support() {
                         </div>
 
                         {/* Input */}
-                        <div className="bg-background border-t border-border p-4">
+                        <div className="bg-background border-t border-border p-3 sm:p-4 flex-shrink-0">
                             {error && (
                                 <p className="text-xs text-red-600 mb-2">{error}</p>
                             )}
@@ -393,14 +395,14 @@ export default function Support() {
                                     type="text"
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder="Type your message..."
-                                    className="flex-1 bg-muted border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                                    placeholder="Type message..."
+                                    className="flex-1 bg-background border border-border rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
                                     disabled={submitting}
                                 />
                                 <button
                                     type="submit"
                                     disabled={submitting || !newMessage.trim()}
-                                    className="bg-apple-blue text-white p-2 rounded-lg hover:bg-apple-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                    className="bg-apple-blue text-white p-2 rounded-lg hover:bg-apple-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
                                 >
                                     {submitting ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -416,24 +418,24 @@ export default function Support() {
                 {/* Create Ticket View */}
                 {view === "create" && (
                     <div className="max-w-2xl mx-auto">
-                        <div className="bg-muted rounded-lg border border-border p-6">
-                            <h2 className="text-2xl font-bold text-foreground mb-6">Create Support Ticket</h2>
+                        <div className="apple-card p-4 sm:p-6 md:p-8">
+                            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">Create Support Ticket</h2>
                             
                             {error && (
-                                <div className="bg-red-100 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 text-red-800 mb-4 text-sm">
                                     {error}
                                 </div>
                             )}
                             
                             {success && (
-                                <div className="bg-green-100 border border-green-200 rounded-lg p-4 text-green-700 mb-4">
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 text-green-800 mb-4 text-sm">
                                     {success}
                                 </div>
                             )}
 
-                            <form onSubmit={handleCreateTicket} className="space-y-4">
+                            <form onSubmit={handleCreateTicket} className="space-y-4 sm:space-y-5">
                                 <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
+                                    <label className="block text-xs sm:text-sm font-semibold text-foreground mb-2">
                                         Subject <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -442,7 +444,7 @@ export default function Support() {
                                         onChange={(e) => setNewTicketSubject(e.target.value)}
                                         placeholder="Brief description of your issue"
                                         required
-                                        className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                                        className="w-full bg-background border border-border rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
                                         disabled={submitting}
                                     />
                                 </div>
@@ -454,7 +456,7 @@ export default function Support() {
                                 <select
                                     value={newTicketCategory}
                                     onChange={(e) => setNewTicketCategory(e.target.value)}
-                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                                    className="w-full bg-background border border-border rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue"
                                     disabled={submitting}
                                 >
                                     <option value="GENERAL">General</option>
@@ -475,16 +477,16 @@ export default function Support() {
                                     placeholder="Please describe your issue in detail..."
                                     required
                                     rows={6}
-                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
+                                    className="w-full bg-background border border-border rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
                                     disabled={submitting}
                                 />
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setView("list")}
-                                    className="flex-1 bg-background border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted transition-colors font-semibold"
+                                    className="flex-1 apple-btn-secondary text-foreground px-4 py-2 font-semibold"
                                     disabled={submitting}
                                 >
                                     Cancel
@@ -497,7 +499,8 @@ export default function Support() {
                                     {submitting ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
-                                            Creating...
+                                            <span className="hidden sm:inline">Creating...</span>
+                                            <span className="sm:hidden">...</span>
                                         </>
                                     ) : (
                                         <>
