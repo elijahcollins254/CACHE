@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector, selectNotifications, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
 import { useAuth } from "@/lib/useAuth";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { ArrowLeft, Bell, Trash2, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function NotificationsPage() {
@@ -33,15 +34,7 @@ export default function NotificationsPage() {
     }, [authUser?.phone_number, authLoading, dispatch]);
 
     if (authLoading) {
-        return (
-            <div className="min-h-screen bg-background">
-                <main className="mx-auto pt-24 max-w-[1200px] px-4">
-                    <div className="text-center py-12">
-                        <div className="h-8 w-8 border-4 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
-                    </div>
-                </main>
-            </div>
-        );
+        return <LoadingSpinner />;
     }
 
     if (error || !authUser) {

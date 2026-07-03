@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/useAuth";
 import { Wallet, TrendingUp, History, Bell, ArrowLeft, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectBalance, selectPortfolioValue, selectBets, selectUnreadCount } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
+import { fetchNotifications } from "@/lib/redux/slices/notificationsSlice";
 
 export default function DashboardHub() {
     const { user: authUser, loading: authLoading } = useAuth("/dashboard");
@@ -30,6 +31,7 @@ export default function DashboardHub() {
         if (fetchAttemptedRef.current) return;
         fetchAttemptedRef.current = true;
         dispatch(fetchDashboardData());
+        dispatch(fetchNotifications());
     }, [authUser?.phone_number, authLoading, dispatch]);
 
     const handleLogout = () => {
@@ -85,13 +87,13 @@ export default function DashboardHub() {
     const sections = [
         {
             title: "Portfolio",
-            description: "View your active positions and market holdings",
+            description: "View your asset value and market holdings",
             icon: TrendingUp,
             href: "/dashboard/portfolio",
             color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
             iconColor: "text-amber-700 dark:text-amber-400",
-            stat: activePositions,
-            statLabel: "active positions",
+            stat: `KES ${parseFloat(portfolioValue || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+            statLabel: "portfolio value",
         },
         {
             title: "Profits & Losses",
