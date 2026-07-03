@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useAppDispatch, useAppSelector, selectUser, selectPortfolioValue, selectStatistics, selectBets } from "@/lib/redux/hooks";
+import { useAppDispatch, useAppSelector, selectUser, selectPortfolioValue, selectStatistics, selectBets, selectTransactions } from "@/lib/redux/hooks";
 import { fetchDashboardData } from "@/lib/redux/slices/portfolioSlice";
 import { generateMarketSlug } from "@/lib/slugify";
 
@@ -18,6 +18,7 @@ export default function PortfolioPage() {
     const portfolioValue = useAppSelector(selectPortfolioValue);
     const statistics = useAppSelector(selectStatistics);
     const bets = useAppSelector(selectBets);
+    const transactions = useAppSelector(selectTransactions);
 
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState<"active" | "positions" | "history">("active");
@@ -95,16 +96,14 @@ export default function PortfolioPage() {
                         <p className="text-muted-foreground text-sm font-medium mb-2">Active Positions</p>
                         <h2 className="text-3xl font-bold mb-2">
                             {(() => {
-                                const netPositions: { [key: string]: any } = {};
-                                bets.filter(b => b.result === 'PENDING').forEach((bet: any) => {
-                                    const positionKey = `${bet.market_id}-${bet.outcome}`;
-                                    if (!netPositions[positionKey]) {
-                                        netPositions[positionKey] = { total_bought: 0, total_sold: 0 };
-                                    }
-                                    if (bet.action === 'BUY') netPositions[positionKey].total_bought += Number(bet.quantity || 1);
-                                    else if (bet.action === 'SELL') netPositions[positionKey].total_sold += Number(bet.quantity || 1);
-                                });
-                                return Object.values(netPositions).filter((pos: any) => pos.total_bought > pos.total_sold).length;
+                                const uniquePositions: { [key: string]: boolean } = {};
+                                bets
+                                    .filter((bet: any) => bet.result === 'PENDING' && Number(bet.quantity || 0) > 0)
+                                    .forEach((bet: any) => {
+                                        const key = `${bet.market_id}-${bet.outcome}`;
+                                        uniquePositions[key] = true;
+                                    });
+                                return Object.keys(uniquePositions).length;
                             })()}
                         </h2>
                         <p className="text-xs text-muted-foreground">Markets with active bets</p>
@@ -158,95 +157,57 @@ export default function PortfolioPage() {
                         {activeTab === "active" && (
                             <div>
                                 {(() => {
-                                    const netPositions: { [key: string]: any } = {};
+                                        const positions = bets
+                                            .filter((bet: any) => bet.result === 'PENDING' && Number(bet.quantity || 0) > 0)
+                                            .filter((bet: any) => !searchQuery || bet.market_question.toLowerCase().includes(searchQuery.toLowerCase()));
 
-                                    bets
-                                        .filter(b => b.result === 'PENDING')
-                                        .forEach((bet: any) => {
-                                            const positionKey = `${bet.market_id}-${bet.outcome}`;
+                                        return positions.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {positions.map((position: any) => {
+                                                    const shares = Number(position.quantity || 0);
+                                                    const totalCost = Number(position.amount || 0);
+                                                    const currentValue = Number(position.current_value_kes || 0);
+                                                    const profit = currentValue - totalCost;
 
-                                            if (!netPositions[positionKey]) {
-                                                netPositions[positionKey] = {
-                                                    market_id: bet.market_id,
-                                                    market_question: bet.market_question,
-                                                    outcome: bet.outcome,
-                                                    current_yes_probability: bet.current_yes_probability,
-                                                    current_price: bet.current_price,
-                                                    total_bought: 0,
-                                                    total_sold: 0,
-                                                    total_cost: 0,
-                                                };
-                                            }
-
-                                            if (bet.action === 'BUY') {
-                                                netPositions[positionKey].total_bought += Number(bet.quantity || 1);
-                                                netPositions[positionKey].total_cost += Number(bet.amount);
-                                            } else if (bet.action === 'SELL') {
-                                                netPositions[positionKey].total_sold += Number(bet.quantity || 1);
-                                            }
-                                        });
-
-                                    const positions = Object.values(netPositions)
-                                        .filter((pos: any) => pos.total_bought > pos.total_sold)
-                                        .filter((pos: any) =>
-                                            !searchQuery ||
-                                            pos.market_question.toLowerCase().includes(searchQuery.toLowerCase())
-                                        );
-
-                                    return positions.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {positions.map((position: any) => {
-                                                const shares = position.total_bought - position.total_sold;
-                                                if (shares <= 0) return null;
-
-                                                const marketYesProbability = Number(position.current_yes_probability || 50) / 100;
-                                                const currentPrice = Number(position.current_price || marketYesProbability);
-                                                const maxPayout = 100;
-                                                const currentValue = shares * maxPayout * currentPrice;
-                                                const profit = currentValue - position.total_cost;
-
-                                                return (
-                                                    <div key={`${position.market_id}-${position.outcome}`} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
-                                                        <div className="flex items-start justify-between mb-4">
-                                                            <div className="flex-1">
-                                                                <h3 className="font-bold text-foreground text-lg">{position.market_question}</h3>
-                                                                <p className="text-sm text-muted-foreground mt-1">
-                                                                    Position on{" "}
-                                                                    <span className={`font-semibold ${position.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>
-                                                                        {position.outcome}
-                                                                    </span>
-                                                                </p>
+                                                    return (
+                                                        <div key={`${position.market_id}-${position.outcome}`} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
+                                                            <div className="flex items-start justify-between mb-4">
+                                                                <div className="flex-1">
+                                                                    <h3 className="font-bold text-foreground text-lg">{position.market_question}</h3>
+                                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                                        Position on{" "}
+                                                                        <span className={`font-semibold ${position.outcome === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>
+                                                                            {position.outcome}
+                                                                        </span>
+                                                                    </p>
+                                                                </div>
+                                                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                                                                    PENDING
+                                                                </span>
                                                             </div>
-                                                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-                                                                PENDING
-                                                            </span>
-                                                        </div>
 
-                                                        <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Total Invested</p>
-                                                                <p className="font-bold text-foreground">KES {Number(position.total_cost).toLocaleString()}</p>
+                                                            <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground mb-1 font-medium">Total Invested</p>
+                                                                    <p className="font-bold text-foreground">KES {totalCost.toLocaleString()}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground mb-1 font-medium">Net Shares</p>
+                                                                    <p className="font-bold text-foreground">{shares.toFixed(2)}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground mb-1 font-medium">Current Value</p>
+                                                                    <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        KES {currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground mb-1 font-medium">P&L</p>
+                                                                    <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        {profit >= 0 ? '+' : ''} KES {profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Net Shares</p>
-                                                                <p className="font-bold text-foreground">{shares.toFixed(2)}</p>
-                                                                {position.total_sold > 0 && (
-                                                                    <p className="text-xs text-muted-foreground mt-1">({position.total_bought.toFixed(2)} bought, {position.total_sold.toFixed(2)} sold)</p>
-                                                                )}
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Current Value</p>
-                                                                <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                    KES {currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                                                </p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">P&L</p>
-                                                                <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                    {profit >= 0 ? '+' : ''} KES {profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                                                </p>
-                                                            </div>
-                                                        </div>
 
                                                         <Link
                                                             href={`/markets/${position.market_id}-${generateMarketSlug(position.market_question)}`}
@@ -270,16 +231,108 @@ export default function PortfolioPage() {
                             </div>
                         )}
                         {activeTab === "positions" && (
-                            <div className="py-12 text-center">
-                                <p className="text-muted-foreground">Position details coming soon</p>
+                            <div>
+                                {bets.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {bets
+                                            .filter((bet: any) => !searchQuery || bet.market_question.toLowerCase().includes(searchQuery.toLowerCase()))
+                                            .map((position: any) => {
+                                                const shares = Number(position.quantity || 0);
+                                                const totalCost = Number(position.amount || 0);
+                                                const currentValue = Number(position.current_value_kes || 0);
+                                                const profit = currentValue - totalCost;
+
+                                                return (
+                                                    <div key={position.id} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
+                                                        <div className="flex items-start justify-between mb-4">
+                                                            <div className="flex-1">
+                                                                <h3 className="font-bold text-foreground text-lg">{position.market_question}</h3>
+                                                                <p className="text-sm text-muted-foreground mt-1">
+                                                                    {position.outcome} position • {position.result}
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-muted text-foreground">
+                                                                {position.result}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-4 gap-3 bg-muted p-3 rounded-lg">
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Total Invested</p>
+                                                                <p className="font-bold text-foreground">KES {totalCost.toLocaleString()}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Shares</p>
+                                                                <p className="font-bold text-foreground">{shares.toFixed(2)}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Current Value</p>
+                                                                <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    KES {currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-1 font-medium">Payout</p>
+                                                                <p className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    {position.payout ? `KES ${Number(position.payout).toLocaleString()}` : '–'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                ) : (
+                                    <div className="py-12 text-center">
+                                        <p className="text-muted-foreground">No positions yet</p>
+                                        <Link href="/" className="text-apple-blue hover:underline font-bold">
+                                            Start trading markets
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {activeTab === "history" && (
-                            <div className="py-12 text-center">
-                                <p className="text-muted-foreground">Transaction history - visit Deposits & Withdrawals</p>
-                                <Link href="/wallet" className="text-apple-blue hover:underline mt-4 inline-block">
-                                    View all transactions
-                                </Link>
+                            <div>
+                                {transactions.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {transactions
+                                            .filter((txn: any) => !searchQuery || (txn.description || '').toLowerCase().includes(searchQuery.toLowerCase()))
+                                            .map((txn: any) => (
+                                                <div key={txn.id} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div>
+                                                            <h3 className="font-bold text-foreground text-base">{txn.type}</h3>
+                                                            <p className="text-xs text-muted-foreground mt-1">{txn.description || 'No description'}</p>
+                                                        </div>
+                                                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-muted text-foreground">
+                                                            {txn.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
+                                                        <div>
+                                                            <p className="font-medium text-foreground">Amount</p>
+                                                            <p>KES {Number(txn.amount || 0).toLocaleString()}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-foreground">Reference</p>
+                                                            <p>{txn.reference || '—'}</p>
+                                                        </div>
+                                                    </div>
+                                                    {txn.created_at && (
+                                                        <p className="text-xs text-muted-foreground mt-3">{new Date(txn.created_at).toLocaleString()}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-12 text-center">
+                                        <p className="text-muted-foreground">No transaction history yet</p>
+                                        <Link href="/wallet" className="text-apple-blue hover:underline font-bold">
+                                            View wallet activity
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

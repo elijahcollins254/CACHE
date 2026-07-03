@@ -61,6 +61,7 @@ export const fetchDashboardData = createAsyncThunk(
             return {
                 bets: data.bets || [],
                 statistics: data.statistics,
+                transactions: data.transactions || [],
                 portfolio_value: data.portfolio?.total_value || '0.00',
             };
         } catch (error) {
@@ -111,6 +112,7 @@ const portfolioSlice = createSlice({
             .addCase(fetchDashboardData.fulfilled, (state, action) => {
                 state.bets = action.payload.bets;
                 state.statistics = action.payload.statistics;
+                state.transactions = action.payload.transactions;
                 const portfolioVal = parseFloat(action.payload.portfolio_value);
                 state.portfolio_value = isNaN(portfolioVal) ? '0.00' : portfolioVal.toFixed(2);
                 state.loading = false;
