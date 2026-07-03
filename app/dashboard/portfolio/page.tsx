@@ -203,6 +203,7 @@ export default function PortfolioPage() {
                                                 const currentPrice = Number(position.current_price || marketYesProbability);
                                                 const maxPayout = 100;
                                                 const currentValue = shares * maxPayout * currentPrice;
+                                                const profit = currentValue - position.total_cost;
 
                                                 return (
                                                     <div key={`${position.market_id}-${position.outcome}`} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
