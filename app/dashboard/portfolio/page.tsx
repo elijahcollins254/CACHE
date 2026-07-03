@@ -171,6 +171,7 @@ export default function PortfolioPage() {
                                                     market_question: bet.market_question,
                                                     outcome: bet.outcome,
                                                     current_yes_probability: bet.current_yes_probability,
+                                                    current_price: bet.current_price,
                                                     total_bought: 0,
                                                     total_sold: 0,
                                                     total_cost: 0,
@@ -199,10 +200,9 @@ export default function PortfolioPage() {
                                                 if (shares <= 0) return null;
 
                                                 const marketYesProbability = Number(position.current_yes_probability || 50) / 100;
-                                                const winningProbability = position.outcome === 'Yes' ? marketYesProbability : 1 - marketYesProbability;
+                                                const currentPrice = Number(position.current_price || marketYesProbability);
                                                 const maxPayout = 100;
-                                                const currentValue = shares * maxPayout * winningProbability;
-                                                const profit = currentValue - position.total_cost;
+                                                const currentValue = shares * maxPayout * currentPrice;
 
                                                 return (
                                                     <div key={`${position.market_id}-${position.outcome}`} className="border border-border rounded-lg p-4 hover:border-white/10 transition-all">
