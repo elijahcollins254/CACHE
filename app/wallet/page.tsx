@@ -205,8 +205,8 @@ export default function WalletPage() {
                                     onClick={() => setFilter(tab as any)}
                                     className={`border-b-2 pb-2 text-sm font-semibold transition-colors ${
                                         filter === tab
-                                            ? "border-black text-black dark:border-white dark:text-white"
-                                            : "border-transparent text-muted-foreground hover:text-black dark:hover:text-white"
+                                            ? "border-apple-blue text-apple-blue dark:border-apple-blue dark:text-apple-blue"
+                                            : "border-transparent text-muted-foreground hover:text-foreground dark:hover:text-white"
                                     }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
