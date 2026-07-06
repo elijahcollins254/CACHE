@@ -133,7 +133,7 @@ export default function WalletPage() {
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <p className="text-sm font-semibold text-apple-blue">Wallet Overview</p>
-                                <h2 className="text-3xl font-bold mt-2">KES {parseFloat(balance || "0").toLocaleString(undefined, { maximumFractionDigits: 0 })}</h2>
+                                <h2 className="text-3xl font-bold mt-2 text-foreground dark:text-white">KES {parseFloat(balance || "0").toLocaleString(undefined, { maximumFractionDigits: 0 })}</h2>
                                 <p className="text-sm text-muted-foreground mt-2">Your available balance is ready for deposits, withdrawals, and bets.</p>
                             </div>
                             <div className="rounded-2xl border border-apple-blue/20 bg-white/80 p-3 dark:bg-background/80">
@@ -189,7 +189,7 @@ export default function WalletPage() {
                                     <Icon className="h-5 w-5" />
                                 </div>
                                 <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                                <p className={`mt-3 text-xl font-bold ${card.accent}`}>{card.value}</p>
+                                <p className={`mt-3 text-xl font-bold ${card.accent} dark:text-white`}>{card.value}</p>
                                 <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
                             </div>
                         );

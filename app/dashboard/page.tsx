@@ -161,7 +161,7 @@ export default function DashboardHub() {
                                     
                                     {/* Summary Stat */}
                                     <div className="mb-3">
-                                        <p className={`text-sm md:text-base font-bold ${section.statColor || 'text-foreground'} truncate`}>
+                                        <p className={`text-sm md:text-base font-bold ${section.statColor || 'text-foreground'} dark:text-white truncate`}>
                                             {section.stat ?? '—'}
                                         </p>
                                     </div>
