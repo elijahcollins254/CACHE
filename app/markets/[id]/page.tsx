@@ -729,9 +729,9 @@ export default function MarketDetail() {
         setMessage("");
 
         try {
-            const isPolymarket = market.source === 'polymarket';
+            const isPolymarket = market.source === 'polymarket' || Boolean(market.clobTokenIds || market.conditionId || market.outcomePrices);
             if (!isPolymarket) {
-                setMessage("Only Polymarket trading is supported");
+                setMessage("This market is not configured for Polymarket trading");
                 setPlacingBet(false);
                 return;
             }

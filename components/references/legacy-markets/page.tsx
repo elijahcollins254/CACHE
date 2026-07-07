@@ -840,13 +840,8 @@ export default function MarketDetail() {
         setMessage("");
 
         try {
-            const isPolymarket = market.source === 'polymarket';
-            if (!isPolymarket) {
-                setMessage("Only Polymarket trading is supported");
-                setPlacingBet(false);
-                return;
-            }
-
+            // POLYMARKET ORDER PLACEMENT (Polymarket-only trading)
+            
             const side = outcome === "Yes" ? "BUY" : "SELL";
             let tokenId: string;
 
@@ -915,7 +910,7 @@ export default function MarketDetail() {
                     potentialWinnings,
                     phoneNumber: userData.phone_number,
                     timestamp: new Date(),
-                    isPolymarket,
+                    isPolymarket: true,
                 });
 
                 setShowReceipt(true);

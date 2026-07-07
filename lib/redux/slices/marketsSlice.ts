@@ -148,53 +148,24 @@ const transformPolymarketData = (polymarket: any): Market => {
     };
 };
 
-// Helper function to transform local market data if needed
-const transformLocalMarketData = (market: any): Market => {
-    return {
-        ...market,
-        source: 'local',
-    };
-};
-
-// Thunk to fetch all markets from both sources
+// Thunk to fetch all markets from Polymarket-backed brokerage only
 export const fetchMarkets = createAsyncThunk(
     'markets/fetchMarkets',
     async (_, { rejectWithValue }) => {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-            
-            // Fetch from both APIs in parallel
-            const [brokerageRes, localRes] = await Promise.all([
-                fetch(`${baseUrl}/api/brokerage/markets/`).catch(() => null),
-                fetch(`${baseUrl}/api/markets/`).catch(() => null),
-            ]);
+            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/`).catch(() => null);
 
-            let allMarkets: Market[] = [];
-
-            // Process brokerage markets (Polymarket)
-            if (brokerageRes?.ok) {
-                try {
-                    const brokerageData = await brokerageRes.json();
-                    const brokerageMarkets = Array.isArray(brokerageData) ? brokerageData : brokerageData.results || [];
-                    allMarkets.push(...brokerageMarkets.map(transformPolymarketData));
-                } catch (error) {
-                    console.error('Error processing brokerage markets:', error);
-                }
+            if (!brokerageRes?.ok) {
+                return rejectWithValue('Failed to fetch Polymarket markets');
             }
 
-            // Process local markets
-            if (localRes?.ok) {
-                try {
-                    const localData = await localRes.json();
-                    const localMarkets = Array.isArray(localData) ? localData : localData.results || [];
-                    allMarkets.push(...localMarkets.map(transformLocalMarketData));
-                } catch (error) {
-                    console.error('Error processing local markets:', error);
-                }
-            }
+            const brokerageData = await brokerageRes.json();
+            const brokerageMarkets = Array.isArray(brokerageData) ? brokerageData : brokerageData.results || [];
+            const allMarkets = brokerageMarkets.map(transformPolymarketData);
 
             if (allMarkets.length === 0) {
-                return rejectWithValue('Failed to fetch markets from both sources');
+                return rejectWithValue('No Polymarket markets available');
             }
 
             return allMarkets;
