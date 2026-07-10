@@ -765,7 +765,7 @@ export default function MarketDetail() {
             const kesAmount = Number(betAmount);
             const usdAmount = kesAmount / USD_TO_KES;
             const size = Math.round(usdAmount * 100000000) / 100000000;
-            const price = getMarketProbability(market) / 100;
+            const price = Number((getMarketProbability(market) / 100).toFixed(8));
 
             const polyPayload = {
                 market_id: market.external_id,
