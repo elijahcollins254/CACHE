@@ -14,6 +14,7 @@ import { formatVolume } from "@/lib/volume";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { resolvePolymarketTokenId } from "@/lib/polymarketTokens";
 import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
@@ -60,22 +61,7 @@ function getDisplaySharePriceKes(market: any, probability: number, outcome: stri
     }
 
 function getPolymarketTokenId(market: any, outcome: "Yes" | "No" = "Yes"): string | null {
-    const tokenIds = market?.clobTokenIds;
-    let parsedTokenIds: string[] = [];
-
-    if (Array.isArray(tokenIds)) {
-        parsedTokenIds = tokenIds;
-    } else if (typeof tokenIds === "string") {
-        try {
-            const parsed = JSON.parse(tokenIds);
-            parsedTokenIds = Array.isArray(parsed) ? parsed : [];
-        } catch {
-            parsedTokenIds = [];
-        }
-    }
-
-    const tokenId = parsedTokenIds[outcome === "Yes" ? 0 : 1];
-    return tokenId ? String(tokenId) : null;
+    return resolvePolymarketTokenId(market, outcome);
 }
 
 function parseJsonArray(value: any): any[] {
@@ -737,27 +723,10 @@ export default function MarketDetail() {
             }
 
             const side = outcome === "Yes" ? "BUY" : "SELL";
-            let tokenId: string;
-
-            try {
-                let clobTokenIds = market.clobTokenIds;
-
-                if (Array.isArray(clobTokenIds)) {
-                    tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
-                } else if (typeof clobTokenIds === 'string') {
-                    clobTokenIds = JSON.parse(clobTokenIds);
-                    tokenId = outcome === "Yes" ? clobTokenIds[0] : clobTokenIds[1];
-                } else {
-                    throw new Error("clobTokenIds not found or in unexpected format");
-                }
-            } catch (e) {
-                setMessage(`Invalid market configuration: ${e instanceof Error ? e.message : 'missing token IDs'}`);
-                setPlacingBet(false);
-                return;
-            }
+            const tokenId = resolvePolymarketTokenId(market, outcome);
 
             if (!tokenId) {
-                setMessage("Invalid market configuration (missing token ID)");
+                setMessage("Invalid market configuration: no Polymarket token ID found for this outcome");
                 setPlacingBet(false);
                 return;
             }

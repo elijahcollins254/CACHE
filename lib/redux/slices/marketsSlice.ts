@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { convertUSDVolumeToKES } from '@/lib/currency';
+import { extractPolymarketTokenIds } from '@/lib/polymarketTokens';
 
 const INITIAL_MARKETS_LIMIT = 160;
 const PAGED_MARKETS_LIMIT = 64;
@@ -129,6 +130,7 @@ const transformPolymarketData = (polymarket: any): Market => {
     const subcategory = polymarket.subcategory || metadata.subcategory || null;
     const category_slug = polymarket.category_slug || (category ? category.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
     const subcategory_slug = polymarket.subcategory_slug || (subcategory ? subcategory.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
+    const tokenIds = extractPolymarketTokenIds(polymarket);
 
     // Extract parent event information if available
     // Polymarket markets can have a parent event (e.g., "What will happen before GTA VI?")
@@ -157,7 +159,7 @@ const transformPolymarketData = (polymarket: any): Market => {
         image_url: metadata.image || metadata.icon || polymarket.image_url,
         closing_soon: closingSoon,
         source: 'polymarket',
-        clobTokenIds: metadata.clobTokenIds || polymarket.clobTokenIds,
+        clobTokenIds: tokenIds.length > 0 ? tokenIds : (metadata.clobTokenIds || polymarket.clobTokenIds),
         parentEventId,
         parentEventTitle,
         groupItemTitle: metadata.groupItemTitle,
