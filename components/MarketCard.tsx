@@ -179,6 +179,8 @@ export default function MarketCard({ market }: MarketCardProps) {
 
   const yesProbability = market.yes_probability;
   const noProbability = 100 - yesProbability;
+  const formattedYesProbability = formatProbability(yesProbability);
+  const formattedNoProbability = formatProbability(noProbability);
   const isPolymarket = market.source === "polymarket";
   const yesPriceKes = isPolymarket
     ? polymarketProbabilityToKES(yesProbability)
