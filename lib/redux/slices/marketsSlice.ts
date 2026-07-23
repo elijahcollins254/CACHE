@@ -154,14 +154,17 @@ export const fetchMarkets = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/`).catch(() => null);
+            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=1000`).catch(() => null);
 
             if (!brokerageRes?.ok) {
                 return rejectWithValue('Failed to fetch Polymarket markets');
             }
 
             const brokerageData = await brokerageRes.json();
-            const brokerageMarkets = Array.isArray(brokerageData) ? brokerageData : brokerageData.results || [];
+            // Handle both array format (legacy) and paginated format (new)
+            const brokerageMarkets = Array.isArray(brokerageData) 
+                ? brokerageData 
+                : (brokerageData.results || brokerageData.data || []);
             const allMarkets = brokerageMarkets.map(transformPolymarketData);
 
             if (allMarkets.length === 0) {
