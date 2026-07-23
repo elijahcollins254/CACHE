@@ -41,18 +41,26 @@ interface MarketsState {
     allMarkets: Market[];
     filteredMarkets: Market[];
     loading: boolean;
+    loadingMore: boolean;
     error: string | null;
     lastUpdate: number;
     savedMarketIds: number[];
+    paginationOffset: number;
+    totalMarketCount: number;
+    hasMore: boolean;
 }
 
 const initialState: MarketsState = {
     allMarkets: [],
     filteredMarkets: [],
     loading: false,
+    loadingMore: false,
     error: null,
     lastUpdate: 0,
     savedMarketIds: [],
+    paginationOffset: 0,
+    totalMarketCount: 0,
+    hasMore: true,
 };
 
 // Helper function to transform Polymarket data to Market interface
@@ -154,7 +162,7 @@ export const fetchMarkets = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=1000`).catch(() => null);
+            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=1000&offset=0`).catch(() => null);
 
             if (!brokerageRes?.ok) {
                 return rejectWithValue('Failed to fetch Polymarket markets');
@@ -162,18 +170,67 @@ export const fetchMarkets = createAsyncThunk(
 
             const brokerageData = await brokerageRes.json();
             // Handle both array format (legacy) and paginated format (new)
-            const brokerageMarkets = Array.isArray(brokerageData) 
-                ? brokerageData 
-                : (brokerageData.results || brokerageData.data || []);
+            let brokerageMarkets: any[] = [];
+            let totalCount = 0;
+            
+            if (Array.isArray(brokerageData)) {
+                brokerageMarkets = brokerageData;
+                totalCount = brokerageMarkets.length;
+            } else if (brokerageData.results) {
+                brokerageMarkets = brokerageData.results;
+                totalCount = brokerageData.count || 0;
+            } else if (brokerageData.data) {
+                brokerageMarkets = brokerageData.data;
+                totalCount = brokerageMarkets.length;
+            }
+            
             const allMarkets = brokerageMarkets.map(transformPolymarketData);
 
             if (allMarkets.length === 0) {
                 return rejectWithValue('No Polymarket markets available');
             }
 
-            return allMarkets;
+            return { markets: allMarkets, totalCount, offset: 0 };
         } catch (error) {
             return rejectWithValue('Connection error');
+        }
+    }
+);
+
+// Thunk to fetch more markets for infinite scroll
+export const fetchMoreMarkets = createAsyncThunk(
+    'markets/fetchMoreMarkets',
+    async (offset: number, { rejectWithValue }) => {
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            const limit = 1000;
+            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=${limit}&offset=${offset}`).catch(() => null);
+
+            if (!brokerageRes?.ok) {
+                return rejectWithValue('Failed to fetch more markets');
+            }
+
+            const brokerageData = await brokerageRes.json();
+            // Handle both array format and paginated format
+            let brokerageMarkets: any[] = [];
+            let totalCount = 0;
+            
+            if (Array.isArray(brokerageData)) {
+                brokerageMarkets = brokerageData;
+                totalCount = offset + brokerageMarkets.length;
+            } else if (brokerageData.results) {
+                brokerageMarkets = brokerageData.results;
+                totalCount = brokerageData.count || 0;
+            } else if (brokerageData.data) {
+                brokerageMarkets = brokerageData.data;
+                totalCount = offset + brokerageMarkets.length;
+            }
+            
+            const moreMarkets = brokerageMarkets.map(transformPolymarketData);
+
+            return { markets: moreMarkets, totalCount, offset };
+        } catch (error) {
+            return rejectWithValue('Failed to load more markets');
         }
     }
 );
@@ -220,16 +277,40 @@ const marketsSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchMarkets.fulfilled, (state, action) => {
-                state.allMarkets = action.payload.map((m: Market) => ({
+                const { markets, totalCount, offset } = action.payload;
+                state.allMarkets = markets.map((m: Market) => ({
                     ...m,
                     saved: state.savedMarketIds.includes(m.id)
                 }));
                 state.filteredMarkets = state.allMarkets;
                 state.loading = false;
                 state.lastUpdate = Date.now();
+                state.paginationOffset = offset + markets.length;
+                state.totalMarketCount = totalCount;
+                state.hasMore = state.paginationOffset < totalCount;
             })
             .addCase(fetchMarkets.rejected, (state, action) => {
                 state.loading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(fetchMoreMarkets.pending, (state) => {
+                state.loadingMore = true;
+            })
+            .addCase(fetchMoreMarkets.fulfilled, (state, action) => {
+                const { markets, totalCount, offset } = action.payload;
+                const newMarkets = markets.map((m: Market) => ({
+                    ...m,
+                    saved: state.savedMarketIds.includes(m.id)
+                }));
+                state.allMarkets = [...state.allMarkets, ...newMarkets];
+                state.filteredMarkets = state.allMarkets;
+                state.loadingMore = false;
+                state.paginationOffset = offset + newMarkets.length;
+                state.totalMarketCount = totalCount;
+                state.hasMore = state.paginationOffset < totalCount;
+            })
+            .addCase(fetchMoreMarkets.rejected, (state, action) => {
+                state.loadingMore = false;
                 state.error = action.payload as string;
             });
     },

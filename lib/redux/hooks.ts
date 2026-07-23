@@ -17,9 +17,13 @@ export const selectAuthLastUpdate = (state: RootState) => state.auth.lastUpdate;
 export const selectAllMarkets = (state: RootState) => state.markets.allMarkets;
 export const selectFilteredMarkets = (state: RootState) => state.markets.filteredMarkets;
 export const selectMarketsLoading = (state: RootState) => state.markets.loading;
+export const selectMarketsLoadingMore = (state: RootState) => state.markets.loadingMore;
 export const selectMarketsError = (state: RootState) => state.markets.error;
 export const selectMarketsLastUpdate = (state: RootState) => state.markets.lastUpdate;
 export const selectSavedMarketIds = (state: RootState) => state.markets.savedMarketIds;
+export const selectPaginationOffset = (state: RootState) => state.markets.paginationOffset;
+export const selectTotalMarketCount = (state: RootState) => state.markets.totalMarketCount;
+export const selectHasMoreMarkets = (state: RootState) => state.markets.hasMore;
 
 // Memoized selector for saved markets to prevent unnecessary re-renders
 export const selectSavedMarkets = createSelector(

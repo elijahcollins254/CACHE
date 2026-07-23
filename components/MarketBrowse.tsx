@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
-import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
+import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading, selectMarketsLoadingMore, selectHasMoreMarkets, selectPaginationOffset } from "@/lib/redux/hooks";
+import { fetchMarkets, fetchMoreMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
@@ -21,7 +21,11 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
   const allMarkets = useAppSelector(selectAllMarkets);
   const filteredMarkets = useAppSelector(selectFilteredMarkets);
   const loading = useAppSelector(selectMarketsLoading);
+  const loadingMore = useAppSelector(selectMarketsLoadingMore);
+  const hasMore = useAppSelector(selectHasMoreMarkets);
+  const paginationOffset = useAppSelector(selectPaginationOffset);
   const [backendCategories, setBackendCategories] = useState<BackendCategory[]>(specialCategoryOptions);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const categoryMap = useMemo(
     () => new Map(backendCategories.map((category) => [category.slug, category.name])),
@@ -167,6 +171,30 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
     }
   }, []); // Empty dependency array - only run once on mount
 
+  // Infinite scroll with Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !loadingMore && !loading) {
+          // Load next page
+          dispatch(fetchMoreMarkets(paginationOffset));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => {
+      if (sentinelRef.current) {
+        observer.unobserve(sentinelRef.current);
+      }
+    };
+  }, [hasMore, loadingMore, loading, paginationOffset, dispatch]);
+
   const heading = activeLeague
     ? `${activeLeague} Markets`
     : activeSubcategory
@@ -295,6 +323,19 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Sentinel element for infinite scroll */}
+        <div ref={sentinelRef} className="mt-12 flex justify-center">
+          {loadingMore && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-4 w-4 rounded-full border-2 border-muted-foreground border-r-transparent animate-spin" />
+              Loading more markets...
+            </div>
+          )}
+          {!hasMore && allMarkets.length > 0 && (
+            <p className="text-sm text-muted-foreground">No more markets to load</p>
           )}
         </div>
       </main>
