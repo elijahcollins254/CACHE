@@ -143,6 +143,14 @@ const formatDate = (dateString: string): string => {
   }
 };
 
+const formatProbability = (value: number): string => {
+  if (!Number.isFinite(value)) {
+    return "0%";
+  }
+  const rounded = Math.round(value * 100) / 100;
+  return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)}%`;
+};
+
 export default function MarketCard({ market }: MarketCardProps) {
   const dispatch = useAppDispatch();
   const savedMarketIds = useAppSelector(selectSavedMarketIds);
