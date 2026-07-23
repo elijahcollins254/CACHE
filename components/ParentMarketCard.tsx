@@ -116,6 +116,14 @@ const formatDate = (dateString: string): string => {
   }
 };
 
+const formatProbability = (value: number): string => {
+  if (!Number.isFinite(value)) {
+    return "0%";
+  }
+  const rounded = Math.round(value * 100) / 100;
+  return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)}%`;
+};
+
 export default function ParentMarketCard({ parentMarket, childMarkets }: ParentMarketCardProps) {
   const dispatch = useAppDispatch();
   const savedMarketIds = useAppSelector(selectSavedMarketIds);
@@ -149,8 +157,10 @@ export default function ParentMarketCard({ parentMarket, childMarkets }: ParentM
     setIsExpanded(!isExpanded);
   };
 
-  const yesProbability = parentMarket.yes_probability;
+  const yesProbability = Number(parentMarket.yes_probability) || 0;
   const noProbability = 100 - yesProbability;
+  const formattedYesProbability = formatProbability(yesProbability);
+  const formattedNoProbability = formatProbability(noProbability);
   const isPolymarket = parentMarket.source === "polymarket";
   const yesPriceKes = isPolymarket
     ? polymarketProbabilityToKES(yesProbability)
@@ -180,8 +190,8 @@ export default function ParentMarketCard({ parentMarket, childMarkets }: ParentM
                     {option.label}
                   </div>
                   <div>
-                    <div className="text-lg font-semibold tracking-tight text-blue-900 dark:text-blue-100">
-                      {optionYesProb}%
+                    <div className="text-lg font-semibold tracking-tight text-blue-900 dark:text-blue-100 truncate">
+                      {formatProbability(optionYesProb)}
                     </div>
                     <div className="text-[10px] font-medium text-blue-600 dark:text-blue-300 mt-0.5">
                       {formatKES(optionPriceKes)}
@@ -200,8 +210,8 @@ export default function ParentMarketCard({ parentMarket, childMarkets }: ParentM
         <div className="rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 transition-all duration-300 group-hover:border-emerald-400 dark:group-hover:border-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 h-[80px] flex flex-col">
           <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 mb-auto">Yes</span>
           <div>
-            <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100">
-              {yesProbability}%
+            <div className="text-xl font-semibold tracking-tight text-emerald-900 dark:text-emerald-100 truncate">
+              {formattedYesProbability}
             </div>
             <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">{formatKES(yesPriceKes)}</span>
           </div>
@@ -210,8 +220,8 @@ export default function ParentMarketCard({ parentMarket, childMarkets }: ParentM
         <div className="rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 p-2 transition-all duration-300 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 h-[80px] flex flex-col">
           <span className="text-[11px] font-medium text-rose-700 dark:text-rose-300 mb-auto">No</span>
           <div>
-            <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100">
-              {noProbability}%
+            <div className="text-xl font-semibold tracking-tight text-rose-900 dark:text-rose-100 truncate">
+              {formattedNoProbability}
             </div>
             <span className="text-[10px] font-medium text-rose-600 dark:text-rose-300">{formatKES(noPriceKes)}</span>
           </div>
