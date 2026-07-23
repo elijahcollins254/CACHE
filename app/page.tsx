@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import Image from "next/image";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading } from "@/lib/redux/hooks";
-import { fetchMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
+import { fetchMarkets, hydrateMarketsFromStorage, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
@@ -97,8 +97,22 @@ export default function Home() {
     }
   }, [dispatch]);
 
-  // Fetch markets on mount only, not on every render
+  // Hydrate from cache first for an instant first screen, then refresh in the background
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const cachedMarkets = localStorage.getItem('poly_cached_markets');
+      if (cachedMarkets) {
+        const parsedMarkets = JSON.parse(cachedMarkets);
+        if (Array.isArray(parsedMarkets) && parsedMarkets.length > 0) {
+          dispatch(hydrateMarketsFromStorage(parsedMarkets));
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to hydrate markets from storage:', error);
+    }
+
     if (allMarkets.length === 0) {
       dispatch(fetchMarkets());
     }

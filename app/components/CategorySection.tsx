@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default function CategorySection({ title, slug, markets, parentMarketIds, parentGroups }: Props) {
-  const display = markets.slice(0, 8);
+  const display = markets.slice(0, 16);
 
   return (
     <section className="mb-8">

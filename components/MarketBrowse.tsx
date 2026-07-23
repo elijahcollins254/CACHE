@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useAppDispatch, useAppSelector, selectAllMarkets, selectFilteredMarkets, selectMarketsLoading, selectMarketsLoadingMore, selectHasMoreMarkets, selectPaginationOffset } from "@/lib/redux/hooks";
-import { fetchMarkets, fetchMoreMarkets, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
+import { fetchMarkets, fetchMoreMarkets, hydrateMarketsFromStorage, loadSavedMarketsFromStorage } from "@/lib/redux/slices/marketsSlice";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import MarketCard from "@/components/MarketCard";
 import ParentMarketCard from "@/components/ParentMarketCard";
@@ -161,12 +161,23 @@ export default function MarketBrowse({ categorySlug, subcategorySlug, leagueSlug
     };
   }, []);
 
-  // Only fetch markets if they haven't been loaded yet or if cache is older than 5 minutes
+  // Hydrate from cache first for an instant first screen, then refresh in the background
   useEffect(() => {
-    const now = Date.now();
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-    
-    if (allMarkets.length === 0 || (now - (loading ? 0 : Date.now())) > CACHE_DURATION) {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const cachedMarkets = localStorage.getItem('poly_cached_markets');
+      if (cachedMarkets) {
+        const parsedMarkets = JSON.parse(cachedMarkets);
+        if (Array.isArray(parsedMarkets) && parsedMarkets.length > 0) {
+          dispatch(hydrateMarketsFromStorage(parsedMarkets));
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to hydrate markets from storage:', error);
+    }
+
+    if (allMarkets.length === 0) {
       dispatch(fetchMarkets());
     }
   }, []); // Empty dependency array - only run once on mount

@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { convertUSDVolumeToKES } from '@/lib/currency';
 
+const INITIAL_MARKETS_LIMIT = 160;
+const PAGED_MARKETS_LIMIT = 64;
+
 export interface Market {
     id: number;
     question: string;
@@ -61,6 +64,15 @@ const initialState: MarketsState = {
     paginationOffset: 0,
     totalMarketCount: 0,
     hasMore: true,
+};
+
+const persistMarketsToStorage = (markets: Market[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem('poly_cached_markets', JSON.stringify(markets));
+    } catch (error) {
+        console.warn('Failed to cache markets:', error);
+    }
 };
 
 // Helper function to transform Polymarket data to Market interface
@@ -162,7 +174,7 @@ export const fetchMarkets = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=1000&offset=0`).catch(() => null);
+            const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=${INITIAL_MARKETS_LIMIT}&offset=0`).catch(() => null);
 
             if (!brokerageRes?.ok) {
                 return rejectWithValue('Failed to fetch Polymarket markets');
@@ -203,7 +215,7 @@ export const fetchMoreMarkets = createAsyncThunk(
     async (offset: number, { rejectWithValue }) => {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-            const limit = 1000;
+            const limit = PAGED_MARKETS_LIMIT;
             const brokerageRes = await fetch(`${baseUrl}/api/brokerage/markets/?limit=${limit}&offset=${offset}`).catch(() => null);
 
             if (!brokerageRes?.ok) {
@@ -268,6 +280,18 @@ const marketsSlice = createSlice({
                 ...m,
                 saved: state.savedMarketIds.includes(m.id)
             }));
+            state.filteredMarkets = state.allMarkets;
+        },
+        hydrateMarketsFromStorage: (state, action) => {
+            const cachedMarkets = action.payload || [];
+            state.allMarkets = cachedMarkets.map((m: Market) => ({
+                ...m,
+                saved: state.savedMarketIds.includes(m.id)
+            }));
+            state.filteredMarkets = state.allMarkets;
+            state.loading = false;
+            state.error = null;
+            state.lastUpdate = Date.now();
         },
     },
     extraReducers: (builder) => {
@@ -285,6 +309,7 @@ const marketsSlice = createSlice({
                 state.filteredMarkets = state.allMarkets;
                 state.loading = false;
                 state.lastUpdate = Date.now();
+                persistMarketsToStorage(state.allMarkets);
                 state.paginationOffset = offset + markets.length;
                 state.totalMarketCount = totalCount;
                 state.hasMore = state.paginationOffset < totalCount;
@@ -305,6 +330,7 @@ const marketsSlice = createSlice({
                 state.allMarkets = [...state.allMarkets, ...newMarkets];
                 state.filteredMarkets = state.allMarkets;
                 state.loadingMore = false;
+                persistMarketsToStorage(state.allMarkets);
                 state.paginationOffset = offset + newMarkets.length;
                 state.totalMarketCount = totalCount;
                 state.hasMore = state.paginationOffset < totalCount;
@@ -316,5 +342,5 @@ const marketsSlice = createSlice({
     },
 });
 
-export const { setFilteredMarkets, clearMarkets, toggleSaveMarket, loadSavedMarketsFromStorage } = marketsSlice.actions;
+export const { setFilteredMarkets, clearMarkets, toggleSaveMarket, loadSavedMarketsFromStorage, hydrateMarketsFromStorage } = marketsSlice.actions;
 export default marketsSlice.reducer;
