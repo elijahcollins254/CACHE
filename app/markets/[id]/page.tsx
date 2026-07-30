@@ -333,47 +333,31 @@ export default function MarketDetail() {
         setLoading(true);
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-            const response = await fetch(`${baseUrl}/api/brokerage/markets/?ts=${Date.now()}`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-            });
+            const response = await fetch(
+                `${baseUrl}/api/brokerage/markets/${encodeURIComponent(String(marketId))}/?ts=${Date.now()}`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to fetch brokerage market");
             }
 
-            const brokerageData = await response.json();
-            const brokerageMarkets = Array.isArray(brokerageData)
-                ? brokerageData
-                : brokerageData.results || [];
+            const rawMarket = await response.json();
+            const normalizedMarket = normalizeBrokerageMarketData(rawMarket);
+            setMarket(normalizedMarket);
+            setRelatedMarkets([]);
+            setAllMarkets([normalizedMarket]);
 
-            const normalizedMarkets = brokerageMarkets.map(normalizeBrokerageMarketData);
-            setAllMarkets(normalizedMarkets);
-
-            const foundMarket = normalizedMarkets.find((item: any) => {
-                const itemId = String(item?.id ?? "");
-                const externalId = String(item?.external_id ?? "");
-                return itemId === String(marketId) || externalId === String(marketId);
-            });
-
-            if (foundMarket) {
-                setMarket(foundMarket);
-                setRelatedMarkets(
-                    normalizedMarkets.filter((item: any) =>
-                        item.external_id !== foundMarket.external_id &&
-                        item.question === foundMarket.question
-                    )
-                );
-
-                const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
-                setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
-            } else {
-                setMarket(null);
-                setRelatedMarkets([]);
-            }
+            const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
+            setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
         } catch (err) {
             console.error("Error fetching brokerage market:", err);
             setMarket(null);
+            setRelatedMarkets([]);
+            setAllMarkets([]);
         } finally {
             setLoading(false);
         }
