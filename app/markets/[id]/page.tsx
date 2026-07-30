@@ -722,7 +722,7 @@ export default function MarketDetail() {
                 return;
             }
 
-            const side = outcome === "Yes" ? "BUY" : "SELL";
+            const side = activeTab === "sell" ? "SELL" : "BUY";
             const tokenId = resolvePolymarketTokenId(market, outcome);
 
             if (!tokenId) {
