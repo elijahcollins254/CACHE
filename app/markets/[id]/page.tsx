@@ -482,10 +482,24 @@ export default function MarketDetail() {
                             headers: { "Content-Type": "application/json" },
                         }
                     );
-                    
+
                     if (response.ok) {
                         const data = await response.json();
-                        const normalized = transformPolymarketHistory(data?.history || [], getMarketProbability(market));
+
+                        // If API returned no history points, synthesize a short history
+                        // so the chart can render a proper line instead of an empty state.
+                        if (!Array.isArray(data?.history) || data.history.length === 0) {
+                            console.log("Polymarket returned empty history, synthesizing points");
+                            const currentProb = getMarketProbability(market);
+                            const synthesized = normalizePolymarketHistory({ history: [] }, currentProb);
+                            const points = transformHistoryToChartData(synthesized.yes, synthesized.no);
+                            console.log("Synthesized chart points:", points.length);
+                            setChartData(points);
+                            if (showLoading) setLoadingChart(false);
+                            return;
+                        }
+
+                        const normalized = transformPolymarketHistory(data.history || [], getMarketProbability(market));
 
                         console.log("Polymarket chart data:", { points: normalized.length, first: normalized[0], last: normalized[normalized.length - 1] });
                         setChartData(normalized);
@@ -494,7 +508,7 @@ export default function MarketDetail() {
                         }
                         return;
                     }
-                    
+
                     console.log("No price history found, using current probability");
                     const currentProb = getMarketProbability(market);
                     setChartData([{
