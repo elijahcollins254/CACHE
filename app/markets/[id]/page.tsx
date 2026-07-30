@@ -14,7 +14,7 @@ import { formatVolume } from "@/lib/volume";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { resolvePolymarketTokenId } from "@/lib/polymarketTokens";
+import { resolvePolymarketTokenId, extractPolymarketTokenIds } from "@/lib/polymarketTokens";
 import { TrendingUp, Clock, ShieldCheck, Wallet, ArrowLeft, Bookmark, Send } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
@@ -734,7 +734,20 @@ export default function MarketDetail() {
             }
 
             const side = activeTab === "sell" ? "SELL" : "BUY";
-            const tokenId = resolvePolymarketTokenId(market, outcome);
+            let tokenId = resolvePolymarketTokenId(market, outcome);
+
+            // Fallback: attempt to extract token IDs array and pick by outcome index
+            if (!tokenId) {
+                try {
+                    const tokenValues = extractPolymarketTokenIds(market || {});
+                    const idx = outcome === "Yes" ? 0 : 1;
+                    if (tokenValues && tokenValues[idx]) {
+                        tokenId = String(tokenValues[idx]);
+                    }
+                } catch (e) {
+                    // ignore and fall through to error
+                }
+            }
 
             if (!tokenId) {
                 setMessage("Invalid market configuration: no Polymarket token ID found for this outcome");

@@ -10,7 +10,15 @@ export function parseTokenIdList(value: unknown): string[] {
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+        return parsed
+          .map((entry) => {
+            if (typeof entry === 'string') return entry;
+            if (entry && typeof entry === 'object') {
+              return entry.id || entry.token_id || entry.tokenId || entry.address || null;
+            }
+            return null;
+          })
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
       }
     } catch {
       // Ignore malformed JSON and fall through.
@@ -41,6 +49,10 @@ export function extractPolymarketTokenIds(market: any): string[] {
   const tokenValues = candidates.flatMap((value) => {
     if (Array.isArray(value)) {
       return value;
+    }
+
+    if (typeof value === 'string') {
+      return parseTokenIdList(value);
     }
 
     if (value && typeof value === 'object') {
