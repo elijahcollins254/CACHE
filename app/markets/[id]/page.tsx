@@ -80,26 +80,39 @@ function parseJsonArray(value: any): any[] {
 function normalizeBrokerageMarketData(rawMarket: any): any {
     if (!rawMarket) return rawMarket;
 
+    const metadata = rawMarket.metadata || {};
     const normalized: any = { ...rawMarket };
-    const outcomePrices = parseJsonArray(rawMarket.outcomePrices).map((price: any) => Number(price)).filter(Number.isFinite);
-    const yesProbabilityFromPrices = outcomePrices.length > 0 ? outcomePrices[0] * 100 : undefined;
-    const yesProbability = Number.isFinite(yesProbabilityFromPrices as number)
-        ? Math.round((yesProbabilityFromPrices as number) * 100) / 100
-        : Number.isFinite(rawMarket.yes_probability)
-        ? rawMarket.yes_probability
-        : Number.isFinite(rawMarket.lastTradePrice)
-        ? Math.round(rawMarket.lastTradePrice * 100)
-        : 50;
+
+    const outcomePrices = parseJsonArray(rawMarket.outcomePrices || metadata.outcomePrices)
+        .map((price: any) => Number(price))
+        .filter(Number.isFinite);
+    const yesProbabilityFromPrices = outcomePrices.length > 0 ? outcomePrices[0] : undefined;
+
+    const normalizeProb = (value: number | undefined | null): number | undefined => {
+        if (!Number.isFinite(value)) return undefined;
+        const prob = Number(value);
+        if (prob >= 0 && prob <= 1) {
+            return Math.round(prob * 10000) / 100;
+        }
+        return Math.round(prob * 100) / 100;
+    };
+
+    const yesProbability = normalizeProb(yesProbabilityFromPrices)
+        ?? normalizeProb(rawMarket.yes_probability)
+        ?? normalizeProb(metadata.yes_probability)
+        ?? normalizeProb(rawMarket.lastTradePrice)
+        ?? normalizeProb(metadata.lastTradePrice)
+        ?? 50;
 
     normalized.yes_probability = yesProbability;
     normalized.no_probability = Math.round((100 - yesProbability) * 100) / 100;
-    normalized.end_date = rawMarket.endDate || rawMarket.end_date || rawMarket.endDateIso || rawMarket.end_date_iso || rawMarket.end_date;
-    normalized.image_url = rawMarket.image || rawMarket.icon || rawMarket.image_url || rawMarket.imageUrl || "";
-    normalized.volume = rawMarket.volume != null ? rawMarket.volume : rawMarket.volumeNum || "";
-    normalized.category = rawMarket.category || rawMarket.category_slug || "Other";
+    normalized.end_date = rawMarket.endDate || rawMarket.end_date || rawMarket.endDateIso || rawMarket.end_date_iso || rawMarket.end_date || metadata.endDate || metadata.end_date;
+    normalized.image_url = rawMarket.image || rawMarket.icon || rawMarket.image_url || rawMarket.imageUrl || metadata.image || metadata.icon || "";
+    normalized.volume = rawMarket.volume != null ? rawMarket.volume : rawMarket.volumeNum || metadata.volume || "";
+    normalized.category = rawMarket.category || rawMarket.category_slug || metadata.category || "Other";
     normalized.status = rawMarket.closed ? "CLOSED" : rawMarket.resolved ? "RESOLVED" : rawMarket.active === false ? "CLOSED" : "OPEN";
-    normalized.source = rawMarket.source || (rawMarket.clobTokenIds || rawMarket.conditionId || rawMarket.outcomePrices ? "polymarket" : rawMarket.source);
-    normalized.external_id = String(rawMarket.external_id || rawMarket.id || rawMarket.market_id || rawMarket.conditionId || "");
+    normalized.source = rawMarket.source || metadata.source || (rawMarket.clobTokenIds || metadata.clobTokenIds || rawMarket.conditionId || metadata.conditionId || rawMarket.outcomePrices || metadata.outcomePrices ? "polymarket" : rawMarket.source);
+    normalized.external_id = String(rawMarket.external_id || rawMarket.id || rawMarket.market_id || rawMarket.conditionId || metadata.external_id || "");
 
     return normalized;
 }
