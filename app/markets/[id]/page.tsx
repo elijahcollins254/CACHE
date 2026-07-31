@@ -282,6 +282,7 @@ export default function MarketDetail() {
     const [isSaved, setIsSaved] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastBet, setLastBet] = useState<any>(null);
+    const [mobileBuyOpen, setMobileBuyOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
     const [replyingToName, setReplyingToName] = useState("");
@@ -1231,8 +1232,8 @@ export default function MarketDetail() {
 
                     </div>
 
-                    {/* Right Column - Position Interface */}
-                    <div className="order-2 md:order-none bg-muted border border-border rounded-2xl p-4 md:sticky md:top-32 md:h-fit">
+                    {/* Right Column - Position Interface (hidden on small screens; mobile uses bottom-sheet) */}
+                    <div className="hidden sm:block order-2 md:order-none bg-muted border border-border rounded-2xl p-4 md:sticky md:top-32 md:h-fit">
                         {/* Selected Option Display */}
                         {market.market_type === 'OPTION_LIST' && selectedOptionId && (
                             <div className="mb-4 p-3 bg-background rounded-lg border border-border">
@@ -1605,11 +1606,11 @@ export default function MarketDetail() {
             </main>
 
             {/* Mobile floating yes/no buy control */}
-            <div className="fixed inset-x-0 bottom-0 z-50 sm:hidden px-4 pb-4">
+            <div className="fixed inset-x-0 bottom-20 z-50 sm:hidden px-4 pb-4">
                 <div className="rounded-3xl border border-border bg-muted/95 p-3 shadow-2xl shadow-black/10 backdrop-blur-xl">
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setSelectedOutcome("Yes")}
+                            onClick={() => { setSelectedOutcome("Yes"); setMobileBuyOpen(true); }}
                             className={`flex-1 rounded-2xl py-3 font-bold text-sm transition ${
                                 selectedOutcome === "Yes"
                                     ? "bg-green-500 text-white"
@@ -1620,7 +1621,7 @@ export default function MarketDetail() {
                             <span className="ml-2 text-xs font-semibold text-muted-foreground">{getMarketProbability(market)}%</span>
                         </button>
                         <button
-                            onClick={() => setSelectedOutcome("No")}
+                            onClick={() => { setSelectedOutcome("No"); setMobileBuyOpen(true); }}
                             className={`flex-1 rounded-2xl py-3 font-bold text-sm transition ${
                                 selectedOutcome === "No"
                                     ? "bg-red-500 text-white"
@@ -1632,7 +1633,7 @@ export default function MarketDetail() {
                         </button>
                     </div>
                     <button
-                        onClick={() => handleBet(selectedOutcome)}
+                        onClick={() => setMobileBuyOpen(true)}
                         disabled={placingBet || market.status === 'CLOSED'}
                         className={`mt-3 w-full rounded-2xl py-3 font-bold text-white transition ${
                             market.status === 'CLOSED'
@@ -1650,6 +1651,94 @@ export default function MarketDetail() {
                     </button>
                 </div>
             </div>
+
+            {/* Mobile bottom-sheet modal for buy/sell */}
+            {mobileBuyOpen && (
+                <div className="fixed inset-0 z-60 sm:hidden">
+                    <div className="absolute left-0 right-0 top-0 bottom-20 bg-black/40" onClick={() => setMobileBuyOpen(false)} />
+                    <div className="absolute left-0 right-0 bottom-20 rounded-t-3xl bg-muted border border-border p-4 shadow-2xl max-h-[70vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="text-sm font-bold">Buy {selectedOutcome}</div>
+                            <button onClick={() => setMobileBuyOpen(false)} className="text-muted-foreground">Close</button>
+                        </div>
+
+                        {/* Reuse position UI inside modal (compact) */}
+                        <div className="space-y-3">
+                            <div>
+                                <label className="mb-1 block text-xs font-bold uppercase text-muted-foreground">Amount (KES)</label>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={betAmount}
+                                    onChange={(e) => setBetAmount(e.target.value)}
+                                    className="w-full rounded-lg border border-border bg-background p-3 text-right text-3xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-5 gap-2">
+                                {[100, 500, 1000, 5000, 10000].map((amount) => (
+                                    <button
+                                        key={amount}
+                                        onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + amount).toString())}
+                                        className="rounded-md border border-border bg-background p-2 text-xs font-bold transition-colors hover:bg-muted"
+                                    >
+                                        +{amount > 999 ? `${amount / 1000}K` : amount}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
+                                <div className="rounded-lg border border-green-900/40 bg-gradient-to-r from-green-950/40 to-blue-950/40 p-4">
+                                    <div className="text-xs font-bold uppercase text-muted-foreground">If correct: you get</div>
+                                    <div className="mt-2 text-2xl font-bold text-green-400">
+                                        KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
+                                    </div>
+                                    <div className="mt-1 text-xs text-muted-foreground">
+                                        at {selectedOutcome === "Yes" ? getMarketProbability(market) : noProbability}% odds
+                                    </div>
+                                </div>
+                            )}
+
+                            {(() => {
+                                const feeInfo = calculateTradingFee(Number(betAmount) || 0);
+                                return (
+                                    <div className="rounded-lg border border-amber-900/40 bg-amber-950/30 p-3">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-xs text-muted-foreground">Bet Amount</span>
+                                            <span className="text-sm font-semibold text-foreground">KES {(feeInfo.totalCost - feeInfo.fee).toFixed(0)}</span>
+                                        </div>
+                                        <div className="mb-2 flex items-center justify-between border-b border-amber-900/40 pb-2">
+                                            <span className="text-xs text-muted-foreground">Fee ({TRADING_FEE_PERCENT}%)</span>
+                                            <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee.toFixed(0)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-foreground">Total</span>
+                                            <span className="text-lg font-bold text-foreground">KES {feeInfo.totalCost.toFixed(0)}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            <div className="mt-4">
+                                {market.status === 'CLOSED' ? (
+                                    <button disabled className="w-full rounded-2xl py-3 font-bold bg-muted text-muted-foreground cursor-not-allowed">Trading Closed</button>
+                                ) : (
+                                    <button
+                                        onClick={async () => {
+                                            await handleBet(selectedOutcome);
+                                            setMobileBuyOpen(false);
+                                        }}
+                                        disabled={placingBet}
+                                        className={`w-full rounded-2xl py-3 font-bold text-white ${selectedOutcome === 'Yes' ? 'bg-green-500' : 'bg-red-500'}`}
+                                    >
+                                        {placingBet ? 'Placing...' : `Buy ${selectedOutcome}`}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
