@@ -1,27 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --muted: #e5e5ea;
-  --muted-foreground: #3c3c43;
+  --background: #f6efe7;
+  --foreground: #2c241d;
+  --muted: #ece0cf;
+  --muted-foreground: #6d5945;
 
-  --apple-blue: #0a84ff;
-  --apple-green: #00c75a;
-  --apple-red: #ff3b30;
+  --apple-blue: #5f6b4a;
+  --apple-green: #6e6848;
+  --apple-red: #8b4c3a;
+  --accent: #7a5b2f;
+  --accent-strong: #4a3422;
 
-  --border: rgba(0, 0, 0, 0.2);
-  --glass: rgba(255, 255, 255, 0.95);
+  --border: rgba(44, 36, 29, 0.16);
+  --glass: rgba(250, 242, 232, 0.84);
 }
 
 .dark {
-  --background: #1a1a1a;
-  --foreground: #ffffff;
-  --muted: #2d2d2d;
-  --muted-foreground: #a1a1a6;
+  --background: #1c1713;
+  --foreground: #f6efe7;
+  --muted: #2d241d;
+  --muted-foreground: #b8a58b;
 
-  --border: rgba(255, 255, 255, 0.1);
-  --glass: rgba(30, 30, 30, 0.72);
+  --border: rgba(246, 239, 231, 0.12);
+  --glass: rgba(28, 23, 19, 0.84);
+  --accent: #c8a56f;
+  --accent-strong: #e2c088;
 }
 
 @theme inline {
@@ -34,24 +38,42 @@
   --color-apple-red: var(--apple-red);
   --color-border: var(--border);
   --color-glass: var(--glass);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
 
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: var(--font-outfit), var(--font-sans);
+  --font-display: var(--font-display), var(--font-sans);
 
   --radius-apple: 22px;
-  --shadow-apple: 0 4px 24px rgba(0, 0, 0, 0.04);
-  --shadow-apple-hover: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-apple: 0 10px 30px rgba(74, 52, 34, 0.08);
+  --shadow-apple-hover: 0 16px 40px rgba(74, 52, 34, 0.14);
   --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 body {
-  background-color: var(--background);
+  background: linear-gradient(135deg, #f8efe5 0%, #efe2d0 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.011em;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0.01em;
+  min-height: 100vh;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+::selection {
+  background: rgba(122, 91, 47, 0.22);
+  color: var(--foreground);
+}
 
 @layer components {
   .apple-glass {
@@ -59,15 +81,15 @@ body {
   }
 
   .apple-card {
-    @apply bg-muted border border-border rounded-[var(--radius-apple)] shadow-[var(--shadow-apple)] transition-all duration-500 ease-apple hover:shadow-[var(--shadow-apple-hover)] hover:-translate-y-0.5;
+    @apply bg-muted/90 border border-border rounded-[var(--radius-apple)] shadow-[0_10px_32px_rgba(74,52,34,0.08)] transition-all duration-500 ease-apple hover:shadow-[0_16px_40px_rgba(74,52,34,0.14)] hover:-translate-y-0.5;
   }
 
   .apple-btn-primary {
-    @apply bg-foreground text-background rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-95;
+    @apply bg-accent-strong text-background rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-95;
   }
 
   .apple-btn-secondary {
-    @apply bg-muted text-foreground rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-75 active:scale-95;
+    @apply bg-muted text-foreground rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-80 active:scale-95;
   }
 
   /* Touch-friendly target for mobile (minimum 44x44px Apple HIG) */
