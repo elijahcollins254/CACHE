@@ -1,31 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #f6efe7;
-  --foreground: #2c241d;
-  --muted: #ece0cf;
-  --muted-foreground: #6d5945;
+  --background: #ece4d2;
+  --foreground: #2d2a20;
+  --muted: #d8cbb4;
+  --muted-foreground: #675d48;
 
-  --apple-blue: #5f6b4a;
-  --apple-green: #6e6848;
-  --apple-red: #8b4c3a;
-  --accent: #7a5b2f;
-  --accent-strong: #4a3422;
+  --money-green: #5c6d4e;
+  --money-gold: #a38b55;
+  --money-ink: #2c2a24;
+  --money-cream: #f1ead8;
 
-  --border: rgba(44, 36, 29, 0.16);
-  --glass: rgba(250, 242, 232, 0.84);
+  --accent: #687150;
+  --accent-strong: #4b593d;
+
+  --border: rgba(45, 39, 28, 0.18);
+  --glass: rgba(245, 238, 224, 0.82);
 }
 
 .dark {
-  --background: #1c1713;
-  --foreground: #f6efe7;
-  --muted: #2d241d;
-  --muted-foreground: #b8a58b;
+  --background: #1e1a14;
+  --foreground: #ede6d6;
+  --muted: #2f2b22;
+  --muted-foreground: #b8a976;
 
-  --border: rgba(246, 239, 231, 0.12);
-  --glass: rgba(28, 23, 19, 0.84);
-  --accent: #c8a56f;
-  --accent-strong: #e2c088;
+  --money-green: #6d7a5c;
+  --money-gold: #c1af7d;
+  --money-ink: #f2ebda;
+  --money-cream: #2a271f;
+
+  --border: rgba(233, 221, 179, 0.16);
+  --glass: rgba(36, 31, 23, 0.84);
+  --accent: #b19b57;
+  --accent-strong: #8f7b42;
 }
 
 @theme inline {
@@ -33,31 +41,39 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-apple-blue: var(--apple-blue);
-  --color-apple-green: var(--apple-green);
-  --color-apple-red: var(--apple-red);
+  --color-apple-blue: var(--money-green);
+  --color-apple-green: var(--money-gold);
+  --color-apple-red: var(--money-ink);
   --color-border: var(--border);
   --color-glass: var(--glass);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
 
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: var(--font-display), var(--font-sans);
+  --font-sans: Georgia, Cambria, "Times New Roman", serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
 
-  --radius-apple: 22px;
-  --shadow-apple: 0 10px 30px rgba(74, 52, 34, 0.08);
-  --shadow-apple-hover: 0 16px 40px rgba(74, 52, 34, 0.14);
+  --radius-apple: 20px;
+  --shadow-apple: 0 12px 28px rgba(32, 28, 20, 0.12);
+  --shadow-apple-hover: 0 18px 42px rgba(32, 28, 20, 0.16);
   --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 body {
-  background: linear-gradient(135deg, #f8efe5 0%, #efe2d0 100%);
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at top left, rgba(92, 109, 78, 0.12), transparent 22%),
+    linear-gradient(135deg, #f6efde 0%, #d7c9a9 100%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: auto, auto, 30px 30px;
   color: var(--foreground);
   font-family: var(--font-sans);
+  font-variant-ligatures: common-ligatures;
+  font-feature-settings: "kern" 1, "liga" 1;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: 0.01em;
-  min-height: 100vh;
 }
 
 h1,
@@ -67,11 +83,13 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display);
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 ::selection {
-  background: rgba(122, 91, 47, 0.22);
+  background: rgba(163, 139, 85, 0.24);
   color: var(--foreground);
 }
 
@@ -81,18 +99,19 @@ h6 {
   }
 
   .apple-card {
-    @apply bg-muted/90 border border-border rounded-[var(--radius-apple)] shadow-[0_10px_32px_rgba(74,52,34,0.08)] transition-all duration-500 ease-apple hover:shadow-[0_16px_40px_rgba(74,52,34,0.14)] hover:-translate-y-0.5;
+    @apply bg-muted/95 border border-border rounded-[var(--radius-apple)] shadow-[0_12px_28px_rgba(32,28,20,0.12)] transition-all duration-500 ease-apple hover:shadow-[0_18px_42px_rgba(32,28,20,0.16)] hover:-translate-y-0.5;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 40%);
   }
 
   .apple-btn-primary {
-    @apply bg-accent-strong text-background rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-95;
+    @apply bg-accent-strong text-background rounded-full px-6 py-2.5 text-sm font-semibold uppercase tracking-[0.08em] transition-all hover:opacity-90 active:scale-95;
+    letter-spacing: 0.08em;
   }
 
   .apple-btn-secondary {
     @apply bg-muted text-foreground rounded-full px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-80 active:scale-95;
   }
 
-  /* Touch-friendly target for mobile (minimum 44x44px Apple HIG) */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
@@ -107,7 +126,6 @@ h6 {
   scrollbar-width: none;
 }
 
-/* Scrollbar hide utility */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -117,7 +135,6 @@ h6 {
   display: none;
 }
 
-/* Tiny invisible scrollbars */
 ::-webkit-scrollbar {
   width: 2px;
   height: 2px;
@@ -128,21 +145,19 @@ h6 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.1);
-  border-radius: 1px;
+  background: rgba(92, 109, 78, 0.16);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.2);
+  background: rgba(92, 109, 78, 0.24);
 }
 
-/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(128, 128, 128, 0.1) transparent;
+  scrollbar-color: rgba(92, 109, 78, 0.16) transparent;
 }
 
-/* Popup & Modal Animations */
 @keyframes slideUp {
   from {
     transform: translateY(20px) scale(0.95);
@@ -202,7 +217,6 @@ h6 {
   animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Smooth animations for interactive elements */
 .search-result-item {
   transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
