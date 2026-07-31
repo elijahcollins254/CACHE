@@ -1022,7 +1022,7 @@ export default function MarketDetail() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-20 md:pb-8 font-sans">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
+        <div className="min-h-screen bg-background pb-32 sm:pb-20 md:pb-8 font-sans">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
               <SearchFilterBar />
             </Suspense>
 
@@ -1369,7 +1369,7 @@ export default function MarketDetail() {
                             )}
                         </div>
 
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-4 space-y-3 hidden sm:block">
                             {market.status === 'CLOSED' ? (
                                 <button
                                     disabled
@@ -1603,6 +1603,53 @@ export default function MarketDetail() {
                     </div>
                 </div>
             </main>
+
+            {/* Mobile floating yes/no buy control */}
+            <div className="fixed inset-x-0 bottom-0 z-50 sm:hidden px-4 pb-4">
+                <div className="rounded-3xl border border-border bg-muted/95 p-3 shadow-2xl shadow-black/10 backdrop-blur-xl">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSelectedOutcome("Yes")}
+                            className={`flex-1 rounded-2xl py-3 font-bold text-sm transition ${
+                                selectedOutcome === "Yes"
+                                    ? "bg-green-500 text-white"
+                                    : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
+                            }`}
+                        >
+                            Yes
+                            <span className="ml-2 text-xs font-semibold text-muted-foreground">{getMarketProbability(market)}%</span>
+                        </button>
+                        <button
+                            onClick={() => setSelectedOutcome("No")}
+                            className={`flex-1 rounded-2xl py-3 font-bold text-sm transition ${
+                                selectedOutcome === "No"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
+                            }`}
+                        >
+                            No
+                            <span className="ml-2 text-xs font-semibold text-muted-foreground">{noProbability}%</span>
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => handleBet(selectedOutcome)}
+                        disabled={placingBet || market.status === 'CLOSED'}
+                        className={`mt-3 w-full rounded-2xl py-3 font-bold text-white transition ${
+                            market.status === 'CLOSED'
+                                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                                : selectedOutcome === 'Yes'
+                                    ? 'bg-green-500 hover:opacity-90'
+                                    : 'bg-red-500 hover:opacity-90'
+                        }`}
+                    >
+                        {market.status === 'CLOSED'
+                            ? 'Trading Closed'
+                            : placingBet
+                                ? 'Placing...'
+                                : `Buy ${selectedOutcome}`}
+                    </button>
+                </div>
+            </div>
 
             {/* Position Receipt Modal - Minimalist */}
             {showReceipt && lastBet && (
