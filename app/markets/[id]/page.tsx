@@ -851,18 +851,6 @@ export default function MarketDetail() {
 
     const noProbability = 100 - getMarketProbability(market);
 
-    // Trading fee constant
-    const TRADING_FEE_PERCENT = 2.0; // 2.0% fee
-
-    // Calculate trading fee
-    const calculateTradingFee = (amount: number): { fee: number; totalCost: number } => {
-        const fee = amount * (TRADING_FEE_PERCENT / 100);
-        return {
-            fee: Math.round(fee * 100) / 100,
-            totalCost: Math.round((amount + fee) * 100) / 100,
-        };
-    };
-
     // Generate historical price data based on time period
     const generateHistoricalPrices = () => {
         const numPoints = 8;
@@ -1342,30 +1330,7 @@ export default function MarketDetail() {
                                         <div className="mt-2 text-3xl font-bold text-green-400">
                                             KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
                                         </div>
-                                        <div className="mt-1 text-xs text-muted-foreground">
-                                            at {selectedOutcome === "Yes" ? getMarketProbability(market) : noProbability}% odds
-                                        </div>
                                     </div>
-
-                                    {(() => {
-                                        const feeInfo = calculateTradingFee(Number(betAmount));
-                                        return (
-                                            <div className="rounded-lg border border-amber-900/40 bg-amber-950/30 p-3">
-                                                <div className="mb-2 flex items-center justify-between">
-                                                    <span className="text-xs text-muted-foreground">Bet Amount</span>
-                                                    <span className="text-sm font-semibold text-foreground">KES {(feeInfo.totalCost - feeInfo.fee).toFixed(0)}</span>
-                                                </div>
-                                                <div className="mb-2 flex items-center justify-between border-b border-amber-900/40 pb-2">
-                                                    <span className="text-xs text-muted-foreground">Fee ({TRADING_FEE_PERCENT}%)</span>
-                                                    <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee.toFixed(0)}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-foreground">Total</span>
-                                                    <span className="text-lg font-bold text-foreground">KES {feeInfo.totalCost.toFixed(0)}</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
                                 </>
                             )}
                         </div>
@@ -1682,31 +1647,8 @@ export default function MarketDetail() {
                                     <div className="mt-2 text-2xl font-bold text-green-400">
                                         KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
                                     </div>
-                                    <div className="mt-1 text-xs text-muted-foreground">
-                                        at {selectedOutcome === "Yes" ? getMarketProbability(market) : noProbability}% odds
-                                    </div>
                                 </div>
                             )}
-
-                            {(() => {
-                                const feeInfo = calculateTradingFee(Number(betAmount) || 0);
-                                return (
-                                    <div className="rounded-lg border border-amber-900/40 bg-amber-950/30 p-3">
-                                        <div className="mb-2 flex items-center justify-between">
-                                            <span className="text-xs text-muted-foreground">Bet Amount</span>
-                                            <span className="text-sm font-semibold text-foreground">KES {(feeInfo.totalCost - feeInfo.fee).toFixed(0)}</span>
-                                        </div>
-                                        <div className="mb-2 flex items-center justify-between border-b border-amber-900/40 pb-2">
-                                            <span className="text-xs text-muted-foreground">Fee ({TRADING_FEE_PERCENT}%)</span>
-                                            <span className="text-sm font-semibold text-amber-300">+ KES {feeInfo.fee.toFixed(0)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold text-foreground">Total</span>
-                                            <span className="text-lg font-bold text-foreground">KES {feeInfo.totalCost.toFixed(0)}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
 
                             <div className="mt-4">
                                 {market.status === 'CLOSED' ? (
