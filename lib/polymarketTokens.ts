@@ -40,6 +40,11 @@ export function extractPolymarketTokenIds(market: any): string[] {
     market.metadata?.tokens,
     market.outcomes,
     market.metadata?.outcomes,
+    market.metadata?.outcomePrices,
+    market.metadata?.yes,
+    market.metadata?.no,
+    market.yes,
+    market.no,
     market.token_ids,
     market.tokenIds,
     market.metadata?.token_ids,
@@ -62,7 +67,22 @@ export function extractPolymarketTokenIds(market: any): string[] {
           if (!entry) return null;
           if (typeof entry === 'string') return entry;
           if (typeof entry === 'object') {
-            return entry.id || entry.token_id || entry.tokenId || entry.address || null;
+            return (
+              entry.id ||
+              entry.token_id ||
+              entry.tokenId ||
+              entry.address ||
+              entry.token ||
+              entry.yes_token_id ||
+              entry.no_token_id ||
+              entry.yesTokenId ||
+              entry.noTokenId ||
+              entry.yes?.token_id ||
+              entry.no?.token_id ||
+              entry.yes?.tokenId ||
+              entry.no?.tokenId ||
+              null
+            );
           }
           return null;
         })
@@ -85,8 +105,8 @@ export function resolvePolymarketTokenId(market: any, outcome: 'Yes' | 'No' = 'Y
     if (tokenValues[0]) return String(tokenValues[0]);
   }
 
-  const explicitYes = market.yes_token_id || market.yesTokenId || market.yesToken || market.yes?.token_id || market.yes?.tokenId || market.metadata?.yes_token_id || market.metadata?.yesTokenId;
-  const explicitNo = market.no_token_id || market.noTokenId || market.noToken || market.no?.token_id || market.no?.tokenId || market.metadata?.no_token_id || market.metadata?.noTokenId;
+  const explicitYes = market.yes_token_id || market.yesTokenId || market.yesToken || market.yes?.token_id || market.yes?.tokenId || market.metadata?.yes_token_id || market.metadata?.yesTokenId || market.metadata?.yes?.token_id || market.metadata?.yes?.tokenId;
+  const explicitNo = market.no_token_id || market.noTokenId || market.noToken || market.no?.token_id || market.no?.tokenId || market.metadata?.no_token_id || market.metadata?.noTokenId || market.metadata?.no?.token_id || market.metadata?.no?.tokenId;
 
   if (outcome === 'Yes') return explicitYes ? String(explicitYes) : null;
   return explicitNo ? String(explicitNo) : null;

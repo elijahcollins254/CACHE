@@ -750,6 +750,11 @@ export default function MarketDetail() {
             }
 
             if (!tokenId) {
+                console.error("Polymarket token resolution failed", {
+                    market,
+                    selectedOutcome: outcome,
+                    extractedTokens: extractPolymarketTokenIds(market || {}),
+                });
                 setMessage("Invalid market configuration: no Polymarket token ID found for this outcome");
                 setPlacingBet(false);
                 return;
@@ -758,7 +763,8 @@ export default function MarketDetail() {
             const kesAmount = Number(betAmount);
             const usdAmount = kesAmount / USD_TO_KES;
             const size = Math.round(usdAmount * 100000000) / 100000000;
-            const price = Number((getMarketProbability(market) / 100).toFixed(8));
+            const selectedProbability = getSelectedOutcomeProbability();
+            const price = Number((selectedProbability / 100).toFixed(8));
 
             const polyPayload = {
                 market_id: market.external_id,
