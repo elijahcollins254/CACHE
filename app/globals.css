@@ -74,6 +74,36 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: 0.01em;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "CACHE";
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) rotate(-15deg);
+  font-family: var(--font-display);
+  font-size: clamp(8rem, 18vw, 14rem);
+  color: rgba(96, 82, 58, 0.08);
+  letter-spacing: 0.3em;
+  white-space: nowrap;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(0deg, rgba(46, 38, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(46, 38, 26, 0.04) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: 0.55;
+  z-index: 0;
+  pointer-events: none;
 }
 
 h1,
@@ -86,6 +116,8 @@ h6 {
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  position: relative;
+  z-index: 1;
 }
 
 ::selection {
