@@ -1571,7 +1571,7 @@ export default function MarketDetail() {
                                 )}
                             </div>
 
-                            <div ref={chatInputRef} className="mt-4 pt-4 border-t border-border">
+                            <div ref={chatInputRef} className="mt-4 pt-4 border-t border-border pb-28 sm:pb-0">
                                 {replyingToId && (
                                     <div className="flex items-center justify-between rounded-2xl border border-apple-blue/30 bg-apple-blue/5 p-3 text-sm text-foreground mb-3">
                                         <span>Replying to {replyingToName}</span>
@@ -1588,6 +1588,12 @@ export default function MarketDetail() {
                                     <textarea
                                         value={newChatMessage}
                                         onChange={(e) => setNewChatMessage(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSendChat();
+                                            }
+                                        }}
                                         placeholder="Add a comment..."
                                         className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background/60 p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-foreground resize-none"
                                     />
@@ -1642,7 +1648,7 @@ export default function MarketDetail() {
                     <div className="absolute left-0 right-0 bottom-20 rounded-t-3xl bg-muted border border-border p-4 shadow-2xl max-h-[70vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-3">
                             <div className="text-sm font-bold">Buy {selectedOutcome}</div>
-                            <button onClick={() => setMobileBuyOpen(false)} className="text-muted-foreground">Close</button>
+                            <button onClick={() => setMobileBuyOpen(false)} className="text-muted-foreground">x</button>
                         </div>
 
                         {/* Reuse position UI inside modal (compact) */}
