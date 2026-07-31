@@ -1605,50 +1605,33 @@ export default function MarketDetail() {
                 </div>
             </main>
 
-            {/* Mobile floating yes/no buy control */}
-            <div className="fixed inset-x-0 bottom-20 z-50 sm:hidden px-4 pb-4">
-                <div className="rounded-3xl border border-border bg-muted/95 p-3 shadow-2xl shadow-black/10 backdrop-blur-xl">
-                    <div className="flex items-center gap-3">
+            {/* Mobile floating yes/no control (compact) */}
+            <div className="fixed inset-x-0 bottom-20 z-50 sm:hidden px-4 pb-0">
+                <div className="rounded-3xl border border-border bg-muted/95 p-2 shadow-2xl shadow-black/10 backdrop-blur-xl">
+                    <div className="flex items-center gap-0">
                         <button
                             onClick={() => { setSelectedOutcome("Yes"); setMobileBuyOpen(true); }}
-                            className={`flex-1 rounded-2xl py-3 font-bold text-sm transition ${
+                            className={`flex-1 rounded-l-2xl py-3 font-bold text-sm transition flex flex-col items-center justify-center ${
                                 selectedOutcome === "Yes"
                                     ? "bg-green-500 text-white"
-                                    : "bg-background border border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
+                                    : "bg-background border-r border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                             }`}
                         >
-                            Yes
-                            <span className="ml-2 text-xs font-semibold text-muted-foreground">{getMarketProbability(market)}%</span>
+                            <div className="text-sm">Yes</div>
+                            <div className="text-xs font-semibold text-muted-foreground">{getMarketProbability(market)}% • {getDisplayMultiplier(market, getMarketProbability(market), 'Yes')}</div>
                         </button>
                         <button
                             onClick={() => { setSelectedOutcome("No"); setMobileBuyOpen(true); }}
-                            className={`flex-1 rounded-2xl py-3 font-bold text-sm transition ${
+                            className={`flex-1 rounded-r-2xl py-3 font-bold text-sm transition flex flex-col items-center justify-center ${
                                 selectedOutcome === "No"
                                     ? "bg-red-500 text-white"
-                                    : "bg-background border border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
+                                    : "bg-background border-l border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                             }`}
                         >
-                            No
-                            <span className="ml-2 text-xs font-semibold text-muted-foreground">{noProbability}%</span>
+                            <div className="text-sm">No</div>
+                            <div className="text-xs font-semibold text-muted-foreground">{noProbability}% • {getDisplayMultiplier(market, noProbability, 'No')}</div>
                         </button>
                     </div>
-                    <button
-                        onClick={() => setMobileBuyOpen(true)}
-                        disabled={placingBet || market.status === 'CLOSED'}
-                        className={`mt-3 w-full rounded-2xl py-3 font-bold text-white transition ${
-                            market.status === 'CLOSED'
-                                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                                : selectedOutcome === 'Yes'
-                                    ? 'bg-green-500 hover:opacity-90'
-                                    : 'bg-red-500 hover:opacity-90'
-                        }`}
-                    >
-                        {market.status === 'CLOSED'
-                            ? 'Trading Closed'
-                            : placingBet
-                                ? 'Placing...'
-                                : `Buy ${selectedOutcome}`}
-                    </button>
                 </div>
             </div>
 
