@@ -923,7 +923,7 @@ export default function MarketDetail() {
 
         const totalCost = validShares * polymarketProbabilityToKES(limitPrice);
         const maxPayout = validShares * getPayoutPerShareKes(market);
-        const winAmount = maxPayout * (1 - TRADING_FEE_PERCENT / 100);
+        const winAmount = maxPayout;
         const potentialProfit = winAmount - totalCost;
 
         return {
