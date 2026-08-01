@@ -786,7 +786,12 @@ export default function MarketDetail() {
             );
 
             const data = await response.json();
-            if (response.ok) {
+            const isSuccessfulTrade = Boolean(
+                response.ok &&
+                (data?.success === true || data?.executed === true || (data?.fills_count > 0 && data?.status))
+            );
+
+            if (isSuccessfulTrade) {
                 const userStr = localStorage.getItem("poly_user");
                 const userData = userStr ? JSON.parse(userStr) : {};
 
@@ -809,7 +814,7 @@ export default function MarketDetail() {
 
                 setShowReceipt(true);
                 setBetAmount("");
-                setMessage("");
+                setMessage(data?.message || "Trade executed successfully and added to your portfolio.");
 
                 if (data.market) {
                     setMarket((prev: any) => normalizeBrokerageMarketData({
@@ -819,10 +824,11 @@ export default function MarketDetail() {
                 }
 
                 window.dispatchEvent(new Event("poly_balance_updated"));
+                window.dispatchEvent(new Event("poly_portfolio_updated"));
                 await fetchMarketDetails();
                 await fetchPriceHistory();
             } else {
-                setMessage(data.error || "Failed to submit position. Try logging in.");
+                setMessage(data?.message || data?.error || "Trade was not successful in Polymarket.");
             }
         } catch (err) {
             setMessage("Connection error.");
