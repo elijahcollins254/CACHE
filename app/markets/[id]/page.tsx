@@ -1014,7 +1014,6 @@ export default function MarketDetail() {
     };
 
     const topLevelChatMessages = chatMessages.filter((msg: any) => !msg.parent_id);
-    const recommendedMarkets = getRecommendedMarkets();
 
     const handleSaveToggle = () => {
         if (!marketId) return;
@@ -1064,6 +1063,8 @@ export default function MarketDetail() {
             .sort((a: any, b: any) => (Number(b.volume) || 0) - (Number(a.volume) || 0))
             .slice(0, 3);
     };
+
+    const recommendedMarkets = getRecommendedMarkets();
 
     return (
         <div className="min-h-screen bg-background pb-32 sm:pb-20 md:pb-8 font-sans">            <Suspense fallback={<div className="h-16 bg-muted animate-pulse" />}>
