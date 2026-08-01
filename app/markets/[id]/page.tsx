@@ -108,7 +108,19 @@ function normalizeBrokerageMarketData(rawMarket: any): any {
     normalized.no_probability = Math.round((100 - yesProbability) * 100) / 100;
     normalized.end_date = rawMarket.endDate || rawMarket.end_date || rawMarket.endDateIso || rawMarket.end_date_iso || rawMarket.end_date || metadata.endDate || metadata.end_date;
     normalized.image_url = rawMarket.image || rawMarket.icon || rawMarket.image_url || rawMarket.imageUrl || metadata.image || metadata.icon || "";
-    normalized.volume = rawMarket.volume != null ? rawMarket.volume : rawMarket.volumeNum || metadata.volume || "";
+    // Normalize volume: if already a KES string, keep it; otherwise convert USD numeric/string to KES compact string
+    const rawVolumeValue = rawMarket.volume != null ? rawMarket.volume : (rawMarket.volumeNum ?? metadata.volume ?? "");
+    try {
+        if (typeof rawVolumeValue === 'string' && rawVolumeValue.trim().toUpperCase().startsWith('KES')) {
+            normalized.volume = rawVolumeValue;
+        } else if (rawVolumeValue !== null && rawVolumeValue !== undefined && rawVolumeValue !== "") {
+            normalized.volume = convertUSDVolumeToKES(rawVolumeValue as any);
+        } else {
+            normalized.volume = "";
+        }
+    } catch (e) {
+        normalized.volume = "";
+    }
     normalized.category = rawMarket.category || rawMarket.category_slug || metadata.category || "Other";
     normalized.status = rawMarket.closed ? "CLOSED" : rawMarket.resolved ? "RESOLVED" : rawMarket.active === false ? "CLOSED" : "OPEN";
     normalized.source = rawMarket.source || metadata.source || (rawMarket.clobTokenIds || metadata.clobTokenIds || rawMarket.conditionId || metadata.conditionId || rawMarket.outcomePrices || metadata.outcomePrices ? "polymarket" : rawMarket.source);
