@@ -359,6 +359,31 @@ export default function MarketDetail() {
         setLoading(true);
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+            let normalizedMarkets: any[] = [];
+            try {
+                const listResponse = await fetch(
+                    `${baseUrl}/api/brokerage/markets/?limit=50&ts=${Date.now()}`,
+                    {
+                        method: "GET",
+                        headers: { "Content-Type": "application/json" },
+                    }
+                );
+
+                if (listResponse.ok) {
+                    const listData = await listResponse.json();
+                    const brokerageMarkets = Array.isArray(listData)
+                        ? listData
+                        : Array.isArray(listData?.results)
+                            ? listData.results
+                            : [];
+                    normalizedMarkets = brokerageMarkets.map(normalizeBrokerageMarketData);
+                    setAllMarkets(normalizedMarkets);
+                }
+            } catch (listError) {
+                console.warn("Unable to load brokerage market list for recommendations:", listError);
+            }
+
             const response = await fetch(
                 `${baseUrl}/api/brokerage/markets/${encodeURIComponent(String(marketId))}/?ts=${Date.now()}`,
                 {
@@ -367,15 +392,26 @@ export default function MarketDetail() {
                 }
             );
 
-            if (!response.ok) {
-                throw new Error("Failed to fetch brokerage market");
+            let normalizedMarket: any = null;
+            if (response.ok) {
+                const rawMarket = await response.json();
+                normalizedMarket = normalizeBrokerageMarketData(rawMarket);
+            } else {
+                normalizedMarket = normalizedMarkets.find((item: any) =>
+                    String(item.id) === String(marketId) || String(item.external_id) === String(marketId)
+                );
+
+                if (!normalizedMarket) {
+                    throw new Error("Failed to fetch brokerage market");
+                }
             }
 
-            const rawMarket = await response.json();
-            const normalizedMarket = normalizeBrokerageMarketData(rawMarket);
             setMarket(normalizedMarket);
             setRelatedMarkets([]);
-            setAllMarkets([normalizedMarket]);
+
+            if (normalizedMarkets.length === 0 && normalizedMarket) {
+                setAllMarkets([normalizedMarket]);
+            }
 
             const savedMarketIds = JSON.parse(localStorage.getItem("poly_saved_markets") || "[]");
             setIsSaved(Array.isArray(savedMarketIds) && savedMarketIds.includes(String(marketId)));
@@ -978,6 +1014,7 @@ export default function MarketDetail() {
     };
 
     const topLevelChatMessages = chatMessages.filter((msg: any) => !msg.parent_id);
+    const recommendedMarkets = getRecommendedMarkets();
 
     const handleSaveToggle = () => {
         if (!marketId) return;
@@ -1236,6 +1273,36 @@ export default function MarketDetail() {
                             </div>
                         </div>
 
+                        {/* Mobile Recommended Markets */}
+                        <div className="sm:hidden mt-6 rounded-2xl border border-border bg-muted p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Recommended Markets</h3>
+                                <span className="text-[11px] text-muted-foreground">Top picks</span>
+                            </div>
+                            <div className="space-y-3">
+                                {recommendedMarkets.length > 0 ? (
+                                    recommendedMarkets.map((rec_market: any) => (
+                                        <Link
+                                            key={rec_market.id}
+                                            href={`/markets/${rec_market.id}-${generateMarketSlug(rec_market.question)}`}
+                                            className="group block rounded-2xl border border-border/70 bg-background/70 p-3 transition hover:border-foreground/20 hover:bg-background"
+                                        >
+                                            <p className="text-sm font-semibold text-foreground line-clamp-2">{rec_market.question}</p>
+                                            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                                                <span className="rounded-full bg-green-500/10 px-2 py-1 text-green-600">Yes {rec_market.yes_probability}%</span>
+                                                <span className="rounded-full bg-red-500/10 px-2 py-1 text-red-600">No {100 - rec_market.yes_probability}%</span>
+                                                <span className="rounded-full bg-border/70 px-2 py-1">{formatVolume(rec_market.volume)}</span>
+                                            </div>
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <div className="rounded-2xl border border-dashed border-border/50 bg-muted/60 p-4 text-sm text-muted-foreground">
+                                        No recommended markets available right now.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* Right Column - Position Interface (hidden on small screens; mobile uses bottom-sheet) */}
@@ -1404,30 +1471,56 @@ export default function MarketDetail() {
                         <div className="mt-8 pt-6 border-t border-border">
                             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Recommended Markets</h3>
                             <div className="space-y-2">
-                                {getRecommendedMarkets().map((rec_market: any) => (
-                                    <Link 
-                                        key={rec_market.id}
-                                        href={`/markets/${rec_market.id}-${generateMarketSlug(rec_market.question)}`}
-                                        className="block p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
-                                    >
-                                        <p className="text-xs font-semibold text-foreground truncate">{rec_market.question}</p>
-                                        <div className="mt-2 grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
-                                            <div className="rounded-md bg-background/70 px-2 py-1">
-                                                <span className="font-semibold text-foreground">Yes</span>{' '}
-                                                <span>{rec_market.yes_probability}%</span>
+                                {(() => {
+                                    const recs = getRecommendedMarkets();
+                                    // Fallback to other markets in allMarkets when no recommended items
+                                    const fallback = recs.length > 0 ? recs : allMarkets
+                                        .filter((m: any) => m.external_id !== market.external_id)
+                                        .sort((a: any, b: any) => (Number(b.volume) || 0) - (Number(a.volume) || 0))
+                                        .slice(0, 3);
+
+                                    if (fallback.length === 0) {
+                                        // Render skeleton placeholders when nothing exists
+                                        return Array.from({ length: 3 }).map((_, idx) => (
+                                            <div key={`skeleton-${idx}`} className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/30 animate-pulse">
+                                                <div className="h-10 w-10 rounded-md bg-border" />
+                                                <div className="flex-1">
+                                                    <div className="h-3 w-3/4 bg-border rounded mb-2" />
+                                                    <div className="h-3 w-1/4 bg-border rounded" />
+                                                </div>
                                             </div>
-                                            <div className="rounded-md bg-background/70 px-2 py-1">
-                                                <span className="font-semibold text-foreground">Volume</span>{' '}
-                                                <span>{formatVolume(rec_market.volume)}</span>
+                                        ));
+                                    }
+
+                                    return fallback.map((rec_market: any) => (
+                                        <Link 
+                                            key={rec_market.id}
+                                            href={`/markets/${rec_market.id}-${generateMarketSlug(rec_market.question)}`}
+                                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
+                                        >
+                                            <div className="h-12 w-12 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                                                {rec_market.image_url ? (
+                                                    <img src={rec_market.image_url} alt="" className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <div className="h-full w-full bg-border" />
+                                                )}
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                                {getRecommendedMarkets().length === 0 && (
-                                    <div className="rounded-lg border border-dashed border-border/50 bg-muted/60 p-4 text-sm text-muted-foreground">
-                                        No recommended markets available right now.
-                                    </div>
-                                )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-foreground truncate">{rec_market.question}</p>
+                                                <div className="mt-1 flex items-center gap-3 text-[12px] text-muted-foreground">
+                                                    <div className="rounded-md bg-background/70 px-2 py-1">
+                                                        <span className="font-semibold text-foreground">Yes</span>{' '}
+                                                        <span>{rec_market.yes_probability}%</span>
+                                                    </div>
+                                                    <div className="rounded-md bg-background/70 px-2 py-1">
+                                                        <span className="font-semibold text-foreground">Volume</span>{' '}
+                                                        <span>{formatVolume(rec_market.volume)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ));
+                                })()}
                             </div>
                         </div>
                     </div>
