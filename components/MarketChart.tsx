@@ -117,7 +117,7 @@ const MarketChart: React.FC<MarketChartProps> = ({
     }
 
     return (
-        <div className="w-full rounded-xl border border-border bg-muted/10 p-2 md:p-3">
+        <div className="w-full rounded-xl border border-border bg-muted/10 p-0">
             <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                 <LineChart
                     data={chartData}

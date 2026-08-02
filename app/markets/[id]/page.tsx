@@ -1003,6 +1003,36 @@ export default function MarketDetail() {
         }
     };
 
+    const formatChartDateRange = (data: ChartDataPoint[], period: string) => {
+        if (!Array.isArray(data) || data.length === 0) {
+            return period === 'ALL' ? 'All time' : `${period} range`;
+        }
+
+        const timestamps = data
+            .map((point) => Number(point.timestamp))
+            .filter((ts) => Number.isFinite(ts) && ts > 0);
+
+        if (timestamps.length === 0) {
+            return period === 'ALL' ? 'All time' : `${period} range`;
+        }
+
+        const minTs = Math.min(...timestamps) * 1000;
+        const maxTs = Math.max(...timestamps) * 1000;
+        const start = new Date(minTs);
+        const end = new Date(maxTs);
+
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+        });
+
+        if (start.toDateString() === end.toDateString()) {
+            return formatter.format(start);
+        }
+
+        return `${formatter.format(start)} — ${formatter.format(end)}`;
+    };
+
     /**
      * Format shares for display (hide long decimals)
      * Shows max 2 decimal places but keeps full precision in state
@@ -1170,39 +1200,33 @@ export default function MarketDetail() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] items-start">
-                                    <div className="flex flex-wrap gap-2 text-xs">
-                                        {(["1H", "6H", "1D", "1W", "1M", "ALL"] as const).map((period) => (
-                                            <button
-                                                key={period}
-                                                onClick={() => setTimePeriod(period)}
-                                                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-                                                    timePeriod === period
-                                                        ? "bg-foreground text-background"
-                                                        : "bg-border text-muted-foreground hover:bg-border/80"
-                                                }`}
-                                            >
-                                                {period}
-                                            </button>
-                                        ))}
+                                <div className="bg-muted rounded-2xl overflow-hidden">
+                                    <div className="border-b border-border px-4 py-3">
+                                        <div className="flex flex-wrap gap-2 text-xs">
+                                            {(["1H", "6H", "1D", "1W", "1M", "ALL"] as const).map((period) => (
+                                                <button
+                                                    key={period}
+                                                    onClick={() => setTimePeriod(period)}
+                                                    className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                                                        timePeriod === period
+                                                            ? "bg-foreground text-background"
+                                                            : "bg-border text-muted-foreground hover:bg-border/80"
+                                                    }`}
+                                                >
+                                                    {period}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                </div>
-
-                                <MarketChart
-                                    data={chartData}
-                                    loading={loadingChart}
-                                    isMobile={isMobile}
-                                />
-
-                                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-                                        <div className="flex items-center gap-2">
-                                            <TrendingUp className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                                            {formatVolume(market.volume)}
-                                        </div>
-                                    <div className="hidden sm:flex items-center gap-2">
-                                        <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                                        {market.end_date ? formatDate(market.end_date) : "Closing soon"}
+                                    <MarketChart
+                                        data={chartData}
+                                        loading={loadingChart}
+                                        isMobile={isMobile}
+                                        timePeriod={timePeriod}
+                                    />
+                                    <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+                                        {formatChartDateRange(chartData, timePeriod)}
                                     </div>
                                 </div>
                             </div>
