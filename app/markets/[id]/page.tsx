@@ -251,8 +251,7 @@ function transformPolymarketHistory(
 
     const now = Date.now() / 1000;
     const intervalSeconds = 300; // 5-minute intervals
-    
-    return rawHistory.map((point: any, index: number) => {
+    const normalizedData = rawHistory.map((point: any, index: number) => {
         const rawPrice = point?.p ?? point?.price ?? point?.value ?? 0.5;
         const price = typeof rawPrice === "string" ? parseFloat(rawPrice) : rawPrice;
         const yesProb = price <= 1 ? price * 100 : price;
@@ -271,6 +270,18 @@ function transformPolymarketHistory(
             no: Math.max(0, Math.min(100, noProb)),
         };
     });
+
+    const currentYes = Math.max(0, Math.min(100, currentProbability));
+    const lastPoint = normalizedData[normalizedData.length - 1];
+    if (Math.abs(lastPoint.yes - currentYes) > 0.01) {
+        normalizedData.push({
+            timestamp: now,
+            yes: currentYes,
+            no: 100 - currentYes,
+        });
+    }
+
+    return normalizedData;
 }
 
 export default function MarketDetail() {
