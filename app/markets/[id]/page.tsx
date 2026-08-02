@@ -1759,20 +1759,43 @@ export default function MarketDetail() {
                     <div className="absolute left-0 right-0 top-0 bottom-20 bg-black/40" onClick={() => setMobileBuyOpen(false)} />
                     <div className="absolute left-0 right-0 bottom-20 rounded-t-3xl bg-muted border border-border p-4 shadow-2xl max-h-[70vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="text-sm font-bold">Buy {selectedOutcome}</div>
+                            <div className="text-sm font-bold text-center flex-1">Buy {selectedOutcome}</div>
                             <button onClick={() => setMobileBuyOpen(false)} className="text-muted-foreground">x</button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            <button
+                                onClick={() => setSelectedOutcome('Yes')}
+                                className={`py-3 rounded-2xl text-sm font-bold transition ${
+                                    selectedOutcome === 'Yes'
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-background border border-border text-foreground hover:bg-green-500/10'
+                                }`}
+                            >
+                                Yes
+                            </button>
+                            <button
+                                onClick={() => setSelectedOutcome('No')}
+                                className={`py-3 rounded-2xl text-sm font-bold transition ${
+                                    selectedOutcome === 'No'
+                                        ? 'bg-red-500 text-white'
+                                        : 'bg-background border border-border text-foreground hover:bg-red-500/10'
+                                }`}
+                            >
+                                No
+                            </button>
                         </div>
 
                         {/* Reuse position UI inside modal (compact) */}
                         <div className="space-y-3">
                             <div>
-                                <label className="mb-1 block text-xs font-bold uppercase text-muted-foreground">Amount (KES)</label>
+                                <label className="mb-1 block text-center text-xs font-bold uppercase text-muted-foreground">Amount (KES)</label>
                                 <input
                                     type="number"
                                     placeholder="0"
                                     value={betAmount}
                                     onChange={(e) => setBetAmount(e.target.value)}
-                                    className="w-full rounded-lg border border-border bg-background p-3 text-right text-3xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                                    className="w-full rounded-lg border border-border bg-background p-3 text-center text-3xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
                                 />
                             </div>
 
@@ -1789,7 +1812,7 @@ export default function MarketDetail() {
                             </div>
 
                             {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                                <div className="rounded-lg border border-green-900/40 bg-gradient-to-r from-green-950/40 to-blue-950/40 p-4">
+                                <div className="rounded-lg border border-green-900/40 bg-gradient-to-r from-green-950/40 to-blue-950/40 p-4 text-center">
                                     <div className="text-xs font-bold uppercase text-muted-foreground">If correct: you get</div>
                                     <div className="mt-2 text-2xl font-bold text-green-400">
                                         KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
