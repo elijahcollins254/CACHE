@@ -1757,88 +1757,81 @@ export default function MarketDetail() {
             {mobileBuyOpen && (
                 <div className="fixed inset-0 z-60 sm:hidden">
                     <div className="absolute inset-0 bg-black/45" onClick={() => setMobileBuyOpen(false)} />
-                    <div className="absolute left-0 right-0 bottom-0 rounded-t-[28px] bg-[#111827] text-white border border-white/10 p-4 shadow-2xl max-h-[85vh] overflow-y-auto">
-                        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-white/20" />
-                        <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/60">Position</div>
-                                <div className="text-base font-semibold">Buy {selectedOutcome}</div>
-                            </div>
-                            <button onClick={() => setMobileBuyOpen(false)} className="rounded-full bg-white/10 p-2 text-white/80">✕</button>
+                    <div className="absolute left-0 right-0 bottom-0 rounded-t-[28px] bg-background border border-border p-4 shadow-2xl max-h-[85vh] overflow-y-auto">
+                        <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-border" />
+                        <div className="mb-4 text-center">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Buy {selectedOutcome}</div>
+                            <div className="mt-2 text-lg font-semibold text-foreground">{market.question || market.title || 'Trade this market'}</div>
                         </div>
 
-                        <div className="mb-4 flex items-center gap-2 rounded-full bg-white/10 p-1">
+                        <div className="mb-4 flex gap-2 rounded-full bg-muted p-1">
                             <button
                                 onClick={() => setSelectedOutcome('Yes')}
-                                className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition ${
+                                className={`flex-1 rounded-full py-3 text-sm font-semibold transition ${
                                     selectedOutcome === 'Yes'
-                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/20'
-                                        : 'text-white/70 hover:bg-white/10'
+                                        ? 'bg-green-500 text-background shadow-sm'
+                                        : 'text-foreground hover:bg-muted/80'
                                 }`}
                             >
                                 Yes
                             </button>
                             <button
                                 onClick={() => setSelectedOutcome('No')}
-                                className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition ${
+                                className={`flex-1 rounded-full py-3 text-sm font-semibold transition ${
                                     selectedOutcome === 'No'
-                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
-                                        : 'text-white/70 hover:bg-white/10'
+                                        ? 'bg-red-500 text-background shadow-sm'
+                                        : 'text-foreground hover:bg-muted/80'
                                 }`}
                             >
                                 No
                             </button>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-                                <label className="mb-2 block text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Amount (KES)</label>
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={betAmount}
-                                    onChange={(e) => setBetAmount(e.target.value)}
-                                    className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-center text-3xl font-bold text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                                />
-                            </div>
+                        <div className="rounded-3xl border border-border bg-muted p-3 text-center">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Amount (KES)</div>
+                            <input
+                                type="number"
+                                placeholder="0"
+                                value={betAmount}
+                                onChange={(e) => setBetAmount(e.target.value)}
+                                className="mt-3 w-full rounded-3xl border border-border bg-background px-4 py-3 text-center text-4xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-foreground"
+                            />
+                        </div>
 
-                            <div className="grid grid-cols-5 gap-2">
-                                {[100, 500, 1000, 5000, 10000].map((amount) => (
-                                    <button
-                                        key={amount}
-                                        onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + amount).toString())}
-                                        className="rounded-xl border border-white/10 bg-white/[0.06] p-2 text-xs font-semibold text-white/80 transition hover:bg-white/10"
-                                    >
-                                        +{amount > 999 ? `${amount / 1000}K` : amount}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="grid grid-cols-5 gap-2 mt-4">
+                            {[100, 500, 1000, 5000, 10000].map((amount) => (
+                                <button
+                                    key={amount}
+                                    onClick={() => setBetAmount(((parseFloat(betAmount) || 0) + amount).toString())}
+                                    className="rounded-3xl border border-border bg-background px-2 py-3 text-center text-[11px] font-semibold text-foreground transition hover:bg-muted"
+                                >
+                                    +{amount > 999 ? `${amount / 1000}K` : amount}
+                                </button>
+                            ))}
+                        </div>
 
-                            {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
-                                <div className="rounded-2xl border border-emerald-400/30 bg-gradient-to-r from-emerald-500/15 to-sky-500/15 p-4 text-center">
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">If correct: you get</div>
-                                    <div className="mt-2 text-2xl font-bold text-emerald-400">
-                                        KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : "0.00"}
-                                    </div>
-                                </div>
+                        {betAmount && !isNaN(Number(betAmount)) && Number(betAmount) > 0 && (
+                            <div className="mt-4 rounded-3xl border border-green-500/20 bg-green-500/5 p-4 text-center">
+                                <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">If correct you get</div>
+                                <div className="mt-2 text-2xl font-bold text-foreground">KES {Number.isFinite(estimatedReturn) ? estimatedReturn.toFixed(0) : '0.00'}</div>
+                            </div>
+                        )}
+
+                        <div className="mt-5">
+                            {market.status === 'CLOSED' ? (
+                                <button disabled className="w-full rounded-3xl bg-muted/90 px-4 py-4 text-sm font-semibold text-muted-foreground">Trading Closed</button>
+                            ) : (
+                                <button
+                                    onClick={async () => {
+                                        await handleBet(selectedOutcome);
+                                        setMobileBuyOpen(false);
+                                    }}
+                                    disabled={placingBet}
+                                    className={`w-full rounded-3xl px-4 py-4 text-sm font-semibold text-background ${selectedOutcome === 'Yes' ? 'bg-green-500' : 'bg-red-500'}`}
+                                >
+                                    {placingBet ? 'Placing...' : `Buy ${selectedOutcome}`}
+                                </button>
                             )}
-
-                            <div className="pt-1">
-                                {market.status === 'CLOSED' ? (
-                                    <button disabled className="w-full rounded-2xl py-3.5 font-semibold bg-white/10 text-white/50 cursor-not-allowed">Trading Closed</button>
-                                ) : (
-                                    <button
-                                        onClick={async () => {
-                                            await handleBet(selectedOutcome);
-                                            setMobileBuyOpen(false);
-                                        }}
-                                        disabled={placingBet}
-                                        className={`w-full rounded-2xl py-3.5 font-semibold text-white ${selectedOutcome === 'Yes' ? 'bg-green-500 shadow-lg shadow-green-500/20' : 'bg-red-500 shadow-lg shadow-red-500/20'}`}
-                                    >
-                                        {placingBet ? 'Placing...' : `Buy ${selectedOutcome}`}
-                                    </button>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </div>
