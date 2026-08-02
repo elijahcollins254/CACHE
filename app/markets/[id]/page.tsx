@@ -1725,14 +1725,14 @@ export default function MarketDetail() {
 
             {/* Mobile floating yes/no control (compact) */}
             <div className="fixed inset-x-0 bottom-20 z-50 sm:hidden px-4 pb-0">
-                <div className="rounded-3xl border border-border bg-muted/95 px-2 py-2 shadow-2xl shadow-black/10 backdrop-blur-xl">
-                    <div className="mx-auto inline-flex items-center justify-center gap-2 rounded-full bg-background/80 p-1">
+                <div className="rounded-3xl border border-border bg-muted/95 p-2 shadow-2xl shadow-black/10 backdrop-blur-xl">
+                    <div className="flex items-center gap-0">
                         <button
                             onClick={() => { setSelectedOutcome("Yes"); setMobileBuyOpen(true); }}
-                            className={`min-w-[110px] rounded-full px-4 py-2 font-bold text-sm text-center transition flex flex-col items-center justify-center ${
+                            className={`flex-1 rounded-l-2xl py-3 font-bold text-sm transition flex flex-col items-center justify-center ${
                                 selectedOutcome === "Yes"
                                     ? "bg-green-500 text-white"
-                                    : "text-foreground hover:bg-green-500/10"
+                                    : "bg-background border-r border-border text-foreground hover:bg-green-500/20 hover:border-green-500"
                             }`}
                         >
                             <div className="text-sm">Yes</div>
@@ -1740,10 +1740,10 @@ export default function MarketDetail() {
                         </button>
                         <button
                             onClick={() => { setSelectedOutcome("No"); setMobileBuyOpen(true); }}
-                            className={`min-w-[110px] rounded-full px-4 py-2 font-bold text-sm text-center transition flex flex-col items-center justify-center ${
+                            className={`flex-1 rounded-r-2xl py-3 font-bold text-sm transition flex flex-col items-center justify-center ${
                                 selectedOutcome === "No"
                                     ? "bg-red-500 text-white"
-                                    : "text-foreground hover:bg-red-500/10"
+                                    : "bg-background border-l border-border text-foreground hover:bg-red-500/20 hover:border-red-500"
                             }`}
                         >
                             <div className="text-sm">No</div>
@@ -1764,10 +1764,10 @@ export default function MarketDetail() {
                             <div className="mt-2 text-lg font-semibold text-foreground">{market.question || market.title || 'Trade this market'}</div>
                         </div>
 
-                        <div className="mb-4 flex justify-center gap-2 rounded-full bg-muted p-1">
+                        <div className="mb-4 flex gap-2 rounded-full bg-muted p-1">
                             <button
                                 onClick={() => setSelectedOutcome('Yes')}
-                                className={`min-w-[110px] rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                className={`flex-1 rounded-full py-3 text-sm font-semibold transition ${
                                     selectedOutcome === 'Yes'
                                         ? 'bg-green-500 text-background shadow-sm'
                                         : 'text-foreground hover:bg-muted/80'
@@ -1777,7 +1777,7 @@ export default function MarketDetail() {
                             </button>
                             <button
                                 onClick={() => setSelectedOutcome('No')}
-                                className={`min-w-[110px] rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                className={`flex-1 rounded-full py-3 text-sm font-semibold transition ${
                                     selectedOutcome === 'No'
                                         ? 'bg-red-500 text-background shadow-sm'
                                         : 'text-foreground hover:bg-muted/80'
